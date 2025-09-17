@@ -381,21 +381,32 @@ class GeminiPDFProcessor:
         return merged
 
     def parse_json_response(self, response_text: str, method: str) -> Dict[str, Any]:
-        """Parse JSON from Gemini response with robust error handling"""
+        """Parse JSON from Gemini response and return the clean JSON directly"""
         try:
             # Clean response text
             cleaned_text = response_text.strip()
             
-            # Remove markdown formatting
+            # Remove markdown formatting more carefully
             if cleaned_text.startswith('```json'):
-                cleaned_text = cleaned_text[7:]
+                cleaned_text = cleaned_text[7:].strip()
             elif cleaned_text.startswith('```'):
-                cleaned_text = cleaned_text[3:]
+                cleaned_text = cleaned_text[3:].strip()
             
             if cleaned_text.endswith('```'):
-                cleaned_text = cleaned_text[:-3]
+                cleaned_text = cleaned_text[:-3].strip()
 
-            # Find JSON boundaries
+            # Try direct parsing first (in case it's clean JSON)
+            try:
+                parsed_json = json.loads(cleaned_text)
+                parsed_json["_metadata"] = {
+                    "processing_method": method,
+                    "processed_timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                }
+                return parsed_json
+            except json.JSONDecodeError:
+                pass  # Continue to more complex parsing
+
+            # Find JSON boundaries using brace matching
             brace_count = 0
             start_idx = -1
             end_idx = -1
@@ -417,26 +428,111 @@ class GeminiPDFProcessor:
                 # Clean up common JSON issues
                 json_str = self.clean_json_string(json_str)
                 
+                # Parse and return the clean JSON directly
                 parsed_json = json.loads(json_str)
-                parsed_json["processing_method"] = method
-                parsed_json["processed_timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
-                return parsed_json
-            else:
-                return {
-                    "raw_response": response_text,
+                
+                # Add minimal metadata
+                parsed_json["_metadata"] = {
                     "processing_method": method,
-                    "error": "No valid JSON structure found",
-                    "note": "Content extraction failed - check raw_response for manual review"
+                    "processed_timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
                 }
+                
+                return parsed_json
+            
+            else:
+                # Last resort: return raw response as extracted content
+                print("Warning: Could not find valid JSON structure, returning raw content")
+                return self.create_fallback_response(response_text, method, "No JSON structure found")
 
         except json.JSONDecodeError as e:
-            return {
-                "raw_response": response_text,
-                "processing_method": method,
-                "json_error": str(e),
-                "error": "JSON parsing failed",
-                "note": "Content extraction failed - check raw_response for manual review"
+            print(f"Warning: JSON decode error - {e}")
+            # Try aggressive cleanup and retry
+            try:
+                if 'start_idx' in locals() and 'end_idx' in locals() and start_idx != -1 and end_idx != -1:
+                    json_str = cleaned_text[start_idx:end_idx]
+                    json_str = self.aggressive_json_cleanup(json_str)
+                    parsed_json = json.loads(json_str)
+                    parsed_json["_metadata"] = {
+                        "processing_method": f"{method}_repaired",
+                        "processed_timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "note": "JSON was automatically repaired"
+                    }
+                    return parsed_json
+                else:
+                    # Try aggressive cleanup on the whole cleaned text
+                    json_str = self.aggressive_json_cleanup(cleaned_text)
+                    parsed_json = json.loads(json_str)
+                    parsed_json["_metadata"] = {
+                        "processing_method": f"{method}_repaired",
+                        "processed_timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "note": "JSON was automatically repaired"
+                    }
+                    return parsed_json
+            except:
+                pass
+            
+            # Final fallback: return structured format with raw content
+            print("Warning: All JSON parsing attempts failed, providing raw content")
+            return self.create_fallback_response(response_text, method, f"JSON parsing failed: {str(e)}")
+
+    def create_fallback_response(self, response_text: str, method: str, error_msg: str) -> Dict[str, Any]:
+        """Create a structured fallback response when JSON parsing fails"""
+        return {
+            "document_info": {
+                "title": "Raw Content - JSON Parse Failed",
+                "type": "Unknown", 
+                "reference_number": "N/A",
+                "date": "N/A",
+                "authority": "N/A"
+            },
+            "main_content": {
+                "purpose": "Content extraction encountered JSON parsing issues",
+                "summary": f"JSON parsing failed: {error_msg}. Raw response content is provided in full_text_content.",
+                "key_points": ["JSON parsing failed", "Raw content available in full_text_content", f"Error: {error_msg}"]
+            },
+            "detailed_sections": [],
+            "rules_and_provisions": [],
+            "penalties_and_consequences": [],
+            "important_entities": {
+                "people": [], "organizations": [], "locations": [],
+                "amounts": [], "dates": [], "references": []
+            },
+            "action_items": [],
+            "definitions": [],
+            "full_text_content": response_text,
+            "_metadata": {
+                "processing_method": f"{method}_fallback",
+                "processed_timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "parsing_error": error_msg,
+                "note": "JSON parsing failed, raw response preserved in full_text_content"
             }
+        }
+
+    def aggressive_json_cleanup(self, json_str: str) -> str:
+        """More aggressive JSON cleanup for problematic responses"""
+        import re
+        
+        # Remove control characters and invisible characters
+        json_str = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', json_str)
+        
+        # Fix common escaping issues
+        json_str = json_str.replace('\\"', '"')
+        json_str = json_str.replace('\\\\', '\\')
+        
+        # Fix trailing commas more aggressively
+        json_str = re.sub(r',\s*}', '}', json_str)
+        json_str = re.sub(r',\s*]', ']', json_str)
+        
+        # Fix broken strings across lines
+        json_str = re.sub(r'(["\w])\s*\n\s*(["\w])', r'\1 \2', json_str)
+        
+        # Fix missing quotes on keys
+        json_str = re.sub(r'(\w+):', r'"\1":', json_str)
+        
+        # Fix single quotes to double quotes
+        json_str = re.sub(r"'([^']*)'", r'"\1"', json_str)
+        
+        return json_str
 
     def clean_json_string(self, json_str: str) -> str:
         """Clean up common JSON formatting issues"""
