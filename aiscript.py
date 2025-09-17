@@ -6,7 +6,6 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 import PyPDF2
 from typing import Dict, List, Any
-import PIL.Image
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,7 +22,7 @@ class GeminiPDFProcessor:
         # Configure Gemini API
         genai.configure(api_key=self.api_key)
 
-        # Initialize model (Gemini Pro with vision capabilities)
+        # Initialize model
         self.model = genai.GenerativeModel('gemini-1.5-flash')
 
         # Generation config for consistent responses
@@ -35,15 +34,7 @@ class GeminiPDFProcessor:
         }
 
     def extract_text_from_pdf(self, pdf_path: str) -> str:
-        """
-        Extract text from PDF file
-
-        Args:
-            pdf_path (str): Path to the PDF file
-
-        Returns:
-            str: Extracted text from PDF
-        """
+        """Extract text from PDF file"""
         try:
             text = ""
             with open(pdf_path, 'rb') as file:
@@ -56,16 +47,8 @@ class GeminiPDFProcessor:
             print(f"Error extracting text from {pdf_path}: {e}")
             return ""
 
-    def upload_pdf_to_gemini(self, pdf_path: str) -> str:
-        """
-        Upload PDF file to Gemini for processing
-
-        Args:
-            pdf_path (str): Path to the PDF file
-
-        Returns:
-            str: File URI from Gemini
-        """
+    def upload_pdf_to_gemini(self, pdf_path: str):
+        """Upload PDF file to Gemini for processing"""
         try:
             uploaded_file = genai.upload_file(
                 path=pdf_path,
@@ -87,61 +70,99 @@ class GeminiPDFProcessor:
             print(f"Error uploading PDF to Gemini: {e}")
             return None
 
-    def process_pdf_with_gemini(self, pdf_path: str, processing_prompt: str = None) -> Dict[str, Any]:
+    def get_content_extraction_prompt(self) -> str:
         """
-        Process PDF using Gemini API
+        Generate a focused prompt for content extraction that's LLM-friendly
+        """
+        return """
+        Extract and structure ALL meaningful content from this document in a clean, organized JSON format.
+        Focus on making the content easily understandable and queryable by language models.
 
-        Args:
-            pdf_path (str): Path to the PDF file
-            processing_prompt (str): Custom prompt for processing
+        Return ONLY valid JSON with this structure:
 
-        Returns:
-            Dict[str, Any]: Processed data from Gemini
+        {
+            "document_info": {
+                "title": "Main title or heading of the document",
+                "type": "document type (act, notification, report, manual, etc.)",
+                "reference_number": "any document/file/act numbers",
+                "date": "any dates mentioned",
+                "authority": "issuing authority or department"
+            },
+            "main_content": {
+                "purpose": "What is this document about and why was it created",
+                "summary": "Comprehensive summary of the entire document",
+                "key_points": [
+                    "List of all important points, decisions, or provisions",
+                    "Each point should be self-contained and clear"
+                ]
+            },
+            "detailed_sections": [
+                {
+                    "section_title": "Section name or number",
+                    "content": "Full content of this section in clear, readable format",
+                    "key_details": ["Specific important details from this section"]
+                }
+            ],
+            "rules_and_provisions": [
+                {
+                    "rule": "What the rule states",
+                    "details": "Specific requirements, conditions, or explanations",
+                    "applies_to": "Who or what this applies to"
+                }
+            ],
+            "penalties_and_consequences": [
+                {
+                    "violation": "What constitutes a violation",
+                    "penalty": "What the penalty is",
+                    "amount": "Specific amounts if mentioned",
+                    "conditions": "Any conditions or circumstances"
+                }
+            ],
+            "important_entities": {
+                "people": ["Names of people mentioned"],
+                "organizations": ["Government bodies, departments, organizations"],
+                "locations": ["Places, addresses, jurisdictions mentioned"],
+                "amounts": ["All monetary amounts, fees, fines mentioned"],
+                "dates": ["All dates mentioned"],
+                "references": ["References to other documents, acts, rules"]
+            },
+            "action_items": [
+                "Things that need to be done",
+                "Compliance requirements",
+                "Implementation steps"
+            ],
+            "definitions": [
+                {
+                    "term": "Technical term or concept",
+                    "definition": "What it means in context"
+                }
+            ],
+            "full_text_content": "The complete text content cleaned and formatted for readability"
+        }
+
+        IMPORTANT INSTRUCTIONS:
+        1. Extract ALL content - don't skip anything important
+        2. Clean up OCR errors and formatting issues
+        3. Convert any non-English content to English if possible, or indicate what language it is
+        4. Make everything readable and understandable
+        5. Preserve all numbers, dates, and specific details exactly
+        6. If there are tables or lists, format them clearly
+        7. Remove administrative headers/footers unless they contain important info
+        8. Focus on substance, not formatting artifacts
         """
 
-        # Default processing prompt
-        if not processing_prompt:
-            processing_prompt = """
-            Please analyze this PDF document and extract the following information in JSON format.
-            Return ONLY the JSON response, no additional text or formatting unless it is any other language than english if so, convert it to english:
-
-            {
-                "title": "Document title",
-                "summary": "Brief summary of the document (2-3 sentences)",
-                "key_points": ["List of key points or main topics"],
-                "metadata": {
-                    "document_type": "Type of document (report, paper, manual, etc.)",
-                    "estimated_pages": "Number of pages if determinable",
-                    "date_mentions": "Any dates mentioned in the document",
-                    "author_info": "Author information if available"
-                },
-                "sections": [
-                    {
-                        "heading": "Section heading",
-                        "content": "Summary of section content"
-                    }
-                ],
-                "entities": {
-                    "people": ["Names of people mentioned"],
-                    "organizations": ["Organizations mentioned"],
-                    "locations": ["Places mentioned"],
-                    "dates": ["Important dates"],
-                    "key_numbers": ["Key numbers or statistics"]
-                },
-                "actionable_items": ["Any action items, recommendations, or next steps mentioned"],
-                "keywords": ["Important keywords or technical terms"]
-            }
-
-            Please provide accurate information based on the document content. If certain information is not available, use null or empty arrays as appropriate.
-            """
+    def process_pdf_with_gemini(self, pdf_path: str, custom_prompt: str = None) -> Dict[str, Any]:
+        """Process PDF using Gemini API"""
+        
+        # Use custom prompt or default content extraction prompt
+        processing_prompt = custom_prompt or self.get_content_extraction_prompt()
 
         try:
-            # First, try to upload PDF directly to Gemini
+            # Try direct PDF upload first
             uploaded_file = self.upload_pdf_to_gemini(pdf_path)
 
             if uploaded_file:
                 try:
-                    # Process with uploaded file
                     response = self.model.generate_content(
                         [uploaded_file, processing_prompt],
                         generation_config=self.generation_config
@@ -153,9 +174,8 @@ class GeminiPDFProcessor:
                     try:
                         genai.delete_file(uploaded_file.name)
                     except:
-                        pass  # Ignore cleanup errors
+                        pass
 
-                    # Try to parse JSON from response
                     return self.parse_json_response(response_text, "direct_upload")
 
                 except Exception as api_error:
@@ -176,16 +196,7 @@ class GeminiPDFProcessor:
             return {"error": str(e), "file": pdf_path}
 
     def process_text_with_gemini(self, pdf_path: str, processing_prompt: str) -> Dict[str, Any]:
-        """
-        Fallback method: Extract text first, then process with Gemini
-
-        Args:
-            pdf_path (str): Path to the PDF file
-            processing_prompt (str): Processing prompt
-
-        Returns:
-            Dict[str, Any]: Processed data from Gemini
-        """
+        """Fallback method: Extract text first, then process with Gemini"""
         print(f"Using text extraction fallback for {pdf_path}")
 
         # Extract text from PDF
@@ -194,65 +205,228 @@ class GeminiPDFProcessor:
         if not pdf_text:
             return {"error": "Could not extract text from PDF", "file": pdf_path}
 
-        # Truncate text if too long (Gemini has token limits)
+        # Handle long documents by splitting if necessary
         max_chars = 100000  # Approximately 25k tokens
         if len(pdf_text) > max_chars:
-            pdf_text = pdf_text[:max_chars] + "\n\n[TEXT TRUNCATED DUE TO LENGTH]"
-            print(f"Warning: Text truncated for {pdf_path} due to length")
+            # Try to split at natural boundaries (double newlines, section breaks)
+            chunks = self.smart_text_split(pdf_text, max_chars)
+            if len(chunks) > 1:
+                return self.process_multi_chunk_document(chunks, processing_prompt, pdf_path)
+            else:
+                # Fallback to simple truncation
+                pdf_text = pdf_text[:max_chars] + "\n\n[TEXT TRUNCATED - DOCUMENT CONTINUES]"
+                print(f"Warning: Text truncated for {pdf_path} due to length")
 
         # Process with Gemini
         try:
-            full_prompt = f"{processing_prompt}\n\nDocument text:\n{pdf_text}"
+            full_prompt = f"{processing_prompt}\n\nDocument content:\n{pdf_text}"
 
             response = self.model.generate_content(
                 full_prompt,
                 generation_config=self.generation_config
             )
 
-            response_text = response.text
-
-            # Try to parse JSON from response
-            return self.parse_json_response(response_text, "text_extraction")
+            return self.parse_json_response(response.text, "text_extraction")
 
         except Exception as e:
             print(f"Error processing text with Gemini: {e}")
             return {"error": str(e), "file": pdf_path}
 
+    def smart_text_split(self, text: str, max_chars: int) -> List[str]:
+        """Split text intelligently at natural boundaries"""
+        if len(text) <= max_chars:
+            return [text]
+
+        chunks = []
+        current_chunk = ""
+        
+        # Split by double newlines first (paragraphs)
+        paragraphs = text.split('\n\n')
+        
+        for para in paragraphs:
+            # If adding this paragraph would exceed limit
+            if len(current_chunk) + len(para) + 2 > max_chars:
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+                    current_chunk = para
+                else:
+                    # Single paragraph is too long, split by sentences
+                    sentences = para.split('. ')
+                    for sentence in sentences:
+                        if len(current_chunk) + len(sentence) + 2 > max_chars:
+                            if current_chunk:
+                                chunks.append(current_chunk.strip())
+                                current_chunk = sentence
+                            else:
+                                # Even single sentence too long, truncate
+                                chunks.append(sentence[:max_chars])
+                                current_chunk = ""
+                        else:
+                            current_chunk += sentence + ". "
+            else:
+                current_chunk += para + "\n\n"
+        
+        if current_chunk.strip():
+            chunks.append(current_chunk.strip())
+        
+        return chunks
+
+    def process_multi_chunk_document(self, chunks: List[str], processing_prompt: str, pdf_path: str) -> Dict[str, Any]:
+        """Process document that was split into multiple chunks"""
+        print(f"Processing {len(chunks)} chunks for {pdf_path}")
+        
+        chunk_results = []
+        
+        for i, chunk in enumerate(chunks, 1):
+            print(f"Processing chunk {i}/{len(chunks)}")
+            
+            chunk_prompt = f"""
+            This is part {i} of {len(chunks)} of a larger document. 
+            Extract all content from this section following the same JSON structure.
+            Mark this as "chunk_{i}_of_{len(chunks)}" in the response.
+            
+            {processing_prompt}
+            
+            Document section content:
+            {chunk}
+            """
+            
+            try:
+                response = self.model.generate_content(
+                    chunk_prompt,
+                    generation_config=self.generation_config
+                )
+                
+                chunk_result = self.parse_json_response(response.text, f"chunk_{i}")
+                chunk_results.append(chunk_result)
+                
+                # Brief delay between chunks
+                time.sleep(1)
+                
+            except Exception as e:
+                print(f"Error processing chunk {i}: {e}")
+                chunk_results.append({"error": str(e), "chunk": i})
+
+        # Merge chunk results into a single comprehensive result
+        return self.merge_chunk_results(chunk_results, pdf_path)
+
+    def merge_chunk_results(self, chunk_results: List[Dict], pdf_path: str) -> Dict[str, Any]:
+        """Merge results from multiple chunks into a single comprehensive result"""
+        merged = {
+            "document_info": {},
+            "main_content": {
+                "purpose": "",
+                "summary": "",
+                "key_points": []
+            },
+            "detailed_sections": [],
+            "rules_and_provisions": [],
+            "penalties_and_consequences": [],
+            "important_entities": {
+                "people": [],
+                "organizations": [],
+                "locations": [],
+                "amounts": [],
+                "dates": [],
+                "references": []
+            },
+            "action_items": [],
+            "definitions": [],
+            "full_text_content": "",
+            "processing_method": "multi_chunk",
+            "total_chunks": len(chunk_results)
+        }
+
+        # Merge data from all chunks
+        for chunk_result in chunk_results:
+            if "error" in chunk_result:
+                continue
+                
+            # Merge document info (take first non-empty values)
+            if not merged["document_info"] and chunk_result.get("document_info"):
+                merged["document_info"] = chunk_result["document_info"]
+            
+            # Merge main content
+            main_content = chunk_result.get("main_content", {})
+            if main_content.get("purpose") and not merged["main_content"]["purpose"]:
+                merged["main_content"]["purpose"] = main_content["purpose"]
+            
+            if main_content.get("summary"):
+                merged["main_content"]["summary"] += " " + main_content["summary"]
+            
+            if main_content.get("key_points"):
+                merged["main_content"]["key_points"].extend(main_content["key_points"])
+            
+            # Merge sections and other arrays
+            for field in ["detailed_sections", "rules_and_provisions", "penalties_and_consequences", "action_items", "definitions"]:
+                if chunk_result.get(field):
+                    merged[field].extend(chunk_result[field])
+            
+            # Merge entities
+            entities = chunk_result.get("important_entities", {})
+            for entity_type in merged["important_entities"]:
+                if entities.get(entity_type):
+                    merged["important_entities"][entity_type].extend(entities[entity_type])
+            
+            # Concatenate full text
+            if chunk_result.get("full_text_content"):
+                merged["full_text_content"] += "\n\n" + chunk_result["full_text_content"]
+
+        # Clean up duplicates
+        for entity_type in merged["important_entities"]:
+            merged["important_entities"][entity_type] = list(set(merged["important_entities"][entity_type]))
+        
+        merged["main_content"]["key_points"] = list(dict.fromkeys(merged["main_content"]["key_points"]))  # Remove duplicates preserving order
+        
+        return merged
+
     def parse_json_response(self, response_text: str, method: str) -> Dict[str, Any]:
-        """
-        Parse JSON from Gemini response
-
-        Args:
-            response_text (str): Response from Gemini
-            method (str): Processing method used
-
-        Returns:
-            Dict[str, Any]: Parsed JSON or error response
-        """
+        """Parse JSON from Gemini response with robust error handling"""
         try:
-            # Remove any markdown formatting
+            # Clean response text
             cleaned_text = response_text.strip()
+            
+            # Remove markdown formatting
             if cleaned_text.startswith('```json'):
                 cleaned_text = cleaned_text[7:]
-            if cleaned_text.startswith('```'):
+            elif cleaned_text.startswith('```'):
                 cleaned_text = cleaned_text[3:]
+            
             if cleaned_text.endswith('```'):
                 cleaned_text = cleaned_text[:-3]
 
-            # Find JSON content
-            start_idx = cleaned_text.find('{')
-            end_idx = cleaned_text.rfind('}') + 1
+            # Find JSON boundaries
+            brace_count = 0
+            start_idx = -1
+            end_idx = -1
+            
+            for i, char in enumerate(cleaned_text):
+                if char == '{':
+                    if start_idx == -1:
+                        start_idx = i
+                    brace_count += 1
+                elif char == '}':
+                    brace_count -= 1
+                    if brace_count == 0 and start_idx != -1:
+                        end_idx = i + 1
+                        break
 
             if start_idx != -1 and end_idx != -1:
                 json_str = cleaned_text[start_idx:end_idx]
+                
+                # Clean up common JSON issues
+                json_str = self.clean_json_string(json_str)
+                
                 parsed_json = json.loads(json_str)
                 parsed_json["processing_method"] = method
+                parsed_json["processed_timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
                 return parsed_json
             else:
                 return {
                     "raw_response": response_text,
                     "processing_method": method,
-                    "note": "No JSON structure found in response"
+                    "error": "No valid JSON structure found",
+                    "note": "Content extraction failed - check raw_response for manual review"
                 }
 
         except json.JSONDecodeError as e:
@@ -260,31 +434,39 @@ class GeminiPDFProcessor:
                 "raw_response": response_text,
                 "processing_method": method,
                 "json_error": str(e),
-                "note": "Could not parse JSON from response"
+                "error": "JSON parsing failed",
+                "note": "Content extraction failed - check raw_response for manual review"
             }
+
+    def clean_json_string(self, json_str: str) -> str:
+        """Clean up common JSON formatting issues"""
+        import re
+        
+        # Remove control characters
+        json_str = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', json_str)
+        
+        # Fix trailing commas
+        json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
+        
+        # Fix broken strings across lines
+        json_str = re.sub(r'(["\w])\s*\n\s*(["\w])', r'\1 \2', json_str)
+        
+        # Fix unescaped quotes in strings
+        json_str = re.sub(r'(?<!\\)"(?=.*".*:)', '\\"', json_str)
+        
+        return json_str
 
     def process_directory(self,
                          pdf_directory: str,
                          output_directory: str,
                          custom_prompt: str = None,
-                         delay_seconds: float = 2.0) -> Dict[str, Any]:
-        """
-        Process all PDFs in a directory
+                         delay_seconds: float = 3.0) -> Dict[str, Any]:
+        """Process all PDFs in a directory"""
 
-        Args:
-            pdf_directory (str): Directory containing PDF files
-            output_directory (str): Directory to save JSON files
-            custom_prompt (str): Custom processing prompt
-            delay_seconds (float): Delay between API calls
-
-        Returns:
-            Dict[str, Any]: Processing results summary
-        """
-
-        # Create output directory if it doesn't exist
+        # Create output directory
         os.makedirs(output_directory, exist_ok=True)
 
-        # Find all PDF files
+        # Find PDF files
         pdf_files = list(Path(pdf_directory).glob("*.pdf"))
 
         if not pdf_files:
@@ -302,36 +484,45 @@ class GeminiPDFProcessor:
         }
 
         for i, pdf_path in enumerate(pdf_files, 1):
-            print(f"\nProcessing {i}/{len(pdf_files)}: {pdf_path.name}")
+            print(f"\n{'='*60}")
+            print(f"Processing {i}/{len(pdf_files)}: {pdf_path.name}")
+            print(f"{'='*60}")
 
             try:
-                # Process PDF with Gemini
+                # Process PDF
                 processed_data = self.process_pdf_with_gemini(str(pdf_path), custom_prompt)
 
                 # Create output filename
-                output_filename = f"{pdf_path.stem}.json"
+                output_filename = f"{pdf_path.stem}_extracted.json"
                 output_path = os.path.join(output_directory, output_filename)
 
-                # Add metadata
+                # Add file metadata
                 processed_data["source_file"] = pdf_path.name
-                processed_data["processed_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
                 processed_data["file_size_bytes"] = pdf_path.stat().st_size
+                processed_data["extraction_timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
 
                 # Save JSON file
                 with open(output_path, 'w', encoding='utf-8') as f:
                     json.dump(processed_data, f, indent=2, ensure_ascii=False)
 
-                print(f"✓ Saved: {output_filename}")
+                print(f"✓ Successfully extracted content to: {output_filename}")
+                
+                # Show brief summary
+                if "main_content" in processed_data:
+                    summary = processed_data["main_content"].get("summary", "")
+                    if summary:
+                        print(f"📄 Summary: {summary[:200]}...")
+
                 results["processed_successfully"] += 1
                 results["results"].append({
                     "file": pdf_path.name,
                     "status": "success",
                     "output": output_filename,
-                    "processing_method": processed_data.get("processing_method", "unknown")
+                    "method": processed_data.get("processing_method", "unknown")
                 })
 
             except Exception as e:
-                print(f"✗ Failed: {pdf_path.name} - {e}")
+                print(f"✗ Failed to process {pdf_path.name}: {e}")
                 results["failed"] += 1
                 results["results"].append({
                     "file": pdf_path.name,
@@ -339,37 +530,34 @@ class GeminiPDFProcessor:
                     "error": str(e)
                 })
 
-            # Delay between requests to respect API limits
+            # Delay between requests
             if i < len(pdf_files):
-                print(f"Waiting {delay_seconds} seconds before next request...")
+                print(f"⏱️  Waiting {delay_seconds} seconds before next file...")
                 time.sleep(delay_seconds)
 
-        # Save processing summary
+        # Save summary
         results["processing_completed"] = time.strftime("%Y-%m-%d %H:%M:%S")
-        summary_path = os.path.join(output_directory, "processing_summary.json")
+        summary_path = os.path.join(output_directory, "extraction_summary.json")
         with open(summary_path, 'w', encoding='utf-8') as f:
-            json.dump(results, f, indent=2)
+            json.dump(results, f, indent=2, ensure_ascii=False)
 
-        print(f"\n{'='*50}")
-        print(f"PROCESSING COMPLETE")
-        print(f"{'='*50}")
-        print(f"Total files: {results['total_files']}")
-        print(f"Successfully processed: {results['processed_successfully']}")
-        print(f"Failed: {results['failed']}")
-        print(f"Results saved to: {output_directory}")
-        print(f"Summary saved to: {summary_path}")
+        print(f"\n{'='*60}")
+        print(f"EXTRACTION COMPLETE")
+        print(f"{'='*60}")
+        print(f"📊 Total files: {results['total_files']}")
+        print(f"✅ Successfully processed: {results['processed_successfully']}")
+        print(f"❌ Failed: {results['failed']}")
+        print(f"📁 Results saved to: {output_directory}")
+        print(f"📋 Summary: {summary_path}")
 
         return results
 
 def create_env_template():
-    """
-    Create a template .env file
-    """
+    """Create .env template file"""
     template_content = """# Gemini API Configuration
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# You can get your API key from:
-# https://makersuite.google.com/app/apikey
+# Get your API key from: https://makersuite.google.com/app/apikey
 """
 
     if not os.path.exists('.env'):
@@ -380,43 +568,38 @@ GEMINI_API_KEY=your_gemini_api_key_here
     return True
 
 def main():
-    """
-    Main function to run the PDF processor
-    """
-
-    # Check for .env file and create template if needed
+    """Main function"""
+    
     if not create_env_template():
         return
 
-    # Load environment variables
     load_dotenv()
 
-    # Check if API key is available
     if not os.getenv('GEMINI_API_KEY'):
-        print("Error: GEMINI_API_KEY not found in .env file")
+        print("❌ Error: GEMINI_API_KEY not found in .env file")
         print("Please add your Gemini API key to the .env file")
-        print("You can get an API key from: https://makersuite.google.com/app/apikey")
         return
 
-    # Get directories
-    pdf_dir = input("Enter PDF directory path (default: './pdfs'): ").strip()
+    # Get input directory
+    pdf_dir = input("📁 Enter PDF directory path (default: './pdfs'): ").strip()
     if not pdf_dir:
         pdf_dir = "./pdfs"
 
     if not os.path.exists(pdf_dir):
-        print(f"Error: Directory '{pdf_dir}' does not exist")
+        print(f"❌ Error: Directory '{pdf_dir}' does not exist")
         return
 
-    output_dir = input("Enter output directory path (default: './json_output'): ").strip()
+    # Get output directory
+    output_dir = input("📤 Enter output directory path (default: './extracted_content'): ").strip()
     if not output_dir:
-        output_dir = "./json_output"
+        output_dir = "./extracted_content"
 
-    # Custom prompt (optional)
-    use_custom_prompt = input("Do you want to use a custom processing prompt? (y/n): ").strip().lower()
+    # Ask about custom prompt
+    use_custom = input("🎯 Use custom extraction prompt? (y/n, default: n): ").strip().lower()
     custom_prompt = None
 
-    if use_custom_prompt in ['y', 'yes']:
-        print("Enter your custom prompt (press Enter twice to finish):")
+    if use_custom in ['y', 'yes']:
+        print("✏️  Enter your custom prompt (press Enter twice to finish):")
         prompt_lines = []
         empty_lines = 0
         while empty_lines < 2:
@@ -426,24 +609,19 @@ def main():
             else:
                 empty_lines = 0
             prompt_lines.append(line)
-        custom_prompt = "\n".join(prompt_lines[:-2])  # Remove the last two empty lines
+        custom_prompt = "\n".join(prompt_lines[:-2])
 
-    # Delay setting
-    delay = input("Enter delay between requests in seconds (default: 2): ").strip()
+    # Set delay
+    delay = input("⏱️  Enter delay between requests in seconds (default: 3): ").strip()
     try:
-        delay_seconds = float(delay) if delay else 2.0
+        delay_seconds = float(delay) if delay else 3.0
     except ValueError:
-        delay_seconds = 2.0
+        delay_seconds = 3.0
 
-    # Initialize processor and run
+    # Start processing
     try:
-        print("Initializing Gemini PDF Processor...")
+        print("🚀 Initializing Gemini PDF Content Extractor...")
         processor = GeminiPDFProcessor()
-
-        print(f"Starting batch processing...")
-        print(f"Input directory: {pdf_dir}")
-        print(f"Output directory: {output_dir}")
-        print(f"Delay between requests: {delay_seconds} seconds")
 
         results = processor.process_directory(
             pdf_directory=pdf_dir,
@@ -453,7 +631,7 @@ def main():
         )
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"❌ Error: {e}")
 
 if __name__ == "__main__":
     main()
