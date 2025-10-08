@@ -17,10 +17,10 @@ from dataclasses import dataclass
 from datetime import datetime
 import time
 
-from ..processing.document_processor import DocumentProcessor, DocumentChunk
-from ..database.embeddings import get_embedding_service, cleanup_embedding_service
-from ..database.qdrant.client import get_qdrant_store, cleanup_qdrant_store
-from ..config.settings import get_settings, validate_environment
+from processing.document_processor import DocumentProcessor, DocumentChunk
+from database.embeddings import get_embedding_service, cleanup_embedding_service
+from database.qdrant.client import get_qdrant_store, cleanup_qdrant_store
+from config.settings import get_settings, validate_environment
 
 logger = logging.getLogger(__name__)
 

@@ -18,15 +18,15 @@ try:
     from qdrant_client import QdrantClient
     from qdrant_client.models import (
         VectorParams, Distance, CollectionStatus, PointStruct, 
-        PayloadSchemaType, CreatePayloadIndex, FieldCondition, 
+        PayloadSchemaType, CreateFieldIndex, FieldCondition, 
         Filter, MatchValue, SearchRequest
     )
     from qdrant_client.http.exceptions import UnexpectedResponse
 except ImportError:
     raise ImportError("qdrant-client is required. Install with: pip install qdrant-client")
 
-from ...config.settings import get_settings
-from ...processing.document_processor import DocumentChunk
+from config.settings import get_settings
+from processing.document_processor import DocumentChunk
 
 logger = logging.getLogger(__name__)
 

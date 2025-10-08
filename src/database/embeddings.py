@@ -15,8 +15,8 @@ from transformers import AutoTokenizer, AutoModel
 import logging
 from dataclasses import dataclass
 
-from ..config.settings import get_settings
-from ..processing.document_processor import DocumentChunk
+from config.settings import get_settings
+from processing.document_processor import DocumentChunk
 
 logger = logging.getLogger(__name__)
 
