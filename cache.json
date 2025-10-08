@@ -1,73 +1,7 @@
 {
   "processed_files": [
-    "nia.json",
-    "crpc.json",
-    "iea.json",
-    "cpc.json",
-    "hma.json",
-    "ida.json",
-    "MVA.json",
-    "constitution_of_india.pdf"
   ],
-  "processing_history": [
-    {
-      "file_name": "nia.json",
-      "processed_at": "2025-10-08T06:10:00Z",
-      "file_size": 88606,
-      "chunks_created": 34,
-      "points_stored": 34
-    },
-    {
-      "file_name": "crpc.json",
-      "processed_at": "2025-10-08T06:10:00Z",
-      "file_size": 565522,
-      "chunks_created": 224,
-      "points_stored": 224
-    },
-    {
-      "file_name": "iea.json",
-      "processed_at": "2025-10-08T06:10:00Z",
-      "file_size": 110959,
-      "chunks_created": 43,
-      "points_stored": 43
-    },
-    {
-      "file_name": "cpc.json",
-      "processed_at": "2025-10-08T06:10:00Z",
-      "file_size": 162240,
-      "chunks_created": 66,
-      "points_stored": 66
-    },
-    {
-      "file_name": "hma.json",
-      "processed_at": "2025-10-08T06:10:00Z",
-      "file_size": 31227,
-      "chunks_created": 6,
-      "points_stored": 6
-    },
-    {
-      "file_name": "ida.json",
-      "processed_at": "2025-10-08T06:10:00Z",
-      "file_size": 41558,
-      "chunks_created": 17,
-      "points_stored": 17
-    },
-    {
-      "file_name": "MVA.json",
-      "processed_at": "2025-10-08T06:10:00Z",
-      "file_size": 416580,
-      "chunks_created": 169,
-      "points_stored": 169
-    },
-    {
-      "file_name": "constitution_of_india.pdf",
-      "processed_at": "2025-10-08T11:47:51.353737",
-      "file_size": 2019542,
-      "chunks_created": 351,
-      "points_stored": 351,
-      "file_type": ".pdf"
-    }
-  ],
-  "last_updated": "2025-10-08T11:47:51.353801",
-  "total_files_processed": 8
+  "processing_history": [],
+  "last_updated": "",
+  "total_files_processed": 0
 }
