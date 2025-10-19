@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GraphRAG indexing CLI.
+GraphRAG indexing CLI for JSON/TXT/PDF -> Neo4j.
 
 Examples:
   python scripts/graph_rag_index.py --paths data --recursive

@@ -25,6 +25,7 @@ from neo4j import Session
 
 from config.settings import get_settings
 from database.neo4j.client import neo4j_session
+from utils.pdf_extractor import PDFTextExtractor
 
 
 EMBED_MODEL = "text-embedding-3-large"  # 3072 dims
@@ -84,6 +85,7 @@ class GraphRAGIndexer:
         self.chat_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o")
         self.create_vector_index = create_vector_index
         self.embed_dim = 3072
+        self.pdf_extractor = PDFTextExtractor()
 
     def _extract_triples_llm(self, text: str) -> List[Triple]:
         sys_prompt = (
@@ -199,19 +201,28 @@ class GraphRAGIndexer:
         max_chunks_per_file: Optional[int] = None,
         embed_entities: bool = True,
     ) -> IndexStats:
+        # Backward-compatible name, but now supports .json, .txt, .pdf
         stats = IndexStats()
         proc_cfg = self.settings.processing
         files: List[Path] = []
+        exts = {".json", ".txt", ".pdf"}
         for p in paths:
             p = Path(p)
-            if p.is_file() and p.suffix.lower() == ".json":
+            if p.is_file() and p.suffix.lower() in exts:
                 files.append(p)
             elif p.is_dir():
-                files.extend(list(p.rglob("*.json") if recursive else p.glob("*.json")))
+                if recursive:
+                    for pat in ("*.json", "*.txt", "*.pdf"):
+                        files.extend(list(p.rglob(pat)))
+                else:
+                    for pat in ("*.json", "*.txt", "*.pdf"):
+                        files.extend(list(p.glob(pat)))
         seen_entities: Set[str] = set()
         for fp in files:
             try:
-                text_blocks = self._prepare_text_blocks_from_json(fp)
+                text_blocks = self._prepare_text_blocks_from_path(fp)
+                if not text_blocks:
+                    continue
                 chunks = chunk_text(
                     "\n".join(text_blocks),
                     words_per_chunk=proc_cfg.chunk_size,
@@ -232,11 +243,24 @@ class GraphRAGIndexer:
             stats.nodes_embedded = self._embed_entities(list(seen_entities))
         return stats
 
-    def _prepare_text_blocks_from_json(self, path: Path) -> List[str]:
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
-        lines = flatten_json(data)
-        # Coalesce into readable paragraphs (~80-100 words each) to keep LLM context efficient
-        words = " ".join(lines).split()
+    def _prepare_text_blocks_from_path(self, path: Path) -> List[str]:
+        suffix = path.suffix.lower()
+        if suffix == ".json":
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+            lines = flatten_json(data)
+            text = "\n".join(lines)
+        elif suffix == ".txt":
+            try:
+                text = Path(path).read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                text = Path(path).read_text(errors="ignore")
+        elif suffix == ".pdf":
+            extracted = self.pdf_extractor.extract_text_from_pdf(path)
+            text = extracted or ""
+        else:
+            return []
+        # Coalesce into ~100-word paragraphs
+        words = text.split()
         paragraphs: List[str] = []
         cursor = 0
         block = 100
