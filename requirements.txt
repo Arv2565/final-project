@@ -13,8 +13,12 @@ transformers>=4.30.0
 numpy>=1.24.0
 scikit-learn>=1.3.0
 
-# Vector Database
+# Vector Databases
 qdrant-client>=1.6.0
+neo4j>=5.21.0
+
+# OpenAI SDK (for GraphRAG extraction + embeddings)
+openai>=1.40.0
 
 # Existing AI Processing (Legacy)
 google-generativeai>=0.3.0
