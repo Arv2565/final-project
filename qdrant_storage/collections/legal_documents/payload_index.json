@@ -1,0 +1,1 @@
+{"schema":{"court":"keyword","jurisdiction":"keyword","case_type":"keyword","file_type":"keyword","date":"keyword"}}
