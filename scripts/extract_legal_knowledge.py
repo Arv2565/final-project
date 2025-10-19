@@ -47,7 +47,7 @@ def find_central_acts_directory() -> Path:
             return location
     
     # If no central acts directory found, check the entire data directory
-    data_dir = project_root / "data"
+    data_dir = project_root / "data" / "central_acts"
     if data_dir.exists():
         return data_dir
     
@@ -96,9 +96,9 @@ def main():
     
     try:
         # Check for OpenAI API key
-        if not os.getenv('OPENAI_API_KEY'):
-            logger.error("OPENAI_API_KEY environment variable not set")
-            logger.error("Please set your OpenAI API key: export OPENAI_API_KEY='your-key-here'")
+        if not os.getenv('GEMINI_API_KEY'):
+            logger.error("GEMINI_API_KEY environment variable not set")
+            logger.error("Please set your Gemini API key: export GEMINI_API_KEY='your-key-here'")
             sys.exit(1)
         
         # Initialize extractor

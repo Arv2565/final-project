@@ -11,7 +11,8 @@
     "ipc_part_1.json",
     "ipc_part_2.json",
     "ipc_part_3.json",
-    "ipc_part_4.json"
+    "ipc_part_4.json",
+    "legal_knowledge_extraction.json"
   ],
   "processing_history": [
     {
@@ -109,8 +110,16 @@
       "chunks_created": 543,
       "points_stored": 543,
       "file_type": ".json"
+    },
+    {
+      "file_name": "legal_knowledge_extraction.json",
+      "processed_at": "2025-10-19T13:12:46.953489",
+      "file_size": 330883,
+      "chunks_created": 42,
+      "points_stored": 42,
+      "file_type": ".json"
     }
   ],
-  "last_updated": "2025-10-19T10:34:34.828836",
-  "total_files_processed": 12
+  "last_updated": "2025-10-19T13:12:46.953523",
+  "total_files_processed": 13
 }
