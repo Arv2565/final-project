@@ -29,6 +29,12 @@ black>=23.0.0
 isort>=5.12.0
 flake8>=6.0.0
 
+# LangChain for AI Agents
+langchain>=0.0.350
+langchain-community>=0.0.10
+langchain-openai>=0.0.5
+pydantic>=2.0.0
+
 # Optional: For enhanced PDF processing
 # pymupdf>=1.23.0  # Alternative to PyPDF2 for complex PDFs
 # pdfplumber>=0.9.0  # For table extraction from PDFs
