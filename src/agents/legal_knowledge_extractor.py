@@ -4,10 +4,11 @@ LangChain agent for legal document knowledge extraction.
 import json
 import logging
 import os
+import time
 from pathlib import Path
 from typing import List, Optional
 
-from langchain.llms import OpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain.schema import BaseOutputParser
 from langchain.chains import LLMChain
@@ -72,13 +73,13 @@ class LegalDocumentKnowledgeExtractor:
     
     EXTRACTION_PROMPT = """You are a legal knowledge extraction model. Read only the provided PDF file contents and produce one JSON object with exactly these fields and types:
 
-{
+{{
 "title": "string",
 "purpose": "string", 
 "scope": "string",
 "key_provisions": ["string", "..."], // 4–6 separate items; each item short, precise, and grounded in the PDF (no interpretation)
 "administration": "string"
-}
+}}
 
 Rules (must be followed by the model, verbatim):
 
@@ -103,29 +104,33 @@ PDF Content:
 
 JSON Response:"""
     
-    def __init__(self, openai_api_key: Optional[str] = None):
+    def __init__(self, gemini_api_key: Optional[str] = None):
         """
         Initialize the legal document knowledge extractor.
         
         Args:
-            openai_api_key: OpenAI API key. If None, will try to get from environment.
+            gemini_api_key: Gemini API key. If None, it will be retrieved from the 'GEMINI_API_KEY' environment variable.
         """
         self.pdf_extractor = PDFTextExtractor()
         self.output_parser = LegalKnowledgeOutputParser()
         
         # Get API key from environment if not provided
-        if not openai_api_key:
-            openai_api_key = os.getenv('OPENAI_API_KEY')
+        if not gemini_api_key:
+            gemini_api_key = os.getenv('GEMINI_API_KEY')
+        
+        if not gemini_api_key:
+            logger.error("GEMINI_API_KEY not found in arguments or environment variables.")
+            raise ValueError("GEMINI_API_KEY must be provided or set as an environment variable.")
         
         # Initialize LLM
         try:
-            self.llm = OpenAI(
+            self.llm = ChatGoogleGenerativeAI(
+                model="gemini-2.5-flash",  # Using the latest powerful model
                 temperature=0,  # Use deterministic output
-                openai_api_key=openai_api_key,
-                model_name="gpt-3.5-turbo-instruct"  # Use instruction-following model
+                google_api_key=gemini_api_key
             )
         except Exception as e:
-            logger.error(f"Failed to initialize OpenAI LLM: {e}")
+            logger.error(f"Failed to initialize Gemini LLM: {e}")
             raise
         
         # Create prompt template
@@ -162,10 +167,10 @@ JSON Response:"""
                 logger.error(f"Failed to extract text from PDF: {pdf_path}")
                 return None
             
-            # Truncate content if too long (GPT-3.5 has token limits)
-            if len(pdf_content) > 10000:  # Rough character limit
-                logger.warning(f"PDF content too long, truncating: {len(pdf_content)} chars")
-                pdf_content = pdf_content[:10000] + "...\n[CONTENT TRUNCATED DUE TO LENGTH]"
+            # Truncate content if too long. Gemini-Pro has a large context, but we'll set a generous limit.
+            if len(pdf_content) > 100000:  # Rough character limit for ~25k tokens
+                logger.warning(f"PDF content too long ({len(pdf_content)} chars), truncating to 100,000 characters.")
+                pdf_content = pdf_content[:100000] + "...\n[CONTENT TRUNCATED DUE TO LENGTH]"
             
             # Run extraction
             logger.info("Running LangChain extraction")
