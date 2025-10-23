@@ -15,6 +15,7 @@ import math
 import os
 import re
 import time
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Dict, Any, Optional, Set, Tuple
@@ -30,6 +31,13 @@ from utils.pdf_extractor import PDFTextExtractor
 
 EMBED_MODEL = "text-embedding-3-large"  # 3072 dims
 
+# Default OpenAI pricing (USD per 1K tokens). Override via env if needed.
+DEFAULT_CHAT_INPUT_PER_1K = float(os.getenv("OPENAI_RATE_CHAT_INPUT_PER_1K", "5.00"))
+DEFAULT_CHAT_OUTPUT_PER_1K = float(os.getenv("OPENAI_RATE_CHAT_OUTPUT_PER_1K", "15.00"))
+DEFAULT_EMBED_PER_1K = float(os.getenv("OPENAI_RATE_EMBED_PER_1K", "0.13"))
+
+logger = logging.getLogger(__name__)
+
 
 class Triple(BaseModel):
     head: str = Field(..., description="Subject entity")
@@ -43,6 +51,20 @@ class IndexStats:
     chunks_processed: int = 0
     triples_extracted: int = 0
     nodes_embedded: int = 0
+
+
+@dataclass
+class CostStats:
+    chat_prompt_tokens: int = 0
+    chat_completion_tokens: int = 0
+    embed_tokens: int = 0
+
+    def total_cost_usd(self) -> float:
+        return (
+            (self.chat_prompt_tokens / 1000.0) * DEFAULT_CHAT_INPUT_PER_1K
+            + (self.chat_completion_tokens / 1000.0) * DEFAULT_CHAT_OUTPUT_PER_1K
+            + (self.embed_tokens / 1000.0) * DEFAULT_EMBED_PER_1K
+        )
 
 
 def flatten_json(obj: Any, prefix: str = "") -> List[str]:
@@ -82,10 +104,11 @@ class GraphRAGIndexer:
     def __init__(self, create_vector_index: bool = True):
         self.settings = get_settings()
         self.client = OpenAI()
-        self.chat_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o")
+        self.chat_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
         self.create_vector_index = create_vector_index
         self.embed_dim = 3072
         self.pdf_extractor = PDFTextExtractor()
+        self.cost = CostStats()
 
     def _extract_triples_llm(self, text: str) -> List[Triple]:
         sys_prompt = (
@@ -105,6 +128,20 @@ class GraphRAGIndexer:
             ],
             temperature=0,
         )
+        # Track token usage if available
+        usage = getattr(resp, "usage", None)
+        if usage is not None:
+            try:
+                prompt_tokens = getattr(usage, "prompt_tokens", None)
+                if prompt_tokens is None and isinstance(usage, dict):
+                    prompt_tokens = usage.get("prompt_tokens", 0)
+                completion_tokens = getattr(usage, "completion_tokens", None)
+                if completion_tokens is None and isinstance(usage, dict):
+                    completion_tokens = usage.get("completion_tokens", 0)
+                self.cost.chat_prompt_tokens += int(prompt_tokens or 0)
+                self.cost.chat_completion_tokens += int(completion_tokens or 0)
+            except Exception:
+                pass
         content = resp.choices[0].message.content or "[]"
         # Strip code fences if any
         content = content.strip()
@@ -177,9 +214,21 @@ class GraphRAGIndexer:
         with neo4j_session() as session:
             self._ensure_vector_index(session)
         batch_size = 128
+        logger.info(f"Embedding {len(names)} unique entities in batches of {batch_size}...")
+        start = time.time()
         for i in range(0, len(names), batch_size):
             batch = names[i : i + batch_size]
             embeds = self.client.embeddings.create(model=EMBED_MODEL, input=batch)
+            # Track embedding token usage if available
+            emb_usage = getattr(embeds, "usage", None)
+            if emb_usage is not None:
+                try:
+                    prompt_tokens = getattr(emb_usage, "prompt_tokens", None)
+                    if prompt_tokens is None and isinstance(emb_usage, dict):
+                        prompt_tokens = emb_usage.get("prompt_tokens", 0)
+                    self.cost.embed_tokens += int(prompt_tokens or 0)
+                except Exception:
+                    pass
             vectors = [e.embedding for e in embeds.data]
             with neo4j_session() as session:
                 for name, vec in zip(batch, vectors):
@@ -192,6 +241,14 @@ class GraphRAGIndexer:
                         embedding=vec,
                     )
                     total += 1
+            done = min(i + batch_size, len(names))
+            pct = (done / len(names)) * 100.0
+            elapsed = time.time() - start
+            rate = done / elapsed if elapsed > 0 else 0
+            eta = (len(names) - done) / rate if rate > 0 else float("inf")
+            logger.info(
+                f"Embedding progress: {done}/{len(names)} ({pct:.1f}%) | rate {rate:.1f}/s | ETA {eta:.1f}s | est cost ${self.cost.total_cost_usd():.2f}"
+            )
         return total
 
     def index_json_files(
@@ -217,11 +274,19 @@ class GraphRAGIndexer:
                 else:
                     for pat in ("*.json", "*.txt", "*.pdf"):
                         files.extend(list(p.glob(pat)))
-        seen_entities: Set[str] = set()
+        if not files:
+            logger.warning("No input files found for GraphRAG indexing.")
+            return stats
+
+        # Pre-scan to estimate total chunks for progress tracking
+        prescan: List[Tuple[Path, List[str]]] = []
+        total_chunks = 0
+        logger.info(f"Pre-scanning {len(files)} files to estimate work...")
         for fp in files:
             try:
                 text_blocks = self._prepare_text_blocks_from_path(fp)
                 if not text_blocks:
+                    prescan.append((fp, []))
                     continue
                 chunks = chunk_text(
                     "\n".join(text_blocks),
@@ -230,17 +295,48 @@ class GraphRAGIndexer:
                 )
                 if max_chunks_per_file is not None:
                     chunks = chunks[:max_chunks_per_file]
-                for idx, chunk in enumerate(chunks):
+                prescan.append((fp, chunks))
+                total_chunks += len(chunks)
+            except Exception as e:
+                logger.error(f"Pre-scan failed for {fp}: {e}")
+                prescan.append((fp, []))
+
+        logger.info(f"Discovered {len(files)} files, estimated {total_chunks} chunks to process.")
+
+        seen_entities: Set[str] = set()
+        processed_chunks = 0
+        start_time = time.time()
+        for file_idx, (fp, chunks) in enumerate(prescan, start=1):
+            logger.info(f"[File {file_idx}/{len(files)}] {fp.name} | {len(chunks)} chunks")
+            for idx, chunk in enumerate(chunks):
+                try:
                     triples = self._extract_triples_llm(chunk)
                     touched = self._ingest_triples(triples, source=str(fp), chunk_id=idx)
-                    seen_entities.update(touched)
-                    stats.chunks_processed += 1
-                    stats.triples_extracted += len(triples)
-                stats.files_processed += 1
-            except Exception:
-                continue
+                except Exception as e:
+                    logger.error(f"Chunk {idx} failed for {fp.name}: {e}")
+                    triples = []
+                    touched = set()
+                seen_entities.update(touched)
+                stats.chunks_processed += 1
+                stats.triples_extracted += len(triples)
+                processed_chunks += 1
+
+                pct = (processed_chunks / total_chunks) * 100.0 if total_chunks else 100.0
+                elapsed = time.time() - start_time
+                rate = processed_chunks / elapsed if elapsed > 0 else 0
+                eta = (total_chunks - processed_chunks) / rate if rate > 0 else float("inf")
+                logger.info(
+                    f"Progress {processed_chunks}/{total_chunks} ({pct:.1f}%) | file {file_idx}/{len(files)} chunk {idx+1}/{len(chunks)} | triples +{len(triples)} (total {stats.triples_extracted}) | rate {rate:.2f} ch/s | ETA {eta:.1f}s | est cost ${self.cost.total_cost_usd():.2f}"
+                )
+            stats.files_processed += 1
+
         if embed_entities and seen_entities:
             stats.nodes_embedded = self._embed_entities(list(seen_entities))
+
+        # Final summary
+        logger.info(
+            f"Completed indexing. Files: {stats.files_processed}, Chunks: {stats.chunks_processed}, Triples: {stats.triples_extracted}, Embedded nodes: {stats.nodes_embedded}, Estimated cost: ${self.cost.total_cost_usd():.2f}"
+        )
         return stats
 
     def _prepare_text_blocks_from_path(self, path: Path) -> List[str]:
