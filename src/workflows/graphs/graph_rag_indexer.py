@@ -26,6 +26,8 @@ from neo4j import Session
 
 from config.settings import get_settings
 from database.neo4j.client import neo4j_session
+from .enrichment import normalize_name, canonicalize_entities, enrich_relation, detect_doc_level_from_source
+from .human_validation import flag_uncertain_triples
 from utils.pdf_extractor import PDFTextExtractor
 
 
@@ -185,24 +187,47 @@ class GraphRAGIndexer:
         touched: Set[str] = set()
         if not triples:
             return touched
+        # Normalize and canonicalize entities to reduce node proliferation
+        original_names = [t.head.strip() for t in triples if t.head] + [t.tail.strip() for t in triples if t.tail]
+        name_to_canon, canon_groups = canonicalize_entities(original_names)
+
+        law_level = detect_doc_level_from_source(source or "")
+
         with neo4j_session() as session:
             for t in triples:
+                head_orig = t.head.strip()
+                tail_orig = t.tail.strip()
+                head = name_to_canon.get(head_orig, normalize_name(head_orig))
+                tail = name_to_canon.get(tail_orig, normalize_name(tail_orig))
+                enriched_rel = enrich_relation(t.relation.strip())
+
+                # Merge nodes using canonical names, but keep a human-friendly display_name
                 session.run(
                     """
                     MERGE (a:Entity {name: $head})
+                    ON CREATE SET a.created_at = timestamp(), a.display_name = $head_orig
+                    SET a.law_level = $law_level, a.source = $source
+
                     MERGE (b:Entity {name: $tail})
+                    ON CREATE SET b.created_at = timestamp(), b.display_name = $tail_orig
+                    SET b.law_level = $law_level, b.source = $source
+
                     MERGE (a)-[r:RELATION {type: $rel}]->(b)
-                    ON CREATE SET r.created_at = timestamp()
-                    SET r.source = $source, r.chunk_id = $chunk_id
+                    ON CREATE SET r.created_at = timestamp(), r.source = $source, r.chunk_id = $chunk_id
+                    SET r.relation_tag = $enriched_rel
                     """,
-                    head=t.head.strip(),
+                    head=head,
+                    head_orig=head_orig,
+                    tail=tail,
+                    tail_orig=tail_orig,
                     rel=t.relation.strip(),
-                    tail=t.tail.strip(),
+                    enriched_rel=enriched_rel,
                     source=source,
                     chunk_id=chunk_id,
+                    law_level=law_level,
                 )
-                touched.add(t.head.strip())
-                touched.add(t.tail.strip())
+                touched.add(head)
+                touched.add(tail)
         return touched
 
     def _embed_entities(self, entity_names: Iterable[str]) -> int:
@@ -311,6 +336,11 @@ class GraphRAGIndexer:
             for idx, chunk in enumerate(chunks):
                 try:
                     triples = self._extract_triples_llm(chunk)
+                    # Human-in-the-loop: flag uncertain triples for review (does not block ingestion)
+                    try:
+                        flag_uncertain_triples([t.dict() for t in triples])
+                    except Exception:
+                        logger.debug("Failed to write review queue; continuing")
                     touched = self._ingest_triples(triples, source=str(fp), chunk_id=idx)
                 except Exception as e:
                     logger.error(f"Chunk {idx} failed for {fp.name}: {e}")
