@@ -247,7 +247,7 @@ class DocumentProcessor:
     
     def _prepare_metadata(self, file_path: Path, extracted_metadata: Dict[str, Any],
                          additional_metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Prepare and standardize metadata for the document."""
+        """Prepare and standardize metadata for the document with legal domain context."""
         metadata = {
             "source": file_path.name,  # Following the requirement for 'source' tag
             "source_file": file_path.name,
@@ -261,6 +261,10 @@ class DocumentProcessor:
         # Add additional metadata if provided
         if additional_metadata:
             metadata.update(additional_metadata)
+        
+        # Infer and add legal document source type for better GraphRAG context
+        source_type = self._detect_legal_document_source(file_path, extracted_metadata)
+        metadata["legal_document_source"] = source_type
         
         # Enhanced category inference for legal documents
         if file_path.suffix.lower() == ".json":
@@ -306,6 +310,59 @@ class DocumentProcessor:
                 metadata[key] = value.strip()
         
         return metadata
+    
+    def _detect_legal_document_source(self, file_path: Path, extracted_metadata: Dict[str, Any]) -> str:
+        """
+        Detect the legal document source type (IPC, Constitution, CPC, etc.)
+        for GraphRAG context awareness.
+        
+        Returns a source type string like 'ipc', 'constitution', 'cpc', etc.
+        """
+        filename_lower = file_path.stem.lower()
+        content_sample = extracted_metadata.get("title", "").lower() + " " + extracted_metadata.get("subject", "").lower()
+        
+        # Check IPC (Indian Penal Code)
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["ipc", "penal_code", "penal code"]):
+            return "ipc"
+        
+        # Check Constitution
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["constitution", "constitutional", "const"]):
+            return "constitution"
+        
+        # Check CPC (Code of Civil Procedure)
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["cpc", "civil_procedure", "civil procedure"]):
+            return "cpc"
+        
+        # Check CrPC (Code of Criminal Procedure)
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["crpc", "criminal_procedure", "criminal procedure"]):
+            return "crpc"
+        
+        # Check Indian Evidence Act
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["iea", "evidence_act", "evidence act"]):
+            return "iea"
+        
+        # Check Hindu Marriage Act
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["hma", "marriage_act", "marriage act"]):
+            return "hma"
+        
+        # Check Motor Vehicle Act
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["mva", "motor_vehicle", "motor vehicle"]):
+            return "mva"
+        
+        # Check Negotiable Instruments Act
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["nia", "negotiable_instruments", "negotiable instruments"]):
+            return "nia"
+        
+        # Check Indian Divorce Act
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["ida", "divorce_act", "divorce act"]):
+            return "ida"
+        
+        # Check Kerala Acts
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["kerala", "kerala_acts"]):
+            return "kerala_acts"
+        
+        # Default generic legal document
+        return "legal_document"
     
     def _clean_text(self, text: str) -> str:
         """Clean and preprocess text for embedding generation."""
