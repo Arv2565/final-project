@@ -162,6 +162,16 @@ def ingest_json_files_enhanced(file_paths: List[Path], preview_only: bool = Fals
                     print(f"✅ Successfully processed {file_path.name}")
                     print(f"   📦 Chunks created: {result.chunks_created}")
                     print(f"   🆔 Points stored: {len(result.points_stored)}")
+
+                    # Additionally, index structural triples into Neo4j for hierarchy
+                    try:
+                        from workflows.graphs.graph_rag_indexer import GraphRAGIndexer
+                        indexer = GraphRAGIndexer(create_vector_index=False)
+                        print(f"🔗 Indexing {file_path.name} into Neo4j for hierarchical relations...")
+                        indexer.index_json_files(paths=[file_path], recursive=False, max_chunks_per_file=50, embed_entities=False)
+                        print(f"✅ Graph indexing completed for {file_path.name}")
+                    except Exception as e:
+                        print(f"⚠️  Graph indexing failed for {file_path.name}: {e}")
                 else:
                     failed_files += 1
                     print(f"❌ Failed to process {file_path.name}")

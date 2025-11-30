@@ -17,7 +17,7 @@ from pydantic import ValidationError
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
 
-from models.legal_document import LegalDocumentKnowledge
+from models.legal_document_v2 import LegalDocumentKnowledgeV2 as LegalDocumentKnowledge
 from utils.pdf_extractor import PDFTextExtractor
 
 
@@ -46,6 +46,7 @@ class LegalKnowledgeOutputParser(BaseOutputParser[LegalDocumentKnowledge]):
             if json_start != -1 and json_end != 0:
                 json_text = text[json_start:json_end]
                 parsed_data = json.loads(json_text)
+                # Ensure keys conform; entities is optional
                 return LegalDocumentKnowledge(**parsed_data)
             else:
                 raise ValueError("No valid JSON found in response")
@@ -59,7 +60,8 @@ class LegalKnowledgeOutputParser(BaseOutputParser[LegalDocumentKnowledge]):
                 purpose="information not publicly available", 
                 scope="information not publicly available",
                 key_provisions=["information not publicly available"] * 4,
-                administration="information not publicly available"
+                administration="information not publicly available",
+                entities=None
             )
 
 
@@ -73,13 +75,24 @@ class LegalDocumentKnowledgeExtractor:
     
     EXTRACTION_PROMPT = """You are a legal knowledge extraction model. Read only the provided PDF file contents and produce one JSON object with exactly these fields and types:
 
-{{
+{
 "title": "string",
 "purpose": "string", 
 "scope": "string",
 "key_provisions": ["string", "..."], // 4–6 separate items; each item short, precise, and grounded in the PDF (no interpretation)
-"administration": "string"
-}}
+"administration": "string",
+"entities": [
+  {
+    "name": "string",
+    "entity_type": "EntityType enum value (optional)",
+    "canonical_id": "string (optional, e.g., IPC:Section:420)",
+    "parent_id": "string (optional canonical id of parent)",
+    "hierarchy_level": "integer (optional; 1=top)",
+    "source": "string (optional source/location)",
+    "confidence": "float (0.0-1.0)"
+  }
+]
+}
 
 Rules (must be followed by the model, verbatim):
 
@@ -93,7 +106,7 @@ If the PDF does not supply any content for a required field, set that field valu
 
 Return only valid JSON for a single object (no commentary, no surrounding text). If you are given multiple PDFs, return a JSON array of objects (one object per PDF).
 
-Validate the JSON shape exactly as the schema above; mis-typed keys or extra fields will be rejected.
+Validate the JSON shape exactly as the schema above; mis-typed keys or extra fields will be rejected. Extra keys are allowed only if they conform to the documented schema above (entities is optional).
 
 Extracted text may contain quoted phrases; keep quotes only if they appear verbatim in the PDF.
 
