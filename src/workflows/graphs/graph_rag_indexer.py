@@ -27,7 +27,7 @@ from neo4j import Session
 from src.config.settings import get_settings
 from src.config.legal_ontology import LegalOntology, EntityType, RelationType
 from src.database.neo4j.client import neo4j_session
-from .enrichment import normalize_name, canonicalize_entities, enrich_relation, detect_doc_level_from_source
+from .enrichment import normalize_name, canonicalize_entities_legal, enrich_relation, detect_doc_level_from_source, get_resolver
 from .human_validation import flag_uncertain_triples
 from src.utils.pdf_extractor import PDFTextExtractor
 
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 class Triple(BaseModel):
-    """Enhanced triple model with optional domain semantic fields."""
+    """Enhanced triple model with optional domain semantic and temporal fields."""
     
     head: str = Field(..., description="Subject entity")
     relation: str = Field(..., description="Relationship type")
@@ -55,6 +55,16 @@ class Triple(BaseModel):
     relation_confidence: float = Field(default=1.0, description="Confidence score of relation (0.5-1.0)")
     head_canonical_id: Optional[str] = Field(default=None, description="Optional canonical identifier for head (e.g., IPC:Section:420)")
     tail_canonical_id: Optional[str] = Field(default=None, description="Optional canonical identifier for tail (e.g., IPC:Chapter:XVII)")
+    
+    # Optional temporal validity fields for the relation
+    effective_from: Optional[str] = Field(
+        default=None,
+        description="Optional ISO date (YYYY-MM-DD) when this relation becomes effective",
+    )
+    effective_to: Optional[str] = Field(
+        default=None,
+        description="Optional ISO date (YYYY-MM-DD) when this relation ceases to be effective",
+    )
     
     @field_validator("head", "tail")
     @classmethod
@@ -72,9 +82,22 @@ class Triple(BaseModel):
             raise ValueError("relation must be non-empty")
         return str(v).strip()
     
-    def normalize_and_validate(self) -> "Triple":
+    @field_validator("effective_from", "effective_to")
+    @classmethod
+    def validate_effective_dates(cls, v):
+        """Normalize blank temporal fields to None and strip whitespace.
+        
+        We intentionally keep values as strings (expected ISO dates) so they can be
+        stored directly in Neo4j as properties; downstream code can parse/compare
+        as needed.
         """
-        Normalize relation to canonical form and validate against legal ontology.
+        if v is None:
+            return None
+        v_str = str(v).strip()
+        return v_str or None
+    
+    def normalize_and_validate(self) -> "Triple":
+        """Normalize relation to canonical form and validate against legal ontology.
         
         Returns updated Triple with canonical relation and confidence score.
         """
@@ -95,7 +118,7 @@ class Triple(BaseModel):
         return self
     
     def to_dict_with_ontology(self) -> Dict[str, Any]:
-        """Return triple as dict with all ontology fields."""
+        """Return triple as dict with all ontology + temporal fields."""
         return {
             "head": self.head,
             "head_type": self.head_type,
@@ -103,6 +126,8 @@ class Triple(BaseModel):
             "relation_confidence": self.relation_confidence,
             "tail": self.tail,
             "tail_type": self.tail_type,
+            "effective_from": self.effective_from,
+            "effective_to": self.effective_to,
         }
 
 
@@ -162,11 +187,14 @@ def chunk_text(text: str, words_per_chunk: int, overlap_words: int) -> List[str]
 
 
 class GraphRAGIndexer:
-    def __init__(self, create_vector_index: bool = True):
+    def __init__(self, create_vector_index: bool = True, force_reembed: bool = False):
         self.settings = get_settings()
         self.client = OpenAI()
         self.chat_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
         self.create_vector_index = create_vector_index
+        # If True, always recompute embeddings even when an existing vector is present.
+        # Default False to enable deduplication across runs.
+        self.force_reembed = force_reembed
         self.embed_dim = 3072
         self.pdf_extractor = PDFTextExtractor()
         self.cost = CostStats()
@@ -222,7 +250,9 @@ Your task: Extract structured triples (head, relation, tail) from legal text, ca
     "head_type": "entity type from list above",
     "relation": "canonical relationship type",
     "tail": "entity name",
-    "tail_type": "entity type from list above"
+    "tail_type": "entity type from list above",
+    "effective_from": "YYYY-MM-DD or null (optional)",
+    "effective_to": "YYYY-MM-DD or null (optional)"
   }},
   ...
 ]
@@ -375,7 +405,7 @@ Document Context: {doc_context}
             logger.warning(f"APOC not available: {e}. Dynamic label assignment will be skipped. Install APOC plugin for full hierarchy support.")
             return False
 
-    def _ingest_triples(self, triples: List[Triple], source: str, chunk_id: int) -> Set[str]:
+    def _ingest_triples(self, triples: List[Triple], source: str, chunk_id: int, chunk_text: Optional[str] = None) -> Set[str]:
         """
         Insert nodes/edges with ontology-validated fields; return set of entity names touched.
         
@@ -387,7 +417,11 @@ Document Context: {doc_context}
         
         # Normalize and canonicalize entities to reduce node proliferation
         original_names = [t.head.strip() for t in triples if t.head] + [t.tail.strip() for t in triples if t.tail]
-        name_to_canon, canon_groups = canonicalize_entities(original_names)
+        # Use legal canonicalization which uses the global resolver
+        name_to_canon, canon_groups = canonicalize_entities_legal(original_names)
+
+        # Global resolver (shared across ingestion) for per-entity canonical lookup
+        resolver = get_resolver()
 
         law_level = detect_doc_level_from_source(source or "")
 
@@ -410,9 +444,13 @@ Document Context: {doc_context}
                 head_label = t.head_type if t.head_type in LegalOntology.ENTITY_TYPES else None
                 tail_label = t.tail_type if t.tail_type in LegalOntology.ENTITY_TYPES else None
 
-                # Compute a simple canonical id using law_level and canonicalized name
-                head_canon_id = f"{law_level}:{head}" if head else None
-                tail_canon_id = f"{law_level}:{tail}" if tail else None
+                # Compute canonical ids using the resolver (preferred) and fall back to law_level prefix
+                head_canon_id = resolver.get_canonical_id(head_orig, t.head_type) or (f"{law_level}:{head}" if head else None)
+                tail_canon_id = resolver.get_canonical_id(tail_orig, t.tail_type) or (f"{law_level}:{tail}" if tail else None)
+
+                # Temporal validity for this relation (optional, ISO strings)
+                effective_from = t.effective_from
+                effective_to = t.effective_to
 
                 # Structural relations that imply parent-child hierarchy
                 structural_rels = {RelationType.PART_OF.value, RelationType.SECTION_IN.value, RelationType.CHAPTER_IN.value, RelationType.SUBSECTION_OF.value, RelationType.CONTAINS.value, 'belongs_to'}
@@ -420,7 +458,10 @@ Document Context: {doc_context}
                 # Get Neo4j typed relationship label from canonical relation
                 cypher_rel_type = LegalOntology.relation_to_cypher_type(t.relation.strip())
 
-                # Step 1: Merge nodes with basic properties
+                # Prepare a unique, file-scoped chunk node id (keep numeric chunk_id on relations for backward compatibility)
+                chunk_node_id = f"{source}::chunk::{chunk_id}"
+
+                # Step 1: Merge nodes with basic properties and create Chunk node linking
                 # Use CALL to dynamically create typed relationships based on the canonical relation
                 cypher_merge = f"""
                     MERGE (a:Entity {{name: $head}})
@@ -430,8 +471,14 @@ Document Context: {doc_context}
                     MERGE (b:Entity {{name: $tail}})
                     ON CREATE SET b.created_at = timestamp(), b.display_name = $tail_orig
                     SET b.entity_type = $tail_type, b.canonical_id = $tail_canon_id, b.law_level = $law_level, b.source = $source
+
+                    // create chunk node and link entities to chunk
+                    MERGE (ch:Chunk {id: $chunk_node_id})
+                    ON CREATE SET ch.created_at = timestamp(), ch.text = $chunk_text, ch.source = $source
+                    MERGE (a)-[m:MENTIONED_IN]->(ch)
+                    ON CREATE SET m.created_at = timestamp(), m.source = $source, m.chunk_id = $chunk_id
                     
-                    CALL apoc.create.relationship(a, $rel_type, {{created_at: timestamp(), source: $source, chunk_id: $chunk_id, relation_tag: $enriched_rel, relation_confidence: $confidence, low_confidence: $low_confidence}}, b) YIELD rel
+                    CALL apoc.create.relationship(a, $rel_type, {{created_at: timestamp(), source: $source, chunk_id: $chunk_id, relation_tag: $enriched_rel, relation_confidence: $confidence, low_confidence: $low_confidence, valid_from: $effective_from, valid_until: $effective_to}}, b) YIELD rel
                     RETURN rel
                 """
 
@@ -448,6 +495,8 @@ Document Context: {doc_context}
                         tail_canon_id=tail_canon_id,
                         rel_type=cypher_rel_type,
                         enriched_rel=enriched_rel,
+                        chunk_node_id=chunk_node_id,
+                        chunk_text=chunk_text,
                         source=source,
                         chunk_id=chunk_id,
                         law_level=law_level,
@@ -482,12 +531,80 @@ Document Context: {doc_context}
                         tail_canon_id=tail_canon_id,
                         canonical_rel=t.relation.strip(),
                         enriched_rel=enriched_rel,
+                        chunk_node_id=chunk_node_id,
+                        chunk_text=chunk_text,
                         source=source,
                         chunk_id=chunk_id,
                         law_level=law_level,
                         confidence=t.relation_confidence,
                         low_confidence=low_confidence,
+                        effective_from=effective_from,
+                        effective_to=effective_to,
                     )
+
+                # Create a reverse relationship to enable efficient reverse lookups.
+                try:
+                    # Try to find an inverse canonical relation (e.g., 'amends' -> 'amended_by')
+                    def _find_inverse(canonical_rel: str) -> Optional[str]:
+                        # Common pattern: try '<rel>_by' or '<rel>_in' or past forms
+                        if LegalOntology.is_valid_relation_type(canonical_rel + '_by'):
+                            return canonical_rel + '_by'
+                        if LegalOntology.is_valid_relation_type(canonical_rel + '_in'):
+                            return canonical_rel + '_in'
+                        if canonical_rel.endswith('s'):
+                            alt = canonical_rel[:-1] + 'd_in'
+                            if LegalOntology.is_valid_relation_type(alt):
+                                return alt
+                            alt2 = canonical_rel[:-1] + 'ed_by'
+                            if LegalOntology.is_valid_relation_type(alt2):
+                                return alt2
+                        # Finally, scan known relation keys for a _by or _in variant
+                        root = canonical_rel.split('_')[0]
+                        for k in LegalOntology.RELATION_TO_CYPHER_TYPE.keys():
+                            if k.startswith(root) and ('_by' in k or '_in' in k or 'ed' in k):
+                                return k
+                        return None
+
+                    inv_canonical = _find_inverse(t.relation.strip())
+                    if inv_canonical:
+                        inv_type = LegalOntology.relation_to_cypher_type(inv_canonical)
+                        # create inverse typed relationship b -> a
+                        session.run(
+                            """
+                            MERGE (b:Entity {name: $tail})
+                            MERGE (a:Entity {name: $head})
+                            CALL apoc.create.relationship(b, $inv_type, {created_at: timestamp(), source: $source, chunk_id: $chunk_id, relation_confidence: $confidence, valid_from: $effective_from, valid_until: $effective_to}, a) YIELD rel
+                            RETURN rel
+                            """,
+                            tail=tail,
+                            head=head,
+                            inv_type=inv_type,
+                            source=source,
+                            chunk_id=chunk_id,
+                            confidence=t.relation_confidence,
+                        )
+                    else:
+                        # Fallback: create reverse generic relation with reference to original
+                        session.run(
+                            """
+                            MERGE (b:Entity {name: $tail})
+                            MERGE (a:Entity {name: $head})
+                            MERGE (b)-[r2:RELATION]->(a)
+                            ON CREATE SET r2.created_at = timestamp(), r2.source = $source, r2.chunk_id = $chunk_id
+                            SET r2.relation_tag = $enriched_rel, r2.relation_confidence = $confidence, r2.inverse_of = $canonical_rel
+                            """,
+                            tail=tail,
+                            head=head,
+                            source=source,
+                            chunk_id=chunk_id,
+                            enriched_rel=enriched_rel,
+                            confidence=t.relation_confidence,
+                            canonical_rel=t.relation.strip(),
+                            effective_from=effective_from,
+                            effective_to=effective_to,
+                        )
+                except Exception:
+                    logger.debug("Failed to create reverse relationship; continuing")
 
                 # Step 2: Dynamically add labels using APOC if entity_type is in ontology whitelist
                 if head_label:
@@ -526,7 +643,7 @@ Document Context: {doc_context}
                         cypher_hierarchy = f"""
                             MERGE (a:Entity {{name: $head}})
                             MERGE (b:Entity {{name: $tail}})
-                            CALL apoc.create.relationship(a, $hierarchy_rel_type, {{created_at: timestamp(), source: $source, chunk_id: $chunk_id, inferred: false, relation_confidence: $confidence}}, b) YIELD rel
+                            CALL apoc.create.relationship(a, $hierarchy_rel_type, {{created_at: timestamp(), source: $source, chunk_id: $chunk_id, inferred: false, relation_confidence: $confidence, valid_from: $effective_from, valid_until: $effective_to}}, b) YIELD rel
                             RETURN rel
                         """
                         try:
@@ -548,13 +665,15 @@ Document Context: {doc_context}
                                 MERGE (b:Entity {name: $tail})
                                 MERGE (a)-[p:PART_OF_HIERARCHY]->(b)
                                 ON CREATE SET p.created_at = timestamp(), p.source = $source, p.chunk_id = $chunk_id, p.inferred = false
-                                SET p.relation_confidence = $confidence
+                                SET p.relation_confidence = $confidence, p.valid_from = $effective_from, p.valid_until = $effective_to
                                 """,
                                 head=head,
                                 tail=tail,
                                 source=source,
                                 chunk_id=chunk_id,
                                 confidence=t.relation_confidence,
+                                effective_from=effective_from,
+                                effective_to=effective_to,
                             )
                 except Exception:
                     # Non-critical if hierarchy relation creation fails
@@ -572,11 +691,38 @@ Document Context: {doc_context}
         total = 0
         with neo4j_session() as session:
             self._ensure_vector_index(session)
+            # If not forcing re-embed, determine which entities already have embeddings
+            names_to_embed = names
+            if not self.force_reembed:
+                try:
+                    result = session.run(
+                        """
+                        UNWIND $names AS n
+                        MATCH (e:Entity {name: n})
+                        WHERE e.embedding IS NOT NULL
+                        RETURN collect(DISTINCT n) AS already
+                        """,
+                        names=names,
+                    )
+                    record = result.single()
+                    already = set(record.get("already", [])) if record else set()
+                    names_to_embed = [n for n in names if n not in already]
+                    if already:
+                        logger.info(
+                            f"Skipping embedding for {len(already)} entities that already have embeddings; "
+                            f"embedding {len(names_to_embed)} new entities."
+                        )
+                except Exception as e:
+                    logger.warning(f"Failed to check existing embeddings, embedding all entities: {e}")
+                    names_to_embed = names
+        if not names_to_embed:
+            logger.info("No new entities to embed; skipping embedding step.")
+            return 0
         batch_size = 128
-        logger.info(f"Embedding {len(names)} unique entities in batches of {batch_size}...")
+        logger.info(f"Embedding {len(names_to_embed)} unique entities in batches of {batch_size}...")
         start = time.time()
-        for i in range(0, len(names), batch_size):
-            batch = names[i : i + batch_size]
+        for i in range(0, len(names_to_embed), batch_size):
+            batch = names_to_embed[i : i + batch_size]
             embeds = self.client.embeddings.create(model=EMBED_MODEL, input=batch)
             # Track embedding token usage if available
             emb_usage = getattr(embeds, "usage", None)
@@ -685,7 +831,7 @@ Document Context: {doc_context}
                         flag_uncertain_triples([t.to_dict_with_ontology() for t in triples])
                     except Exception:
                         logger.debug("Failed to write review queue; continuing")
-                    touched = self._ingest_triples(triples, source=str(fp), chunk_id=idx)
+                    touched = self._ingest_triples(triples, source=str(fp), chunk_id=idx, chunk_text=chunk)
                 except Exception as e:
                     logger.error(f"Chunk {idx} failed for {fp.name}: {e}")
                     triples = []

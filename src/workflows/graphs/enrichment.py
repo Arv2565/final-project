@@ -107,7 +107,8 @@ def canonicalize_entities_legal(names: Iterable[str], entity_type: Optional[str]
     Returns:
         Tuple of (name_to_canonical_id, canonical_id_to_variants)
     """
-    resolver = EntityResolver(strict_mode=strict_mode)
+    # Use the module-level resolver so canonical IDs are globally shared
+    resolver = get_resolver(strict_mode=strict_mode)
     name_to_canonical: Dict[str, str] = {}
     canonical_to_variants: Dict[str, List[str]] = {}
 
