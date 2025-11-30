@@ -282,10 +282,31 @@ class CaseCitationParser:
         year_str = match.group(4)
         court_str = match.group(5)
 
-        # Normalize reporter and court
+        # If primary reporter/year not present, try to find a secondary reporter pattern
         if not reporter_str or not year_str:
-            return None
+            # First find a year enclosed in parentheses like '(2012)'
+            sec_year_match = re.search(r'\((\d{4})\)', text)
+            if sec_year_match:
+                year_str = sec_year_match.group(1)
+                # Look at the text after the closing parenthesis to find optional volume, reporter, and page
+                after = text[sec_year_match.end():]
+                after_match = re.search(r'\s*(\d+)?\s*(SCC|Cr\.?\s*LJ|Scale|JMFC)?\s*(\d+)?', after, re.IGNORECASE)
+                if after_match:
+                    vol = after_match.group(1)
+                    rep = after_match.group(2)
+                    pg = after_match.group(3)
 
+                    reporter_str = rep or reporter_str
+                    # Prefer an explicit page (pg), else use volume (vol), else default to "1"
+                    page = pg or vol or "1"
+                    court_str = "SC" if reporter_str and "SCC" in reporter_str.upper() else court_str
+                else:
+                    # If no following tokens, default to page 1
+                    page = "1"
+            else:
+                return None
+
+        # Normalize reporter and court
         try:
             year = int(year_str)
         except (ValueError, TypeError):
@@ -293,7 +314,12 @@ class CaseCitationParser:
 
         reporter = CaseCitationParser._normalize_reporter(reporter_str)
         court = CaseCitationParser._normalize_court(court_str)
-        page = match.group(6) or "1"
+        # Prefer the page extracted from the secondary reporter (if present)
+        # otherwise fall back to the main match.group(6), then default to "1".
+        if 'page' in locals() and page:
+            page = page
+        else:
+            page = match.group(6) or "1"
 
         # Extract secondary reports
         secondary_reports = []

@@ -491,21 +491,27 @@ class LegalOntology:
         Returns:
             (is_valid, error_message)
         """
-        if not canonical_id or ":" not in canonical_id:
-            return False, f"Canonical ID must contain ':' separator: {canonical_id}"
+        if not canonical_id:
+            return False, f"Canonical ID must be provided: {canonical_id}"
         
         parts = canonical_id.split(":")
         
-        # Statute/Act IDs: "IPC" or "IPC:1860"
+        # Statute/Act IDs: allow either 'IPC' or 'IPC:1860'
         if entity_type == EntityType.LEGAL_ACT.value or entity_type == EntityType.STATUTE.value:
-            if len(parts) < 1 or len(parts) > 2:
+            # Accept single-part abbreviations (e.g., 'IPC') or 'IPC:1860'
+            # Reject obvious section-style identifiers when validating a statute id
+            if parts and parts[0].lower() == 'section':
                 return False, f"Statute ID must be 'ABB' or 'ABB:YEAR': {canonical_id}"
+
+            if len(parts) == 1:
+                return True, ""
             if len(parts) == 2:
                 try:
                     int(parts[1])  # Year must be numeric
                 except ValueError:
                     return False, f"Statute year must be numeric: {canonical_id}"
-            return True, ""
+                return True, ""
+            return False, f"Statute ID must be 'ABB' or 'ABB:YEAR': {canonical_id}"
         
         # Section IDs: "IPC:Section:420" or "IPC:Section:420(1)" or "IPC:Section:420(1)(a)"
         if entity_type == EntityType.SECTION.value:
