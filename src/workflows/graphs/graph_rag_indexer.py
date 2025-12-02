@@ -329,16 +329,119 @@ Document Context: {doc_context}
                 t = Triple(**item)
                 # Normalize and validate against ontology
                 t = t.normalize_and_validate()
+
+                # If ontology confidence is low (<= 0.5), try LLM-based repair / ontology extension
+                if t.relation_confidence <= 0.5:
+                    t = self._repair_relation_via_llm(t, text=text, source=source)
+
                 # Basic sanitation: ensure all required fields are non-empty
                 if t.head and t.relation and t.tail:
                     triples.append(t)
                 else:
-                    logger.debug(f"Skipped invalid triple: {item}")
+                    logger.debug(f"Skipped invalid triple after repair attempt: {item}")
             except ValidationError as e:
                 logger.debug(f"Validation error for triple {item}: {e}")
                 continue
         
         return triples
+    
+    def _repair_relation_via_llm(self, triple: Triple, text: str, source: str = "") -> Triple:
+        """Attempt to repair low-confidence relations using the chat model.
+
+        Behavior:
+        - Only used when relation_confidence is already low (<= 0.5).
+        - Asks the LLM to either map to an existing ontology relation or propose
+          a new one.
+        - If a new label is proposed, it is registered dynamically in
+          LegalOntology so subsequent triples can use it.
+        - On any failure or "none" response, the original triple is returned
+          unchanged to avoid data loss.
+        """
+        # Defensive guard: only run for low-confidence relations
+        if triple.relation_confidence > 0.5:
+            return triple
+
+        allowed = list(LegalOntology.RELATION_TYPES)
+
+        sys_prompt = (
+            "You are assisting with a legal ontology for Indian legal documents.\n"
+            "Given a (head, relation, tail) triple and the source text, choose the BEST "
+            "canonical relationship label.\n\n"
+            "You have two options:\n"
+            "1) Map to one of the EXISTING labels in this list.\n"
+            "2) Propose a NEW label only if none of the existing labels are a good fit.\n\n"
+            "Respond ONLY with a single JSON object like:\n"
+            '{"relation": "<label>", "is_new": false}\n'
+            "or, for a new label:\n"
+            '{"relation": "<new_label>", "is_new": true}\n'
+            "If no relation is appropriate at all, use:\n"
+            '{"relation": "none", "is_new": false}.\n"
+        )
+
+        user_prompt = (
+            f"Existing relation labels: {allowed}\n\n"
+            f"Head: {triple.head}\n"
+            f"Original relation from model: {triple.relation}\n"
+            f"Tail: {triple.tail}\n"
+            f"Source: {source}\n\n"
+            f"Relevant text span:\n{text}\n"
+        )
+
+        try:
+            resp = self.client.chat.completions.create(
+                model=self.chat_model,
+                messages=[
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0,
+            )
+            content = (resp.choices[0].message.content or "").strip()
+            # Strip code fences if any
+            if content.startswith("```"):
+                content = re.sub(r"^```\w*\n|```$", "", content, flags=re.MULTILINE).strip()
+
+            data = json.loads(content)
+            new_rel = str(data.get("relation", "")).strip().lower()
+            is_new = bool(data.get("is_new", False))
+        except Exception as e:
+            logger.warning(
+                f"LLM relation repair failed for triple {triple.head} --[{triple.relation}]--> {triple.tail}: {e}"
+            )
+            return triple
+
+        if not new_rel or new_rel == "none":
+            logger.debug(
+                f"LLM did not provide a better relation for {triple.head} --[{triple.relation}]--> {triple.tail}"
+            )
+            return triple
+
+        # Case 1: mapped to an existing ontology relation
+        if new_rel in LegalOntology.RELATION_TYPES:
+            triple.relation = new_rel
+            triple.relation_confidence = 0.9
+            logger.info(
+                f"Repaired relation using existing ontology: "
+                f"{triple.head} --[{triple.relation}]--> {triple.tail}"
+            )
+            return triple
+
+        # Case 2: LLM proposes a new relation; extend ontology at runtime
+        try:
+            canonical = LegalOntology.add_relation_type(new_rel)
+            triple.relation = canonical
+            triple.relation_confidence = 0.8
+            logger.warning(
+                f"Extended ontology with new relation '{canonical}' from LLM for "
+                f"{triple.head} --[{canonical}]--> {triple.tail}"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to extend ontology with relation '{new_rel}' for "
+                f"{triple.head} --[{triple.relation}]--> {triple.tail}: {e}"
+            )
+
+        return triple
     
     def _infer_doc_context(self, source: str) -> str:
         """Infer document context from source path for prompt guidance."""

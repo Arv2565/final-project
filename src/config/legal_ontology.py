@@ -407,6 +407,31 @@ class LegalOntology:
         return relation_type in cls.RELATION_TYPES
     
     @classmethod
+    def add_relation_type(cls, relation: str) -> str:
+        """Dynamically register a new canonical relation type at runtime.
+
+        This updates the in-memory ontology so that subsequent triples in the
+        same process can treat the new relation as first-class.
+
+        Args:
+            relation: Proposed canonical relation label (e.g., "triggers_review").
+
+        Returns:
+            The normalized (lowercase) relation label that was registered.
+        """
+        rel = relation.lower().strip()
+        if not rel:
+            raise ValueError("relation must be non-empty")
+
+        if rel not in cls.RELATION_TYPES:
+            cls.RELATION_TYPES.add(rel)
+
+        if rel not in cls.RELATION_TO_CYPHER_TYPE:
+            cls.RELATION_TO_CYPHER_TYPE[rel] = rel.upper()
+
+        return rel
+    
+    @classmethod
     def relation_to_cypher_type(cls, relation: str) -> str:
         """
         Convert canonical relation type to Neo4j relationship type label.
