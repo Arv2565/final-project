@@ -1,0 +1,206 @@
+{
+  "metadata": {
+    "description": "Legal extraction examples from Indian legal documents for few-shot prompting",
+    "domain": "Indian Legal System (IPC, CPC, CRPC, Constitution)",
+    "created_at": "2025-11-30",
+    "total_examples": 15,
+    "example_format": {
+      "head": "Subject entity name",
+      "head_type": "Entity type from EntityType enum",
+      "relation": "Relationship type from RelationType enum",
+      "tail": "Object entity name",
+      "tail_type": "Entity type from RelationType enum",
+      "source": "Source document (e.g., IPC, CPC, Constitution)",
+      "confidence": "Extraction confidence (1.0 = high, 0.8 = medium, 0.5 = low)",
+      "canonical_id": "Optional canonical identifier (e.g., IPC:Section:420)"
+    }
+  },
+  "examples": [
+    {
+      "head": "Indian Penal Code",
+      "head_type": "Legal_Act",
+      "relation": "defines",
+      "tail": "Grievous Hurt",
+      "tail_type": "Definition",
+      "source": "IPC Section 319",
+      "confidence": 1.0,
+      "context": "Section 319 defines 'Grievous Hurt' in contrast to 'Simple Hurt'"
+    },
+    {
+      "head": "Section 304 (Culpable Homicide)",
+      "head_type": "Section",
+      "relation": "penalizes",
+      "tail": "Causing death by negligence",
+      "tail_type": "Offence",
+      "source": "IPC Section 304",
+      "confidence": 1.0,
+      "context": "Section 304 penalizes culpable homicide not amounting to murder"
+    },
+    {
+      "head": "Section 420",
+      "head_type": "Section",
+      "relation": "part_of",
+      "tail": "Chapter XVII",
+      "tail_type": "Chapter",
+      "source": "IPC",
+      "confidence": 1.0,
+      "canonical_id": "IPC:Section:420",
+      "context": "Section 420 is part of Chapter XVII in IPC"
+    },
+    {
+      "head": "Chapter XVII",
+      "head_type": "Chapter",
+      "relation": "part_of",
+      "tail": "Offences Against Property",
+      "tail_type": "Other",
+      "source": "IPC",
+      "confidence": 1.0,
+      "canonical_id": "IPC:Chapter:XVII",
+      "context": "Chapter XVII groups offences against property"
+    },
+    {
+      "head": "Section 304A",
+      "head_type": "Section",
+      "relation": "part_of",
+      "tail": "Indian Penal Code",
+      "tail_type": "Legal_Act",
+      "source": "IPC Chapter XVI",
+      "confidence": 1.0,
+      "context": "Section 304A is part of Chapter XVI of the IPC"
+    },
+    {
+      "head": "Code of Criminal Procedure, 1973",
+      "head_type": "Legal_Act",
+      "relation": "establishes",
+      "tail": "Criminal procedure in Indian courts",
+      "tail_type": "Procedure",
+      "source": "CrPC Preamble",
+      "confidence": 0.9,
+      "context": "CrPC establishes the framework for criminal procedure"
+    },
+    {
+      "head": "Article 21 of Constitution",
+      "head_type": "Section",
+      "relation": "establishes",
+      "tail": "Right to Life and Liberty",
+      "tail_type": "Right",
+      "source": "Constitution of India, Part III",
+      "confidence": 1.0,
+      "context": "Article 21 establishes the fundamental right to life and liberty"
+    },
+    {
+      "head": "Section 497 (Adultery)",
+      "head_type": "Section",
+      "relation": "superseded_by",
+      "tail": "Supreme Court judgment (2018)",
+      "tail_type": "Other",
+      "source": "IPC Section 497 (as amended)",
+      "confidence": 0.8,
+      "context": "Section 497 was effectively superseded by constitutional challenges"
+    },
+    {
+      "head": "District Court",
+      "head_type": "Court",
+      "relation": "has_jurisdiction",
+      "tail": "Civil disputes up to specified amount",
+      "tail_type": "Jurisdiction",
+      "source": "CPC Section 7-10",
+      "confidence": 0.9,
+      "context": "District Courts have jurisdiction over civil disputes within territorial limits"
+    },
+    {
+      "head": "Section 125 CrPC",
+      "head_type": "Section",
+      "relation": "procedure_for",
+      "tail": "Maintenance and support",
+      "tail_type": "Procedure",
+      "source": "CrPC Section 125",
+      "confidence": 1.0,
+      "context": "Section 125 provides procedure for maintenance of wife, children, and parents"
+    },
+    {
+      "head": "Indian Evidence Act, 1872",
+      "head_type": "Legal_Act",
+      "relation": "specifies",
+      "tail": "Rules for admissibility of evidence",
+      "tail_type": "Procedure",
+      "source": "IEA Sections 1-100",
+      "confidence": 0.9,
+      "context": "The Evidence Act specifies rules governing evidence admissibility"
+    },
+    {
+      "head": "Section 300 (Murder)",
+      "head_type": "Section",
+      "relation": "distinguishes",
+      "tail": "Section 304 (Culpable Homicide)",
+      "tail_type": "Section",
+      "source": "IPC Chapters XVI",
+      "confidence": 0.8,
+      "context": "Murder (300) is distinguished from culpable homicide (304) by mens rea"
+    },
+    {
+      "head": "High Court",
+      "head_type": "Court",
+      "relation": "interprets",
+      "tail": "Provisions of IPC and CPC",
+      "tail_type": "Legal_Act",
+      "source": "Constitution Article 226-227",
+      "confidence": 0.9,
+      "context": "High Courts interpret and apply IPC and CPC provisions"
+    },
+    {
+      "head": "Section 41 CrPC",
+      "head_type": "Section",
+      "relation": "prerequisite_to",
+      "tail": "Arrest without warrant",
+      "tail_type": "Procedure",
+      "source": "CrPC Section 41",
+      "confidence": 1.0,
+      "context": "Section 41 prerequisites for police to arrest person without warrant"
+    },
+    {
+      "head": "Hindu Marriage Act, 1955",
+      "head_type": "Legal_Act",
+      "relation": "governs",
+      "tail": "Marriage and divorce among Hindus",
+      "tail_type": "Procedure",
+      "source": "HMA Section 1",
+      "confidence": 1.0,
+      "context": "HMA governs marriage and dissolution procedures for Hindus"
+    },
+    {
+      "head": "Section 2(a) Definition",
+      "head_type": "Definition",
+      "relation": "cited_in",
+      "tail": "Multiple sections throughout IPC",
+      "tail_type": "Section",
+      "source": "IPC Section 2",
+      "confidence": 0.8,
+      "context": "Definitions in Section 2 are referenced throughout the IPC"
+    },
+    {
+      "head": "Motor Vehicle Act, 1988",
+      "head_type": "Legal_Act",
+      "relation": "amends",
+      "tail": "Motor Vehicle Act, 1939",
+      "tail_type": "Legal_Act",
+      "source": "MVA 1988",
+      "confidence": 1.0,
+      "context": "Motor Vehicle Act 1988 amended and consolidated the 1939 Act"
+    }
+  ],
+  "extraction_guidelines": {
+    "entity_type_selection": "Choose from EntityType enum. If uncertain, use 'Other'.",
+    "relation_type_selection": "Choose from RelationType enum. Avoid generic 'related_to' unless no better option.",
+    "confidence_scoring": "1.0 = explicitly stated in text, 0.8 = inferred with high certainty, 0.5 = inferred with low certainty",
+    "source_format": "Document name (e.g., IPC, CPC) and section/article number if applicable",
+    "key_relationships": [
+      "Legal documents heavily use: defines, part_of, establishes, specifies, amends, enforces, interprets, cited_in",
+      "Procedural documents use: procedure_for, prerequisite_to, precedes, followed_by",
+      "Definitional sections use: defines, defined_in, classifies, is_instance_of",
+      "Temporal/validity relations use: amends, amended_by, supersedes, repeals",
+      "Enforcement relations use: enforces, enforced_by, interprets, adjudicates",
+      "Citation relations use: cited_in, cites, referenced_in, references"
+    ]
+  }
+}
