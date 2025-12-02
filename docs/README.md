@@ -1,32 +1,118 @@
-# Legal RAG System Documentation
+# Legal RAG System (Vector + GraphRAG)
 
-## Overview
+This repository implements a production-ready **dual retrieval** legal RAG system that combines:
 
-This is a **Dual-Retrieval RAG System** for legal document processing combining:
-1. **Vector Retrieval**: Qdrant + inLegalBERT (768-dim embeddings)
-2. **Graph Retrieval**: Neo4j + GraphRAG (hierarchical legal knowledge)
-3. **LangGraph Workflows**: Multi-step orchestration
+- **Vector retrieval** over chunks using inLegalBERT + Qdrant / Neo4j vector indexes
+- **GraphRAG** over a rich Neo4j legal knowledge graph
+- **LangChain / LangGraph-style workflows** for ingestion and query orchestration
 
-## Quick Start
+The goal of this README is to be the **single entry point** for understanding, setting up, and operating the system. For a deeper technical view of the graph pipeline, see `GRAPH_RAG_FEATURES_AND_IMPLEMENTATION.md`.
+
+---
+
+## 1. High‑Level Architecture
+
+### Components
+
+- **Document processing** (`src/processing/`, `src/utils/pdf_extractor.py`)
+  - Normalizes PDF / JSON / TXT sources into clean text + metadata
+- **Vector store** (`scripts/ingest_legal_documents.py`, Qdrant / Neo4j vector index)
+  - inLegalBERT embeddings (768‑dim) for semantic search over chunks
+- **Legal knowledge graph (GraphRAG)** (`src/workflows/graphs/`)
+  - 50+ entity types and 90+ typed relationships in Neo4j
+  - Entity resolution and canonical IDs (e.g. `IPC:Section:420`)
+- **LLM extraction** (`src/workflows/graphs/graph_rag_indexer.py`)
+  - GPT‑4o‑mini extracts (head, relation, tail) triples with ontology‑aware prompts
+- **Retrieval workflows** (`src/workflows/graphs/retrieval.py`)
+  - Pure vector search, pure graph traversal, or hybrid (vector → graph expansion)
+
+### Data Flow
+
+1. **Ingestion → Vector**: documents → chunks → embeddings → Qdrant / Neo4j vector index
+2. **Ingestion → GraphRAG**: documents → triples → canonical entities + typed edges → Neo4j graph
+3. **Retrieval**: user query → embedding/vector search → seed entities → graph expansion → answer
+
+---
+
+## 2. Setup (One‑Time)
+
+### 2.1 Prerequisites
+
+- Python **3.9+**
+- Docker (recommended for Qdrant, optional for Neo4j)
+- Neo4j **5.x** with **APOC Core** plugin (for full GraphRAG features)
+
+### 2.2 Install Python Dependencies
 
 ```bash
-# Environment Setup
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with your credentials
+# Edit .env with your credentials and local settings
+```
 
-# Start Qdrant
+### 2.3 Required Environment Variables (Minimal)
+
+```bash
+# Vector DB (Qdrant)
+QDRANT_HOST=localhost
+QDRANT_PORT=6333
+QDRANT_COLLECTION=legal_documents
+
+# Graph DB (Neo4j)
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+
+# Embeddings
+LEGAL_BERT_MODEL=nlpaueb/legal-bert-base-uncased
+EMBEDDING_DEVICE=auto      # auto/cuda/cpu/mps
+CHUNK_SIZE=450
+CHUNK_OVERLAP=50
+
+# GraphRAG LLM
+OPENAI_API_KEY=your_openai_key
+OPENAI_CHAT_MODEL=gpt-4o-mini
+
+# Optional cost tracking (defaults are sane)
+OPENAI_RATE_CHAT_INPUT_PER_1K=5.00
+OPENAI_RATE_CHAT_OUTPUT_PER_1K=15.00
+OPENAI_RATE_EMBED_PER_1K=0.13
+```
+
+### 2.4 Start Services
+
+**Qdrant (vector database)**
+
+```bash
 docker run -p 6333:6333 qdrant/qdrant
+```
 
-# Verify setup
+**Neo4j + APOC (recommended Docker setup)**
+
+```bash
+docker run -d \
+  --name neo4j \
+  -p 7687:7687 -p 7474:7474 \
+  -e NEO4J_AUTH=neo4j/password \
+  -e NEO4JLABS_PLUGINS='["apoc"]' \
+  neo4j:5.21-enterprise
+```
+
+Verify environment:
+
+```bash
 python -c "from src.config.settings import validate_environment; print('✅ Ready!' if validate_environment() else '❌ Check config')"
 ```
 
-## Core Workflows
+For more Neo4j/APOC options and vector index tuning, see the GraphRAG doc.
 
-### 1. Vector Ingestion (Qdrant)
+---
 
-**Process**: PDF/JSON → Text extraction → inLegalBERT embeddings → Qdrant storage
+## 3. Core Workflows
+
+### 3.1 Vector Ingestion & Search (Qdrant)
+
+**Ingest legal documents into Qdrant:**
 
 ```bash
 # Single document
@@ -35,142 +121,18 @@ python scripts/ingest_legal_documents.py --file document.pdf --court "Supreme Co
 # Batch directory
 python scripts/ingest_legal_documents.py --directory data/knowledge_base/ --recursive
 
-# Search
-python scripts/ingest_legal_documents.py --search "contract breach" --limit 5
-
 # Status
 python scripts/ingest_legal_documents.py --status
 ```
 
-**Configuration** (`.env`):
-```bash
-QDRANT_HOST=localhost
-QDRANT_PORT=6333
-QDRANT_COLLECTION=legal_documents
-
-LEGAL_BERT_MODEL=nlpaueb/legal-bert-base-uncased
-CHUNK_SIZE=450
-CHUNK_OVERLAP=50
-EMBEDDING_DEVICE=auto
-```
-
-### 2. Graph Ingestion (Neo4j + GraphRAG)
-
-**Process**: Documents → LLM triple extraction → Legal ontology validation → Neo4j hierarchical graph
+**Semantic search over stored documents:**
 
 ```bash
-# Index with graph + embeddings
-python scripts/graph_rag_index.py --paths data/knowledge_base/ --recursive
-
-# Skip embeddings (faster)
-python scripts/graph_rag_index.py --paths data/ --no-embed
-
-# Test with limited chunks
-python scripts/graph_rag_index.py --paths data/ --max-chunks 10
+python scripts/ingest_legal_documents.py --search "contract breach" --limit 5
 ```
 
-**Requirements**:
-- OpenAI API key for triple extraction
-- Neo4j with **APOC plugin** (required for hierarchical labels)
-- Neo4j credentials in `.env`
+Programmatic example:
 
-**Configuration** (`.env`):
-```bash
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=your_password
-OPENAI_API_KEY=your_openai_key
-OPENAI_CHAT_MODEL=gpt-4o-mini
-```
-
-## Architecture Deep Dive
-
-### Legal Knowledge Graph (GraphRAG)
-
-**Ontology**: 57 entity types + 80+ canonical relationships
-
-**Entity Types**:
-- `Legal_Act`, `Statute`, `Constitution`
-- `Section`, `Clause`, `Chapter`, `Schedule`
-- `Offence`, `Penalty`, `Right`, `Duty`
-- `Court`, `Tribunal`, `Authority`
-- `Definition`, `Procedure`, `Jurisdiction`
-
-**Relationship Types**:
-- Definitional: `defines`, `classifies`, `is_instance_of`
-- Structural: `part_of`, `contains`, `section_in`, `chapter_in`
-- Amendment: `amends`, `repeals`, `supersedes`, `replaces`
-- Enforcement: `enforces`, `interprets`, `adjudicates`
-- Citation: `cites`, `referenced_in`, `relies_on`
-- Procedural: `procedure_for`, `prerequisite_to`, `precedes`
-
-**Node Structure**:
-```cypher
-(:Entity:Section {
-  name: "section_420",              // Normalized name
-  display_name: "Section 420 IPC",  // Human-readable
-  entity_type: "Section",           // Ontology type
-  canonical_id: "IPC:Section:420",  // Unique identifier
-  law_level: "statute",             // Document level
-  source: "ipc.json",               // Origin file
-  embedding: [...]                  // Optional vector
-})
-```
-
-**Hierarchical Relationships**:
-```cypher
-(:Section)-[:PART_OF_HIERARCHY {
-  relation_confidence: 1.0,
-  inferred: false,
-  source: "ipc.json"
-}]->(:Chapter)-[:PART_OF_HIERARCHY]->(:Act)
-```
-
-### Triple Extraction Pipeline
-
-1. **Document Context Detection**: Auto-detect IPC, Constitution, CPC, CrPC, etc.
-2. **Domain-Aware Prompts**: 
-   - System prompt with legal ontology (entity types + relations)
-   - Few-shot examples from real legal documents
-   - Document-specific guidance (e.g., "This is IPC - criminal law")
-3. **LLM Extraction**: GPT-4o-mini extracts JSON triples with entity types
-4. **Validation**: Pydantic validation + ontology normalization
-5. **Confidence Scoring**: 1.0 (exact), 0.8 (alias), 0.5 (unknown)
-6. **Neo4j Ingestion**: Dynamic label assignment via APOC + relationship creation
-
-### Neo4j APOC Requirement
-
-**Why APOC?** Cypher cannot dynamically add labels. APOC enables:
-```cypher
-CALL apoc.create.addLabels(node, ["Section"]) 
-```
-
-**Installation**:
-
-**Neo4j Desktop**: Plugins tab → Install "APOC Core" → Restart
-
-**Docker**:
-```bash
-# Download matching version from https://github.com/neo4j/apoc/releases
-docker cp apoc-5.x.x-all.jar neo4j_container:/var/lib/neo4j/plugins/
-docker restart neo4j_container
-```
-
-**Verify**:
-```cypher
-CALL apoc.version()
-```
-
-**Fallback (no APOC)**: Query by property instead of label:
-```cypher
-MATCH (s:Entity)-[:PART_OF_HIERARCHY]->(c:Entity)
-WHERE s.entity_type = 'Section' AND c.entity_type = 'Chapter'
-RETURN s.display_name, c.display_name
-```
-
-## Query Examples
-
-### Vector Search (Qdrant)
 ```python
 from src.workflows.legal_document_ingestion import get_ingestion_workflow
 
@@ -178,226 +140,152 @@ workflow = get_ingestion_workflow()
 results = workflow.search_similar_documents(
     query_text="breach of contract damages",
     limit=10,
-    filters={"court": "Supreme Court"}
+    filters={"court": "Supreme Court"},
 )
 ```
 
-### Graph Traversal (Neo4j)
+---
 
-**Find sections in chapters**:
-```cypher
-MATCH (s:Section)-[:PART_OF_HIERARCHY]->(c:Chapter)
-RETURN s.display_name AS section, c.display_name AS chapter
-LIMIT 10
+### 3.2 Graph Ingestion (Neo4j + GraphRAG)
+
+The graph indexer turns documents into a hierarchical legal knowledge graph with canonical entities and typed relationships.
+
+**Basic graph indexing:**
+
+```bash
+# Full graph + embeddings
+python scripts/graph_rag_index.py --paths data/knowledge_base/ --recursive
+
+# Faster iteration: no embeddings
+python scripts/graph_rag_index.py --paths data/ --no-embed
+
+# Safe dry‑run / small subset
+python scripts/graph_rag_index.py --paths data/ --max-chunks 10
 ```
 
-**Full hierarchy traversal**:
-```cypher
-MATCH path = (s:Section)-[:PART_OF_HIERARCHY*..5]->()
-WHERE s.canonical_id = 'IPC:Section:420'
-RETURN path
-```
+High‑level pipeline (see `GRAPH_RAG_FEATURES_AND_IMPLEMENTATION.md` for details):
 
-**Semantic relations**:
-```cypher
-MATCH (a:Section)-[r:RELATION {type: 'amends'}]->(b:Section)
-RETURN a.display_name, b.display_name, r.relation_confidence
-```
+1. Load and flatten JSON / PDF into text blocks
+2. Chunk text and send to OpenAI chat model
+3. Parse triples into `Triple` Pydantic model
+4. Normalize entity/relationship types using `LegalOntology`
+5. Resolve entities to canonical IDs via `EntityResolver`
+6. Ingest nodes and typed relationships into Neo4j (APOC‑powered)
+7. Optionally embed entities and update Neo4j vector index
 
-**Low-confidence review**:
-```cypher
-MATCH (a)-[r:RELATION]->(b)
-WHERE r.relation_confidence < 0.8
-RETURN a.display_name, r.type, b.display_name, r.relation_confidence
-ORDER BY r.relation_confidence ASC
-```
+---
 
-### Hybrid Retrieval (Vector + Graph)
+### 3.3 Hybrid Retrieval (Vector + Graph)
+
+Use vector search to find seed entities, then expand through the graph:
+
 ```python
-from src.workflows.graphs.retrieval import vector_nearest_entities, expand_graph_seeds
+from src.workflows.graphs.retrieval import (
+    vector_nearest_entities,
+    expand_graph_seeds,
+)
 
-# 1. Semantic search
+# 1. Semantic seed search
 seeds = vector_nearest_entities("Section 420 fraud", top_k=5)
 entity_names = [name for name, score, meta in seeds]
 
-# 2. Graph expansion
-neighbors = expand_graph_seeds(entity_names, hops=2, limit_per_seed=10)
+# 2. Graph expansion around seeds
+neighbors = expand_graph_seeds(
+    entity_names,
+    hops=2,
+    relation_types=["CITES", "AMENDS"],
+    limit_per_seed=10,
+)
 ```
 
-## System Configuration
+---
 
-### Environment Variables
+## 4. Graph & Vector Optimizations (Summary)
 
-**Core Database**:
-```bash
-QDRANT_HOST=localhost
-QDRANT_PORT=6333
-QDRANT_COLLECTION=legal_documents
+The system includes three major optimizations (see `OPTIMIZATIONS.md` for full metrics and details; Graph‑specific aspects are also summarized in the GraphRAG doc):
 
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=required
+1. **Entity resolution** (`docs/ENTITY_RESOLUTION.md`, `src/utils/entity_resolver.py`)
+   - Legal‑specific parsers for sections, cases, statutes
+   - Canonical IDs like `IPC:Section:420`, `AIR_1970_SC_1876`
+   - ~90% duplicate reduction and 5–10× faster traversals
+
+2. **Typed relationships** (`docs/TYPED_RELATIONSHIPS_GUIDE.md`, `src/config/legal_ontology.py`)
+   - 90+ canonical relation types mapped to Neo4j labels (`:AMENDS`, `:CITES`, ...)
+   - 12–17× faster relationship queries vs a generic `:RELATION {type: ...}` model
+
+3. **Native vector search** (`docs/VECTOR_SEARCH_OPTIMIZATION.md`, `scripts/vector_index_manager.py`)
+   - Neo4j 5 vector index instead of Python‑side cosine similarity
+   - 15–300× faster semantic search with O(log n) behaviour
+
+---
+
+## 5. Project Layout
+
+```text
+src/
+├── agents/                # LangChain knowledge extractors (e.g. Legal Knowledge Extractor)
+├── config/                # Settings, legal ontology, extraction examples
+├── database/              # Qdrant + Neo4j clients, embedding services
+├── processing/            # Document processors (PDF, JSON, TXT)
+├── scrapers/              # Web scrapers for legal sources
+├── workflows/             # Orchestration workflows (vector + graph)
+│   └── graphs/            # GraphRAG indexing, enrichment, retrieval
+└── utils/                 # PDF extraction, helpers
+
+scripts/
+├── ingest_legal_documents.py        # Vector ingestion + CLI search
+├── graph_rag_index.py               # GraphRAG indexing entrypoint
+├── vector_index_manager.py          # Neo4j vector index management
+└── verify_hierarchy_setup.py        # Sanity checks for graph hierarchy
+
+docs/
+├── DOCUMENTATION_INDEX.md           # History of previous consolidations
+├── OPTIMIZATIONS.md                 # Detailed performance work
+├── ENTITY_RESOLUTION.md             # Entity resolution reference
+├── TYPED_RELATIONSHIPS_GUIDE.md     # All relationship types
+├── VECTOR_SEARCH_OPTIMIZATION.md    # Vector index deep‑dive
+├── LEGAL_KNOWLEDGE_EXTRACTOR.md     # LangChain legal extractor
+└── GRAPH_RAG_FEATURES_AND_IMPLEMENTATION.md  # GraphRAG design (this repo’s main graph doc)
+
+tests/                               # Unit + integration tests
 ```
 
-**Embeddings**:
-```bash
-LEGAL_BERT_MODEL=nlpaueb/legal-bert-base-uncased
-EMBEDDING_BATCH_SIZE=8
-EMBEDDING_DEVICE=auto  # auto/cuda/cpu/mps
-```
+---
 
-**Processing**:
-```bash
-CHUNK_SIZE=450
-CHUNK_OVERLAP=50
-```
+## 6. Troubleshooting (Essentials)
 
-**LLM (GraphRAG)**:
-```bash
-OPENAI_API_KEY=required
-OPENAI_CHAT_MODEL=gpt-4o-mini
-OPENAI_RATE_CHAT_INPUT_PER_1K=5.00
-OPENAI_RATE_CHAT_OUTPUT_PER_1K=15.00
-OPENAI_RATE_EMBED_PER_1K=0.13
-```
+**Connectivity**
 
-**Production**:
 ```bash
-APP_ENV=development
-LOG_LEVEL=INFO
-LOG_SENSITIVE_DATA=false
-```
-
-## Troubleshooting
-
-### Connection Issues
-```bash
-# Test Qdrant
+# Qdrant
 curl http://localhost:6333/collections
 
-# Test Neo4j
+# Neo4j
 cypher-shell -u neo4j -p password "RETURN 'connected'"
 
-# Test APOC
+# APOC
 cypher-shell -u neo4j -p password "CALL apoc.version()"
 ```
 
-### Memory Issues
-```bash
-# Reduce batch sizes
-export EMBEDDING_BATCH_SIZE=4
-export EMBEDDING_DEVICE=cpu
-```
+**Performance / memory issues**
 
-### Model Loading
+- Reduce batch sizes:
+  - `export EMBEDDING_BATCH_SIZE=4`
+  - `export EMBEDDING_DEVICE=cpu`
+- For Neo4j vector search, ensure `entity_embedding_index` is ONLINE using `scripts/vector_index_manager.py`.
+
+**Model / cache issues**
+
 ```bash
-# Clear cache
 rm -rf ~/.cache/huggingface/transformers/
-
-# Test internet
-ping huggingface.co
 ```
 
-## Performance Optimization
+---
 
-### GPU Acceleration
-- Set `EMBEDDING_DEVICE=cuda` for 5-10x faster embeddings
-- Monitor GPU memory with `nvidia-smi`
+## 7. Development & Testing
 
-### Batch Processing
-- Qdrant: Increase `EMBEDDING_BATCH_SIZE` (8-32)
-- GraphRAG: Use `--max-chunks` for testing before full runs
+Run tests:
 
-### Neo4j Indexing
-```cypher
--- Index for hierarchical queries
-CREATE INDEX section_canonical_id IF NOT EXISTS FOR (s:Section) ON (s.canonical_id)
-CREATE INDEX entity_type_idx IF NOT EXISTS FOR (e:Entity) ON (e.entity_type)
-
--- Vector index (requires Neo4j 5.x+)
-CREATE VECTOR INDEX entity_embedding_index IF NOT EXISTS
-FOR (e:Entity) ON (e.embedding)
-OPTIONS {indexConfig: {`vector.dimensions`: 3072, `vector.similarity_function`: 'cosine'}}
-```
-
-## Project Structure
-
-```
-src/
-├── agents/              # LangChain knowledge extractors
-├── config/              # Settings, ontology, extraction examples
-├── database/            # Qdrant, Neo4j, embedding services
-├── processing/          # Document processors (PDF, JSON, TXT)
-├── scrapers/            # Web scrapers for legal sources
-├── workflows/           # Main orchestration workflows
-│   └── graphs/          # GraphRAG indexing, retrieval, enrichment
-└── utils/               # PDF extractors, helpers
-
-scripts/                 # CLI entry points
-├── ingest_legal_documents.py      # Qdrant ingestion
-├── graph_rag_index.py             # Neo4j graph indexing
-└── verify_hierarchy_setup.py     # System verification
-
-docs/                    # Documentation
-data/                    # Legal document storage
-tests/                   # Unit and integration tests
-```
-
-## Common Workflows
-
-### Adding New Document Types
-1. Update `ProcessingConfig.supported_extensions`
-2. Add extraction method in `DocumentProcessor`
-3. Implement category inference logic
-4. Update metadata schema
-
-### Extending Ontology
-1. Add entity types to `EntityType` enum in `legal_ontology.py`
-2. Add relationships to `RelationType` enum
-3. Update system prompts in `graph_rag_indexer.py`
-4. Add examples to `legal_extraction_examples.json`
-
-### Custom Queries
-Combine vector + graph for powerful hybrid retrieval:
-```python
-# 1. Semantic: Find relevant entities
-entities = vector_nearest_entities("fraud penalties IPC", top_k=10)
-
-# 2. Graph: Expand to related concepts
-for name, score, meta in entities:
-    # Traverse hierarchy
-    cypher = "MATCH (e:Entity {name: $name})-[:PART_OF_HIERARCHY*..3]->() RETURN ..."
-    
-    # Find citations
-    cypher = "MATCH (e:Entity {name: $name})-[:RELATION {type: 'cites'}]->() RETURN ..."
-```
-
-## Status & Limitations
-
-### ✅ Implemented
-- Vector ingestion with inLegalBERT + Qdrant
-- Graph ingestion with legal ontology + Neo4j
-- 57 entity types, 80+ relation types
-- Domain-aware triple extraction
-- Confidence scoring and validation
-- Hierarchical relationships via APOC
-- Cost tracking for LLM/embedding usage
-
-### ⚠️ Partial
-- Hierarchical labels (requires APOC)
-- Vector retrieval (Python-side cosine, not Neo4j native)
-- Chunk nodes (chunks not stored as entities)
-
-### ❌ Not Implemented
-- Temporal versioning (amendments over time)
-- Legal citation parsing (regex for "Section 420 IPC")
-- Bidirectional relationships
-- Human review UI for low-confidence triples
-- Automated backfilling of missing hierarchies
-
-## Development
-
-### Testing
 ```bash
 # Unit tests
 pytest tests/unit/
@@ -405,24 +293,31 @@ pytest tests/unit/
 # Integration tests
 pytest tests/integration/
 
-# Specific module
+# Focused module
 pytest tests/unit/test_enrichment.py -v
 ```
 
-### Adding Features
-1. Follow existing code patterns in `src/`
-2. Add type hints to all functions
-3. Use Google-style docstrings
-4. Handle errors gracefully with logging
-5. Add tests for new functionality
+Contribution guidelines (informal):
 
-## References
+1. Follow existing code patterns and type hints in `src/`
+2. Use clear docstrings and structured logging
+3. Preserve separation of concerns (processing vs graph vs vector vs UI)
+4. Add tests and, where relevant, short documentation updates to this README or the GraphRAG doc
 
-- **inLegalBERT**: [nlpaueb/legal-bert-base-uncased](https://huggingface.co/nlpaueb/legal-bert-base-uncased)
-- **Qdrant**: [qdrant.tech](https://qdrant.tech)
-- **Neo4j APOC**: [neo4j.com/labs/apoc](https://neo4j.com/labs/apoc)
-- **OpenAI Embeddings**: text-embedding-3-large (3072-dim)
+---
 
-## License
+## 8. Related References
 
-Production-ready legal tech application. Ensure compliance with your organization's data handling policies.
+- **GraphRAG design & pipeline**: `docs/GRAPH_RAG_FEATURES_AND_IMPLEMENTATION.md`
+- **Optimization details**: `docs/OPTIMIZATIONS.md`
+- **Entity resolution**: `docs/ENTITY_RESOLUTION.md`
+- **Typed relationships**: `docs/TYPED_RELATIONSHIPS_GUIDE.md`
+- **Vector search tuning**: `docs/VECTOR_SEARCH_OPTIMIZATION.md`
+- **Legal Knowledge Extractor**: `docs/LEGAL_KNOWLEDGE_EXTRACTOR.md`
+
+External:
+
+- inLegalBERT — https://huggingface.co/nlpaueb/legal-bert-base-uncased
+- Qdrant — https://qdrant.tech
+- Neo4j APOC — https://neo4j.com/labs/apoc
+- Neo4j Vector Search — https://neo4j.com/docs/neo4j-manual/latest/query-tuning/vector-search/
