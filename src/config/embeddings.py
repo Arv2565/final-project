@@ -19,13 +19,15 @@ class EmbeddingServiceConfig:
     # Vector embedding service (Qdrant - HuggingFace InLegalBERT)
     vector_model_name: str
     vector_model_dimension: int
-    vector_max_seq_length: int = 512
-    vector_batch_size: int = 8
-    vector_device: str = "auto"  # auto, cpu, cuda, mps
     
     # Entity embedding service (Neo4j - OpenAI text-embedding-3-large)
     entity_model_name: str
     entity_model_dimension: int
+
+    # Vector defaults
+    vector_max_seq_length: int = 512
+    vector_batch_size: int = 8
+    vector_device: str = "auto"  # auto, cpu, cuda, mps
     
     # Batch processing
     embedding_batch_size: int = 8

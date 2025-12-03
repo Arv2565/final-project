@@ -21,7 +21,10 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from src.config import get_settings
-from pipelines.document_ingestion.processor import DocumentChunk
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pipelines.document_ingestion.processor import DocumentChunk
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +184,7 @@ class InLegalBERTEmbeddingService:
             logger.error(f"Error generating embeddings for batch: {e}")
             raise RuntimeError(f"Embedding generation failed: {e}")
     
-    def embed_document_chunks(self, chunks: List[DocumentChunk]) -> List[tuple[DocumentChunk, np.ndarray]]:
+    def embed_document_chunks(self, chunks: List["DocumentChunk"]) -> List[tuple["DocumentChunk", np.ndarray]]:
         """
         Generate embeddings for a list of DocumentChunk objects.
         

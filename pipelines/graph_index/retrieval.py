@@ -26,8 +26,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from src.database.neo4j.client import neo4j_session as _base_neo4j_session
 from src.utils.graph import (
-    VectorSearch,
-    VectorRetrievalService,
+    vector_search,
+    VectorSearchCapability,
     SimilarityFunction,
     get_vector_search_stats,
 )

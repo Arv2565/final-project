@@ -19,10 +19,14 @@ from src.utils.entity.parser import (
 )
 from src.utils.pdf.extractor import PDFTextExtractor as PDFTextExtractor
 from src.utils.graph.vector_retrieval import (
-    VectorSearch as VectorSearch,
-    VectorRetrievalService as VectorRetrievalService,
+    vector_search as vector_search,
+    VectorSearchCapability as VectorSearchCapability,
 )
-from src.utils.graph.cypher import CypherBuilder as CypherBuilder
+from src.utils.graph.cypher import (
+    relationship_type_to_cypher as relationship_type_to_cypher,
+    build_relationship_pattern as build_relationship_pattern,
+    build_typed_relationship_query as build_typed_relationship_query,
+)
 
 # Cache manager (kept in main utils)
 from src.utils.cache_manager import *
@@ -34,9 +38,11 @@ __all__ = [
     "CaseCitation",
     "StatuteReference",
     "PDFTextExtractor",
-    "VectorSearch",
-    "VectorRetrievalService",
-    "CypherBuilder",
+    "vector_search",
+    "VectorSearchCapability",
+    "relationship_type_to_cypher",
+    "build_relationship_pattern",
+    "build_typed_relationship_query",
 ]
 
 def __getattr__(name):

@@ -10,8 +10,8 @@ import logging
 from typing import Dict, Any, List, Optional
 from unittest.mock import Mock, patch, MagicMock
 
-from src.config.legal_ontology import LegalOntology, RelationType
-from src.utils.cypher_builder import (
+from src.config.ontology import LegalOntology, RelationType
+from src.utils.graph.cypher import (
     relationship_type_to_cypher,
     build_relationship_pattern,
     build_typed_relationship_query,
@@ -366,20 +366,20 @@ class TestQueryBuilderDocumentation:
     
     def test_readme_example_1(self):
         """Test README example 1: single relationship pattern."""
-        from src.utils.cypher_builder import build_relationship_pattern
+        from src.utils.graph.cypher import build_relationship_pattern
         pattern = build_relationship_pattern('amends')
         assert pattern == '-[r:AMENDS]->'
     
     def test_readme_example_2(self):
         """Test README example 2: multiple types."""
-        from src.utils.cypher_builder import build_relationship_pattern
+        from src.utils.graph.cypher import build_relationship_pattern
         pattern = build_relationship_pattern(['amends', 'modifies'], 'rel')
         assert ':AMENDS|MODIFIES' in pattern
         assert '[rel:' in pattern
     
     def test_readme_example_3(self):
         """Test README example 3: full query."""
-        from src.utils.cypher_builder import build_typed_relationship_query
+        from src.utils.graph.cypher import build_typed_relationship_query
         query = build_typed_relationship_query('Section', 'Chapter', 'part_of')
         assert 'MATCH' in query
         assert ':PART_OF' in query
