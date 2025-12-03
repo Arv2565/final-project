@@ -4,9 +4,13 @@ LangChain agent for legal document knowledge extraction.
 import json
 import logging
 import os
+import sys
 import time
 from pathlib import Path
 from typing import List, Optional
+
+# Add project root for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
@@ -14,11 +18,8 @@ from langchain.schema import BaseOutputParser
 from langchain.chains import LLMChain
 from pydantic import ValidationError
 
-import sys
-sys.path.append(str(Path(__file__).parent.parent))
-
-from models.legal_document_v2 import LegalDocumentKnowledgeV2 as LegalDocumentKnowledge
-from utils.pdf_extractor import PDFTextExtractor
+from src.models.legal_document_v2 import LegalDocumentKnowledgeV2 as LegalDocumentKnowledge
+from src.utils.pdf import PDFTextExtractor
 
 
 logger = logging.getLogger(__name__)

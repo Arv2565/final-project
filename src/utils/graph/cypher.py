@@ -8,7 +8,7 @@ relationship type indexing.
 """
 
 from typing import List, Dict, Any, Optional, Union
-from src.config.legal_ontology import LegalOntology, RelationType
+from src.config import LegalOntology, RelationType
 
 
 def relationship_type_to_cypher(relation: str) -> str:

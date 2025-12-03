@@ -14,9 +14,14 @@ from typing import List, Optional, Union, Any
 from transformers import AutoTokenizer, AutoModel
 import logging
 from dataclasses import dataclass
+import sys
+import os
 
-from config.settings import get_settings
-from processing.document_processor import DocumentChunk
+# Add project root for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
+from src.config import get_settings
+from pipelines.document_ingestion.processor import DocumentChunk
 
 logger = logging.getLogger(__name__)
 
