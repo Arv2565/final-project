@@ -1,8 +1,8 @@
 import pytest
-from models.extracted_entity import ExtractedEntity
-from models.legal_document_v2 import LegalDocumentKnowledgeV2
+from src.models.extracted_entity import ExtractedEntity
+from src.models.legal_document_v2 import LegalDocumentKnowledgeV2
 
-from workflows.graphs.graph_rag_indexer import Triple
+from pipelines.graph_index.indexer import Triple
 
 
 def test_extracted_entity_model():

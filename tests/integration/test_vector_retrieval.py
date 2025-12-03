@@ -16,9 +16,9 @@ from typing import List, Dict, Any
 
 import numpy as np
 
-from src.utils.vector_retrieval import VectorSearchCapability, vector_search, vector_search_batch
-from src.workflows.graphs.retrieval import vector_nearest_entities, expand_graph_seeds
-from src.utils.cypher_builder import (
+from src.utils.graph.vector_retrieval import VectorSearchCapability, vector_search, vector_search_batch
+from pipelines.graph_index.retrieval import vector_nearest_entities, expand_graph_seeds
+from src.utils.graph.cypher import (
     build_vector_search_query,
     build_vector_search_batch_query,
     build_hybrid_vector_graph_query,
@@ -41,7 +41,7 @@ class TestVectorSearchCapability(unittest.TestCase):
     
     def test_neo4j_version_detection(self):
         """Test Neo4j version detection."""
-        with patch('src.utils.vector_retrieval.get_neo4j_session') as mock_session:
+        with patch('src.utils.graph.vector_retrieval.get_neo4j_session') as mock_session:
             mock_result = MagicMock()
             mock_result.single.return_value = {'versions': ['5.2.0']}
             mock_session.return_value.__enter__.return_value.run.return_value = mock_result
@@ -52,10 +52,10 @@ class TestVectorSearchCapability(unittest.TestCase):
             
             self.assertTrue(cap.supports_vector_index)
     
-    @patch('src.utils.vector_retrieval.logger')
+    @patch('src.utils.graph.vector_retrieval.logger')
     def test_version_check_neo4j_4(self, mock_logger):
         """Test version check for Neo4j 4.x (no vector support)."""
-        with patch('src.utils.vector_retrieval.get_neo4j_session') as mock_session:
+        with patch('src.utils.graph.vector_retrieval.get_neo4j_session') as mock_session:
             mock_result = MagicMock()
             mock_result.single.return_value = {'versions': ['4.4.11']}
             mock_session.return_value.__enter__.return_value.run.return_value = mock_result
@@ -69,7 +69,7 @@ class TestVectorSearchCapability(unittest.TestCase):
 class TestVectorNativeSearch(unittest.TestCase):
     """Test native Neo4j vector search functionality."""
     
-    @patch('src.utils.vector_retrieval.get_neo4j_session')
+    @patch('src.utils.graph.vector_retrieval.get_neo4j_session')
     def test_native_vector_search_basic(self, mock_session_func):
         """Test basic native vector search."""
         # Create mock session and result
@@ -87,7 +87,7 @@ class TestVectorNativeSearch(unittest.TestCase):
         mock_session.run.return_value = mock_result
         
         # Test native search
-        from src.utils.vector_retrieval import vector_search_native
+        from src.utils.graph.vector_retrieval import vector_search_native
         
         results = vector_search_native(query_vector, top_k=3)
         
@@ -95,7 +95,7 @@ class TestVectorNativeSearch(unittest.TestCase):
         self.assertEqual(results[0]['name'], 'Entity1')
         self.assertAlmostEqual(results[0]['score'], 0.95)
     
-    @patch('src.utils.vector_retrieval.get_neo4j_session')
+    @patch('src.utils.graph.vector_retrieval.get_neo4j_session')
     def test_native_search_with_filters(self, mock_session_func):
         """Test native vector search with property filters."""
         mock_session = MagicMock()
@@ -109,7 +109,7 @@ class TestVectorNativeSearch(unittest.TestCase):
         mock_result.__iter__ = lambda self: iter(mock_records)
         mock_session.run.return_value = mock_result
         
-        from src.utils.vector_retrieval import vector_search_native
+        from src.utils.graph.vector_retrieval import vector_search_native
         
         results = vector_search_native(
             query_vector,
@@ -124,8 +124,8 @@ class TestVectorNativeSearch(unittest.TestCase):
 class TestVectorSearchFallback(unittest.TestCase):
     """Test vector search fallback mechanism."""
     
-    @patch('src.utils.vector_retrieval.get_neo4j_session')
-    @patch('src.utils.vector_retrieval.logger')
+    @patch('src.utils.graph.vector_retrieval.get_neo4j_session')
+    @patch('src.utils.graph.vector_retrieval.logger')
     def test_fallback_to_python(self, mock_logger, mock_session_func):
         """Test fallback to Python cosine when native search fails."""
         mock_session = MagicMock()
@@ -142,11 +142,11 @@ class TestVectorSearchFallback(unittest.TestCase):
             {'id': '2', 'name': 'Entity2', 'embedding': np.random.randn(3072)},
         ]
         
-        with patch('src.utils.vector_retrieval.get_neo4j_session') as mock_get_session:
+        with patch('src.utils.graph.vector_retrieval.get_neo4j_session') as mock_get_session:
             # First call for capability check, second for fallback
             mock_get_session.side_effect = [mock_session_func, mock_session_func]
             
-            from src.utils.vector_retrieval import vector_search
+            from src.utils.graph.vector_retrieval import vector_search
             
             # This should fall back gracefully
             try:
@@ -159,7 +159,7 @@ class TestVectorSearchFallback(unittest.TestCase):
     
     def test_python_cosine_similarity(self):
         """Test Python cosine similarity computation."""
-        from src.utils.vector_retrieval import _compute_cosine_similarity
+        from src.utils.graph.vector_retrieval import _compute_cosine_similarity
         
         # Create test vectors
         v1 = np.array([1.0, 0.0, 0.0])
@@ -247,8 +247,8 @@ class TestVectorCypherBuilders(unittest.TestCase):
 class TestVectorRetrievalIntegration(unittest.TestCase):
     """Integration tests for vector retrieval workflow."""
     
-    @patch('src.workflows.graphs.retrieval.vector_search')
-    @patch('src.workflows.graphs.retrieval.get_neo4j_session')
+    @patch('pipelines.graph_index.retrieval.vector_search')
+    @patch('pipelines.graph_index.retrieval.get_neo4j_session')
     def test_vector_nearest_entities(self, mock_session_func, mock_vector_search):
         """Test vector_nearest_entities function."""
         # Setup mocks
@@ -273,7 +273,7 @@ class TestVectorRetrievalIntegration(unittest.TestCase):
         self.assertEqual(results[0]['name'], 'Entity1')
         self.assertGreater(results[0]['score'], results[1]['score'])
     
-    @patch('src.workflows.graphs.retrieval.get_neo4j_session')
+    @patch('pipelines.graph_index.retrieval.get_neo4j_session')
     def test_expand_graph_seeds_with_typed_relations(self, mock_session_func):
         """Test graph expansion with typed relationships."""
         mock_session = MagicMock()
@@ -302,7 +302,7 @@ class TestVectorRetrievalIntegration(unittest.TestCase):
         # Should have called session.run with typed relationship support
         mock_session.run.assert_called()
     
-    @patch('src.workflows.graphs.retrieval.get_neo4j_session')
+    @patch('pipelines.graph_index.retrieval.get_neo4j_session')
     def test_expand_graph_seeds_typed_filter(self, mock_session_func):
         """Test that expand_graph_seeds builds correct typed relationship filters."""
         mock_session = MagicMock()
@@ -336,7 +336,7 @@ class TestVectorPerformance(unittest.TestCase):
     
     def test_batch_search_efficiency(self):
         """Test batch search efficiency."""
-        from src.utils.vector_retrieval import vector_search_batch
+        from src.utils.graph.vector_retrieval import vector_search_batch
         
         # Create batch of queries
         queries = [np.random.randn(3072) for _ in range(5)]
@@ -349,7 +349,7 @@ class TestVectorPerformance(unittest.TestCase):
 class TestVectorIndexStatistics(unittest.TestCase):
     """Test vector index statistics and monitoring."""
     
-    @patch('src.workflows.graphs.retrieval.get_neo4j_session')
+    @patch('pipelines.graph_index.retrieval.get_neo4j_session')
     def test_get_retrieval_stats(self, mock_session_func):
         """Test retrieval statistics collection."""
         mock_session = MagicMock()
@@ -362,7 +362,7 @@ class TestVectorIndexStatistics(unittest.TestCase):
             ])
         )
         
-        from src.workflows.graphs.retrieval import get_retrieval_stats
+        from pipelines.graph_index.retrieval import get_retrieval_stats
         
         # Call should work with mocked session
         try:
@@ -375,13 +375,13 @@ class TestVectorIndexStatistics(unittest.TestCase):
 class TestVectorSearchErrorHandling(unittest.TestCase):
     """Test error handling in vector search."""
     
-    @patch('src.utils.vector_retrieval.get_neo4j_session')
-    @patch('src.utils.vector_retrieval.logger')
+    @patch('src.utils.graph.vector_retrieval.get_neo4j_session')
+    @patch('src.utils.graph.vector_retrieval.logger')
     def test_invalid_vector_dimension(self, mock_logger, mock_session_func):
         """Test handling of invalid vector dimensions."""
         query_vector = np.random.randn(2048)  # Wrong dimension
         
-        from src.utils.vector_retrieval import vector_search
+        from src.utils.graph.vector_retrieval import vector_search
         
         # Should handle dimension mismatch gracefully
         try:
@@ -390,14 +390,14 @@ class TestVectorSearchErrorHandling(unittest.TestCase):
             # Expected to fail with dimension mismatch
             pass
     
-    @patch('src.utils.vector_retrieval.get_neo4j_session')
+    @patch('src.utils.graph.vector_retrieval.get_neo4j_session')
     def test_empty_result_handling(self, mock_session_func):
         """Test handling of empty search results."""
         mock_session = MagicMock()
         mock_session_func.return_value = mock_session
         mock_session.run.return_value = MagicMock(__iter__=lambda self: iter([]))
         
-        from src.utils.vector_retrieval import vector_search_native
+        from src.utils.graph.vector_retrieval import vector_search_native
         
         query_vector = np.random.randn(3072)
         results = vector_search_native(query_vector, top_k=5)
@@ -415,7 +415,7 @@ class TestVectorSearchComparison(unittest.TestCase):
         v2 = np.array([1.0, 2.0, 3.0])  # Same as v1
         v3 = np.array([2.0, 4.0, 6.0])  # 2x v1
         
-        from src.utils.vector_retrieval import _compute_cosine_similarity
+        from src.utils.graph.vector_retrieval import _compute_cosine_similarity
         
         # Same vectors should have perfect similarity
         sim_same = _compute_cosine_similarity(v1, v2)

@@ -1,4 +1,4 @@
-from workflows.graphs.enrichment import normalize_name, canonicalize_entities, enrich_relation
+from pipelines.graph_index.enrichment import normalize_name, canonicalize_entities, enrich_relation
 
 
 def test_normalize_name_basic():

@@ -29,9 +29,9 @@ def test_complete_hierarchy():
 
     # Import after path setup
     try:
-        from database.neo4j.client import neo4j_session
-        from workflows.graphs.graph_rag_indexer import GraphRAGIndexer
-        from config.legal_ontology import EntityType, LegalOntology
+        from src.database.neo4j.client import neo4j_session
+        from pipelines.graph_index.indexer import GraphRAGIndexer
+        from src.config.ontology import EntityType, LegalOntology
     except ImportError as e:
         print(f"❌ Import failed: {e}")
         print("   Make sure NEO4J_PASSWORD and OPENAI_API_KEY are set")

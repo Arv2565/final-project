@@ -16,9 +16,9 @@ def test_hierarchy_ingestion():
     Create a small JSON with sections, ingest via GraphRAG, and verify relations.
     """
     try:
-        from workflows.graphs.graph_rag_indexer import GraphRAGIndexer
-        from database.neo4j.client import neo4j_session
-        from config.settings import get_settings
+        from pipelines.graph_index.indexer import GraphRAGIndexer
+        from src.database.neo4j.client import neo4j_session
+        from src.config.settings import get_settings
     except ImportError as e:
         print(f"⚠️  Skipping test: imports failed ({e}). Neo4j/OpenAI may not be configured.")
         return True
