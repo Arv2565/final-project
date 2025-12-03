@@ -25,7 +25,7 @@ import numpy as np
 from neo4j import Session
 
 from src.database.neo4j.client import neo4j_session
-from src.database.embeddings import get_embedding_service
+from src.database.embeddings import InLegalBERTEmbeddingService
 
 logger = logging.getLogger(__name__)
 

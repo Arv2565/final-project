@@ -15,15 +15,17 @@ import difflib
 import json
 import os
 import re
+import sys
 import unicodedata
 from typing import Iterable, List, Dict, Tuple, Optional
 
 import logging
 
-from src.utils.entity_resolver import EntityResolver
-from src.utils.legal_entity_parser import (
-    LegalEntityParser, SectionReference, CaseCitation, StatuteReference
-)
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from src.utils.entity import EntityResolver
+from src.utils.entity import LegalEntityParser, SectionReference, CaseCitation, StatuteReference
 
 logger = logging.getLogger(__name__)
 

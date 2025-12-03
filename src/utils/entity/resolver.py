@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Tuple
 import logging
 
-from src.utils.legal_entity_parser import (
+from src.utils.entity.parser import (
     SectionReference, CaseCitation, StatuteReference,
     SectionParser, CaseCitationParser, StatuteParser
 )

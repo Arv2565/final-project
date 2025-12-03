@@ -13,6 +13,11 @@ from typing import List, Dict, Any, Optional, Union
 from datetime import datetime
 import logging
 import numpy as np
+import sys
+import os
+
+# Add project root for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 try:
     from qdrant_client import QdrantClient
@@ -25,8 +30,8 @@ try:
 except ImportError:
     raise ImportError("qdrant-client is required. Install with: pip install qdrant-client")
 
-from config.settings import get_settings
-from processing.document_processor import DocumentChunk
+from src.config import get_settings
+from pipelines.document_ingestion.processor import DocumentChunk
 
 logger = logging.getLogger(__name__)
 

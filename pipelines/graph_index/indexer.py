@@ -16,25 +16,31 @@ import os
 import re
 import time
 import logging
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Dict, Any, Optional, Set, Tuple
+
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from openai import OpenAI
 from neo4j import Session
 
-from src.config.settings import get_settings
-from src.config.legal_ontology import LegalOntology, EntityType, RelationType
+from src.config import get_settings, LegalOntology, EntityType, RelationType, get_embedding_config
 from src.database.neo4j.client import neo4j_session
 from .enrichment import normalize_name, canonicalize_entities_legal, enrich_relation, detect_doc_level_from_source, get_resolver
-from .human_validation import flag_uncertain_triples
-from src.utils.pdf_extractor import PDFTextExtractor
+from .validation import flag_uncertain_triples
+from src.utils.pdf import PDFTextExtractor
 
 
-EMBED_MODEL = "text-embedding-3-large"  # 3072 dims
+# Use centralized embedding config
+embedding_config = get_embedding_config()
+EMBED_MODEL = embedding_config.entity_embedding_model  # text-embedding-3-large by default
+EMBED_DIM = embedding_config.entity_embedding_dimension  # 3072 by default
 
-# Default OpenAI pricing (USD per 1K tokens). Override via env if needed.
+# OpenAI pricing rates (USD per 1K tokens) - from environment or defaults
 DEFAULT_CHAT_INPUT_PER_1K = float(os.getenv("OPENAI_RATE_CHAT_INPUT_PER_1K", "5.00"))
 DEFAULT_CHAT_OUTPUT_PER_1K = float(os.getenv("OPENAI_RATE_CHAT_OUTPUT_PER_1K", "15.00"))
 DEFAULT_EMBED_PER_1K = float(os.getenv("OPENAI_RATE_EMBED_PER_1K", "0.13"))
@@ -375,7 +381,7 @@ Document Context: {doc_context}
             "or, for a new label:\n"
             '{"relation": "<new_label>", "is_new": true}\n'
             "If no relation is appropriate at all, use:\n"
-            '{"relation": "none", "is_new": false}.\n"
+            '{"relation": "none", "is_new": false}'
         )
 
         user_prompt = (

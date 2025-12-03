@@ -17,13 +17,17 @@ Performance characteristics:
 from __future__ import annotations
 
 import logging
+import sys
+import os
 from typing import List, Tuple, Dict, Any, Optional
 
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
 from src.database.neo4j.client import neo4j_session as _base_neo4j_session
-from src.utils.vector_retrieval import (
-    vector_search,
-    vector_search_native,
-    vector_search_python,
+from src.utils.graph import (
+    VectorSearch,
+    VectorRetrievalService,
     SimilarityFunction,
     get_vector_search_stats,
 )

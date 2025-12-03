@@ -15,8 +15,13 @@ from dataclasses import dataclass
 import PyPDF2
 from datetime import datetime
 import logging
+import sys
+import os
 
-from config.settings import get_settings
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from src.config import get_settings
 
 logger = logging.getLogger(__name__)
 

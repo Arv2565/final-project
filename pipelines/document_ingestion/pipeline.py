@@ -16,11 +16,16 @@ from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
 import time
+import sys
+import os
 
-from processing.document_processor import DocumentProcessor, DocumentChunk
-from database.embeddings import get_embedding_service, cleanup_embedding_service
-from database.qdrant.client import get_qdrant_store, cleanup_qdrant_store
-from config.settings import get_settings, validate_environment
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from pipelines.document_ingestion.processor import DocumentProcessor, DocumentChunk
+from src.database.embeddings import get_embedding_service, cleanup_embedding_service
+from src.database.qdrant.client import get_qdrant_store, cleanup_qdrant_store
+from src.config import get_settings, validate_environment
 
 logger = logging.getLogger(__name__)
 
