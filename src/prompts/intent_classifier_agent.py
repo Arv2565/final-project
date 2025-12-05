@@ -13,17 +13,4 @@ ENTITY EXTRACTION:
 - jurisdiction: Country, state, or legal system (e.g., "India", "US", "California", "EU"). Set to null if unclear.
 - topic: Main legal topic or area (e.g., "divorce", "company registration", "property dispute", "criminal law"). Set to null if not applicable.
 - time_frame: Temporal context - "past" (historical/completed), "future" (planning/upcoming), or "unspecified". Set to null if not time-sensitive.
-
-CRITICAL: You MUST respond with valid JSON only, matching this exact structure:
-{
-  "intent": "ask_procedure",
-  "entities": {
-    "jurisdiction": "India",
-    "topic": "divorce",
-    "time_frame": "unspecified"
-  }
-}
-
-Use null for any entity that cannot be determined from the query.
-Do NOT include any text outside the JSON object.
 """

@@ -14,16 +14,4 @@ Your responsibilities:
 3. Extract metadata:
    - has_personal_data: true if the query mentions names, addresses, case numbers, or other PII
    - is_legal_question: true if the query is about laws, legal procedures, cases, or legal rights
-
-CRITICAL: You MUST respond with valid JSON only, matching this exact structure:
-{
-  "cleaned_query": "normalized English query here",
-  "metadata": {
-    "language": "en",
-    "has_personal_data": false,
-    "is_legal_question": true
-  }
-}
-
-Do NOT include any text outside the JSON object.
 """
