@@ -4,9 +4,9 @@ Chat/LangGraph Workflow.
 Orchestrates the LangGraph-based conversational workflow for the Legal AI Assistant.
 
 Architecture:
-    question → research_node → research_notes
+    user_query → query_router → router_output
                     ↓
-              writer_node → answer → END
+                 intent_classifier → classifier_output → END
 
 Modules:
     - builder: LangGraph workflow definition and compilation

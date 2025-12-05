@@ -223,20 +223,21 @@ The system includes three major optimizations (see `OPTIMIZATIONS.md` for full m
 
 ```text
 src/
-├── agents/                # LangChain knowledge extractors (e.g. Legal Knowledge Extractor)
+├── agents/                # QueryRouter, IntentClassifier, and Knowledge Extractor
 ├── config/                # Settings, legal ontology, extraction examples
 ├── database/              # Qdrant + Neo4j clients, embedding services
 ├── processing/            # Document processors (PDF, JSON, TXT)
 ├── scrapers/              # Web scrapers for legal sources
 ├── workflows/             # Orchestration workflows (vector + graph)
+│   ├── chat/              # LangGraph chat workflow (Router -> Intent Classifier)
 │   └── graphs/            # GraphRAG indexing, enrichment, retrieval
 └── utils/                 # PDF extraction, helpers
 
-scripts/
-├── ingest_legal_documents.py        # Vector ingestion + CLI search
-├── graph_rag_index.py               # GraphRAG indexing entrypoint
-├── vector_index_manager.py          # Neo4j vector index management
-└── verify_hierarchy_setup.py        # Sanity checks for graph hierarchy
+pipelines/                 # Ingestion and indexing pipelines (CLI)
+├── cli/                   # CLI entrypoints
+├── document_ingestion/    # Document processing
+├── graph_index/           # GraphRAG indexing
+└── vector_index/          # Vector index management
 
 docs/
 ├── DOCUMENTATION_INDEX.md           # History of previous consolidations
@@ -252,7 +253,22 @@ tests/                               # Unit + integration tests
 
 ---
 
-## 6. Troubleshooting (Essentials)
+## 6. Query-Time Chat Workflow
+
+The system uses a **LangGraph** workflow to process user queries:
+
+1.  **Query Router Agent**: Normalizes the query, translates if necessary, and extracts basic metadata.
+2.  **Intent Classifier Agent**: Classifies the user's intent (e.g., procedure, law explanation, case law) and extracts specific legal entities.
+
+**Running the Chat Workflow:**
+
+```bash
+python src/app.py --question "What are the penalties under Section 420 IPC?"
+```
+
+---
+
+## 7. Troubleshooting (Essentials)
 
 **Connectivity**
 
@@ -272,7 +288,7 @@ cypher-shell -u neo4j -p password "CALL apoc.version()"
 - Reduce batch sizes:
   - `export EMBEDDING_BATCH_SIZE=4`
   - `export EMBEDDING_DEVICE=cpu`
-- For Neo4j vector search, ensure `entity_embedding_index` is ONLINE using `scripts/vector_index_manager.py`.
+- For Neo4j vector search, ensure `entity_embedding_index` is ONLINE using `pipelines/cli/vector_index_manager.py`.
 
 **Model / cache issues**
 
@@ -282,7 +298,7 @@ rm -rf ~/.cache/huggingface/transformers/
 
 ---
 
-## 7. Development & Testing
+## 8. Development & Testing
 
 Run tests:
 
@@ -306,7 +322,7 @@ Contribution guidelines (informal):
 
 ---
 
-## 8. Related References
+## 9. Related References
 
 - **GraphRAG design & pipeline**: `docs/GRAPH_RAG_FEATURES_AND_IMPLEMENTATION.md`
 - **Optimization details**: `docs/OPTIMIZATIONS.md`
