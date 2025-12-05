@@ -1,8 +1,9 @@
-import json
 from typing import Dict, Any
 
+from langchain_openai import ChatOpenAI
+
 from src.models import GraphState, IntentClassifierOutput, IntentType, ExtractedEntities
-from src.config import get_openai_client, get_llm_config
+from src.config import get_llm_config
 from src.prompts.intent_classifier_agent import INTENT_CLASSIFIER_SYSTEM_PROMPT
 
 
@@ -15,8 +16,11 @@ class IntentClassifierAgent:
     """
 
     def __init__(self) -> None:
-        self.client = get_openai_client()
-        self.config = get_llm_config()
+        config = get_llm_config()
+        self.llm = ChatOpenAI(
+            model=config.writer_model,
+            temperature=config.temperature_writer,
+        ).with_structured_output(IntentClassifierOutput)
 
     def __call__(self, state: GraphState) -> Dict[str, Any]:
         """Classify intent and extract entities from cleaned query.
@@ -43,42 +47,16 @@ class IntentClassifierAgent:
             user_prompt += f"(Originally in: {metadata.language})\n"
         user_prompt += "Classify the intent and extract entities."
 
-        # Single LLM call with strict JSON mode
-        response = self.client.chat.completions.create(
-            model=self.config.writer_model,
-            temperature=self.config.temperature_writer,
-            response_format={"type": "json_object"},  # Enforce JSON output
-            messages=[
+        try:
+            # LangChain handles structured output binding and validation
+            classifier_output = self.llm.invoke([
                 {"role": "system", "content": INTENT_CLASSIFIER_SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
-            ],
-        )
-
-        # Parse JSON response
-        content = response.choices[0].message.content or "{}"
-        try:
-            result = json.loads(content)
+            ])
             
-            # Construct Pydantic models for validation
-            entities = ExtractedEntities(**result.get("entities", {}))
-            
-            # Map intent string to enum (with fallback)
-            intent_str = result.get("intent", "general_question")
-            try:
-                intent = IntentType(intent_str)
-            except ValueError:
-                # Invalid intent string, default to general_question
-                intent = IntentType.GENERAL_QUESTION
-            
-            classifier_output = IntentClassifierOutput(
-                intent=intent,
-                entities=entities
-            )
-            
-            # Return state update
             return {"classifier_output": classifier_output}
             
-        except (json.JSONDecodeError, KeyError, ValueError) as e:
+        except Exception as e:
             # Fallback: Default to general question with no entities
             fallback_output = IntentClassifierOutput(
                 intent=IntentType.GENERAL_QUESTION,
