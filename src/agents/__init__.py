@@ -4,6 +4,27 @@ Agents module for legal document processing and query routing.
 
 from .query_router_agent import QueryRouterAgent
 from .intent_classifier_agent import IntentClassifierAgent
+from .orchestrator_agent import OrchestratorAgent
+from .placeholders import (
+    ActivityToLawAgent,
+    ProceduralGuidanceAgent,
+    DraftBuilderAgent,
+    EducationalLayerAgent,
+    CaseRetrieverAgent,
+    ComparativeModuleAgent
+)
+
+__all__ = [
+    "QueryRouterAgent",
+    "IntentClassifierAgent",
+    "OrchestratorAgent",
+    "ActivityToLawAgent",
+    "ProceduralGuidanceAgent",
+    "DraftBuilderAgent",
+    "EducationalLayerAgent",
+    "CaseRetrieverAgent",
+    "ComparativeModuleAgent",
+]
 
 # Lazy import for LegalDocumentKnowledgeExtractor to avoid dependency issues
 def _get_legal_knowledge_extractor():
