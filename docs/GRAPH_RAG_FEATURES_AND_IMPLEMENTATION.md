@@ -333,32 +333,54 @@ These functions automatically:
 1. Detect whether a Neo4j vector index is available
 2. Use native ANN search when possible, with Python cosine fallback otherwise
 
-### 6.3 Hybrid GraphRAG Usage
+### 6.3 Adaptive Retrieval (Graph RAG)
 
-Hybrid retrieval typically looks like:
+The system uses an **Adaptive Traversal** strategy (`Neo4jGraphRetriever`) to combine semantic precision with structural context:
 
-1. Use vector search to find a small set of seed entities
-2. Expand those seeds through the graph via typed relationships
-3. Rank / aggregate results by structural and semantic signals
+1.  **Semantic Expansion (1-hop)**:
+    -   Finds immediate neighbors via any relationship type (e.g., `AMENDS`, `CITES`, `PENALIZES`).
+    -   **Bidirectional**: Checks both incoming and outgoing edges, using `inverse_of` properties to correctly label direction.
 
-Example (pseudocode):
+2.  **Structural Expansion (Recursive)**:
+    -   Automatically traverses *up* the hierarchy using specific structural types: `PART_OF`, `SECTION_IN`, `CHAPTER_IN`, `CONTAINS`, `SUBSECTION_OF`, `BELONGS_TO`.
+    -   **Goal**: If a specific Section is found, this expansion grabs the Chapter and Act it belongs to, providing broader context to the LLM.
+
+3.  **Context Chunk Retrieval**:
+    -   For every identified entity, the system traverses `[:MENTIONED_IN]` edges to fetch the actual **text chunks**.
+    -   This provides the "Ground Truth" for RAG generation.
+
+### 6.4 Retrieval API Usage
+
+The unified retrieval API supports advanced filtering and context fetching:
 
 ```python
-from src.workflows.graphs.retrieval import (
-    vector_nearest_entities,
-    expand_graph_seeds,
+from src.retrieval.graph import Neo4jGraphRetriever
+
+retriever = Neo4jGraphRetriever()
+
+results = retriever.retrieve(
+    query="fraud penalties",
+    top_k=5,
+    hops=1,                         # Semantic hops
+    resolution_depth=2,             # Structural depth (Entity -> Chapter -> Act)
+    include_chunks=True,            # Fetch text chunks?
+    max_chunks=3,                   # Chunks per entity
+    source_filter="IPC",            # Filter by document source
+    valid_date="2023-01-01"         # Temporal validity check
 )
 
-# 1. Semantic seeds
-seeds = vector_nearest_entities("fraud penalties IPC", top_k=10)
-entity_ids = [meta["canonical_id"] for _, _, meta in seeds]
-
-# 2. Graph expansion
-neighbors = expand_graph_seeds(
-    entity_ids,
-    hops=2,
-    relation_types=["CITES", "AMENDS", "PENALIZES"],
-)
+# Result Structure:
+# {
+#   "query": "fraud penalties",
+#   "results": [
+#     {
+#       "entity": {"name": "Section 420", "type": "Section"},
+#       "chunks": [{"text": "Whoever cheats...", "source": "IPC.pdf"}],
+#       "hierarchy": ["Chapter XVII", "IPC"],
+#       "semantic_connections": [...]
+#     }
+#   ]
+# }
 ```
 
 ---
