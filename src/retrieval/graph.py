@@ -69,19 +69,32 @@ class Neo4jGraphRetriever(GraphRetriever):
         top_k: int = 10,
         hops: int = 1,
         filters: Optional[Dict[str, Any]] = None,
+        source_filter: Optional[str] = None,
+        include_chunks: bool = True,
+        max_chunks: int = 5,
+        resolution_depth: int = 1,
         **kwargs
     ) -> RetrievalResult:
         """
-        Retrieve entities and relationships from graph.
+        Retrieve entities, relationships, AND text context from graph.
+        
+        Uses adaptive traversal:
+        1. Semantic expansion (1 hop standard)
+        2. Structural expansion (recursive parent lookup up to `resolution_depth`)
+        3. Context retrieval (fetching text chunks for grounded RAG)
         
         Args:
             query: Query text (entity name or description)
             top_k: Number of entities to return
-            hops: Number of relationship hops to expand
+            hops: Number of semantic hops (default 1)
             filters: Optional entity type filters
+            source_filter: Optional source/document name filter
+            include_chunks: Whether to fetch text chunks (default True)
+            max_chunks: Max chunks to return per entity
+            resolution_depth: How far up the hierarchy to traverse (default 1)
             
         Returns:
-            RetrievalResult with matched entities and relationships
+            RetrievalResult with entities, relationships, and context_chunks
         """
         start_time = time.time()
         
@@ -92,32 +105,49 @@ class Neo4jGraphRetriever(GraphRetriever):
             # Search entities using vector index
             with self._neo4j_driver.session() as session:
                 # Vector search for similar entities
+                # Note: We filter by source early if possible
+                source_clause = f"AND node.source CONTAINS '{source_filter}'" if source_filter else ""
+                
                 cypher_query = f"""
                 CALL db.index.vector.queryNodes('{self.vector_index}', {top_k}, {query_embedding})
                 YIELD node, score
-                RETURN node.name as entity_name, node.type as entity_type, score
-                LIMIT {top_k}
+                WHERE score > 0.7 {source_clause}
+                RETURN node.name as entity_name, node.type as entity_type, node.source as source, score
+                limit {top_k}
                 """
                 
                 entities = session.run(cypher_query).data()
                 
-                # Expand with relationships if requested
                 results = []
+                all_context_chunks = []
+                
                 for entity in entities:
+                    # 1. Expand Semantic & Structural Neighbors
                     expanded = self.expand_entity_neighbors(
                         entity['entity_name'],
-                        hops=hops
+                        hops=hops,
+                        structural_depth=resolution_depth
                     )
+                    
+                    # 2. Fetch Text Chunks (Context)
+                    if include_chunks:
+                        chunks = self._fetch_context_chunks(session, entity['entity_name'], max_chunks)
+                        expanded['chunks'] = chunks
+                        all_context_chunks.extend(chunks)
+                        
                     results.append(expanded)
             
             retrieval_time = (time.time() - start_time) * 1000
             
+            # Return enriched result
+            # Note: RetrievalResult likely needs to be updated to support 'chunks' or we pack it in metadata
             return RetrievalResult(
                 query=query,
                 results=results,
-                retrieval_type="graph",
-                total_results=len(results),
-                retrieval_time_ms=retrieval_time
+                retrieval_type="graph_rag",
+                total_results=len(all_context_chunks),
+                retrieval_time_ms=retrieval_time,
+                metadata={"context_chunks": all_context_chunks} # Store flat list for easy consumption
             )
             
         except Exception as e:
@@ -127,44 +157,78 @@ class Neo4jGraphRetriever(GraphRetriever):
     def expand_entity_neighbors(
         self,
         entity_id: str,
-        hops: int = 1
+        hops: int = 1,
+        structural_depth: int = 5
     ) -> Dict[str, Any]:
         """
-        Expand entity with its neighbors in the graph.
+        Expand entity using Adaptive Traversal strategies.
         
-        Args:
-            entity_id: Entity identifier
-            hops: Number of relationship hops
-            
-        Returns:
-            Dictionary with entity and its neighbors
+        Strategies:
+        1. Semantic: (e)-[r]-(n) where r is generic or semantic (1 hop)
+        2. Structural: (e)-[:PART_OF|SECTION_IN|...*]->(parent) recursive up
+        
+        Handles Bidirectional relationships using `inverse_of` property.
         """
         try:
             with self._neo4j_driver.session() as session:
-                # Match entity and get relationships
+                # Structural types from documentation (Exact match)
+                structural_types = "PART_OF|CONTAINS|CHAPTER_IN|SECTION_IN|SUBSECTION_OF|BELONGS_TO"
+                
+                # Combined Query:
+                # Part A: Immediate Neighbors (Semantic 1-hop)
+                # Part B: Recursive Parents (Structural up to depth)
                 cypher_query = f"""
-                MATCH (e:Entity {{name: '{entity_id}'}})
+                MATCH (e:Entity {{name: $name}})
+                
+                // 1. Semantic Expansion (Bidirectional)
                 OPTIONAL MATCH (e)-[r]-(neighbor)
-                RETURN e as entity, collect({{
+                WHERE NOT type(r) IN split($structural_types, "|") 
+                WITH e, collect({{
+                    neighbor: neighbor.name, 
                     rel_type: type(r),
-                    neighbor: neighbor.name
-                }}) as relationships
-                LIMIT {hops}
+                    direction: CASE WHEN startNode(r) = e THEN 'outgoing' ELSE 'incoming' END,
+                    inverse_of: r.inverse_of,
+                    confidence: r.relation_confidence
+                }}) as semantic_rels
+                
+                // 2. Structural Expansion (Recursive Upwards)
+                MATCH (e)
+                OPTIONAL MATCH path = (e)-[:{structural_types}*1..{structural_depth}]->(parent)
+                WITH e, semantic_rels, collect([n in nodes(path) | n.name][1..]) as hierarchy_paths
+                
+                RETURN {{
+                    entity: e.name, 
+                    type: e.entity_type,
+                    semantic_connections: semantic_rels,
+                    hierarchy: hierarchy_paths
+                }} as expanded_data
                 """
                 
-                result = session.run(cypher_query).single()
+                result = session.run(cypher_query, name=entity_id, structural_types=structural_types).single()
                 
                 if result:
-                    return {
-                        "entity": dict(result['entity']),
-                        "relationships": result['relationships']
-                    }
-                else:
-                    return {"entity": None, "relationships": []}
+                    return result['expanded_data']
+                return {}
                     
         except Exception as e:
-            logger.error(f"Failed to expand neighbors: {e}")
-            return {"entity": None, "relationships": []}
+            logger.error(f"Failed to expand neighbors for {entity_id}: {e}")
+            return {"error": str(e)}
+
+    def _fetch_context_chunks(self, session, entity_name: str, limit: int = 3) -> List[Dict[str, Any]]:
+        """
+        Fetch text chunks linked to the entity via MENTIONED_IN.
+        """
+        query = """
+        MATCH (e:Entity {name: $name})-[:MENTIONED_IN]->(c:Chunk)
+        RETURN c.text as text, c.source as source, c.id as chunk_id
+        LIMIT $limit
+        """
+        try:
+            results = session.run(query, name=entity_name, limit=limit).data()
+            return results
+        except Exception as e:
+            logger.warning(f"Failed to fetch chunks for {entity_name}: {e}")
+            return []
     
     def is_available(self) -> bool:
         """Check if Neo4j is available."""
