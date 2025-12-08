@@ -297,7 +297,7 @@ If APOC is unavailable, the system falls back to a generic pattern, but with deg
 
 ---
 
-## 6. Vector Search in the Graph Context
+## 6. Graph RAG & Adaptive Retrieval
 
 While the main vector store for chunks is Qdrant, the graph can also use Neo4j’s **native vector index** so that entities themselves are searchable by embedding.
 
