@@ -1,6 +1,8 @@
-from typing import TypedDict, NotRequired, List
+from typing import TypedDict, List
+from typing_extensions import NotRequired
 from src.models.query_router import QueryRouterOutput
 from src.models.intent_classifier import IntentClassifierOutput
+from src.models.activity_law import ActivityLawState
 
 
 class GraphState(TypedDict, total=False):
@@ -30,4 +32,7 @@ class GraphState(TypedDict, total=False):
     educational_content: NotRequired[str] # EducationalLayerAgent
     case_law: NotRequired[List[str]] # CaseRetrieverAgent
     comparison_result: NotRequired[str] # ComparativeModuleAgent
+    
+    # Activity to Law Workflow State
+    activity_law_state: NotRequired['ActivityLawState']
 
