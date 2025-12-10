@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_openai import ChatOpenAI
 from src.config import get_llm_config
 from src.models.activity_law import EvidenceLinkingOutput
@@ -13,7 +13,7 @@ class EvidenceLinkingAgent:
             temperature=0
         ).with_structured_output(EvidenceLinkingOutput)
 
-    def __call__(self, state: GraphState) -> Dict[str, Any]:
+    def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
         print("---EVIDENCE LINKING AGENT---")
         
         activity_law_state = state.get("activity_law_state")
@@ -31,7 +31,8 @@ class EvidenceLinkingAgent:
                     risk_matrix=risk_matrix,
                     factors=factors,
                     events=events
-                )
+                ),
+                config={"callbacks": callbacks}
             )
             return {"evidence_linking": result}
         except Exception as e:

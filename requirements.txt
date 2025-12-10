@@ -39,6 +39,7 @@ langchain-community>=0.0.10
 langchain-google-genai>=0.0.9 # For Gemini integration
 langchain-openai>=0.0.5
 pydantic>=2.0.0
+langfuse>=2.0.0
 
 # Optional: For enhanced PDF processing
 # pymupdf>=1.23.0  # Alternative to PyPDF2 for complex PDFs

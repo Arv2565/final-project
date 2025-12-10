@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_openai import ChatOpenAI
 from src.config import get_llm_config
 from src.models.activity_law import StatuteMatchingOutput
@@ -13,7 +13,7 @@ class StatuteMatchingAgent:
             temperature=0
         ).with_structured_output(StatuteMatchingOutput)
 
-    def __call__(self, state: GraphState) -> Dict[str, Any]:
+    def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
         print("---STATUTE MATCHING AGENT---")
         
         # Get input from previous step
@@ -30,7 +30,8 @@ class StatuteMatchingAgent:
                 STATUTE_MATCHING_PROMPT.format(
                     factors=factors,
                     events=events
-                )
+                ),
+                config={"callbacks": callbacks}
             )
             return {"statute_matching": result}
         except Exception as e:

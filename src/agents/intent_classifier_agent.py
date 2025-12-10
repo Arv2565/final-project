@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from langchain_openai import ChatOpenAI
 
@@ -22,11 +22,12 @@ class IntentClassifierAgent:
             temperature=config.temperature_writer,
         ).with_structured_output(IntentClassifierOutput)
 
-    def __call__(self, state: GraphState) -> Dict[str, Any]:
+    def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
         """Classify intent and extract entities from cleaned query.
         
         Args:
             state: GraphState containing 'router_output' from QueryRouterAgent
+            callbacks: List of LangChain callbacks
             
         Returns:
             Dict with 'classifier_output' field containing IntentClassifierOutput
@@ -49,10 +50,13 @@ class IntentClassifierAgent:
 
         try:
             # LangChain handles structured output binding and validation
-            classifier_output = self.llm.invoke([
-                {"role": "system", "content": INTENT_CLASSIFIER_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ])
+            classifier_output = self.llm.invoke(
+                [
+                    {"role": "system", "content": INTENT_CLASSIFIER_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                config={"callbacks": callbacks}
+            )
             
             return {"classifier_output": classifier_output}
             

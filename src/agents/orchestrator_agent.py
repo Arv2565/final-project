@@ -20,11 +20,12 @@ class OrchestratorAgent:
             temperature=config.temperature_writer,
         ).with_structured_output(OrchestratorPlan)
 
-    def __call__(self, state: GraphState) -> Dict[str, Any]:
+    def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
         """Generate an execution plan.
         
         Args:
             state: GraphState containing 'router_output' and 'classifier_output'
+            callbacks: List of LangChain callbacks
             
         Returns:
             Dict with 'orchestrator_plan' field containing list of steps
@@ -49,10 +50,13 @@ class OrchestratorAgent:
         """
 
         try:
-            plan = self.llm.invoke([
-                {"role": "system", "content": ORCHESTRATOR_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ])
+            plan = self.llm.invoke(
+                [
+                    {"role": "system", "content": ORCHESTRATOR_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                config={"callbacks": callbacks}
+            )
             
             # Serialize steps for graph state
             serialized_steps = [step.model_dump() for step in plan.steps]

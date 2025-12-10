@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from langchain_openai import ChatOpenAI
 
@@ -22,11 +22,12 @@ class QueryRouterAgent:
             temperature=config.temperature_research,
         ).with_structured_output(QueryRouterOutput)
 
-    def __call__(self, state: GraphState) -> Dict[str, Any]:
+    def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
         """Process user query through query router.
         
         Args:
             state: GraphState containing 'user_query' field
+            callbacks: List of LangChain callbacks
             
         Returns:
             Dict with 'router_output' field containing QueryRouterOutput
@@ -40,10 +41,13 @@ class QueryRouterAgent:
 
         try:
             # LangChain handles structured output binding and validation
-            router_output = self.llm.invoke([
-                {"role": "system", "content": QUERY_ROUTER_SYSTEM_PROMPT},
-                {"role": "user", "content": f"Process this query:\n{user_query}"},
-            ])
+            router_output = self.llm.invoke(
+                [
+                    {"role": "system", "content": QUERY_ROUTER_SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Process this query:\n{user_query}"},
+                ],
+                config={"callbacks": callbacks}
+            )
             
             return {"router_output": router_output}
             
