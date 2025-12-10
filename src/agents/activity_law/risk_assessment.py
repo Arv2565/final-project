@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_openai import ChatOpenAI
 from src.config import get_llm_config
 from src.models.activity_law import RiskAssessmentOutput
@@ -13,7 +13,7 @@ class RiskAssessmentAgent:
             temperature=0
         ).with_structured_output(RiskAssessmentOutput)
 
-    def __call__(self, state: GraphState) -> Dict[str, Any]:
+    def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
         print("---RISK ASSESSMENT AGENT---")
         
         activity_law_state = state.get("activity_law_state")
@@ -31,7 +31,8 @@ class RiskAssessmentAgent:
                     rule_assessments=rule_assessments,
                     factors=factors,
                     events=events
-                )
+                ),
+                config={"callbacks": callbacks}
             )
             return {"risk_assessment": result}
         except Exception as e:

@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from langchain_openai import ChatOpenAI
 from src.config import get_llm_config
 from src.models.activity_law import FactStructuringOutput
@@ -13,13 +13,14 @@ class FactStructuringAgent:
             temperature=0
         ).with_structured_output(FactStructuringOutput)
 
-    def __call__(self, state: GraphState) -> Dict[str, Any]:
+    def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
         print("---FACT STRUCTURING AGENT---")
         query = state["router_output"].cleaned_query
         
         try:
             result = self.llm.invoke(
-                FACT_STRUCTURING_PROMPT.format(query=query)
+                FACT_STRUCTURING_PROMPT.format(query=query),
+                config={"callbacks": callbacks}
             )
             return {"fact_structuring": result}
         except Exception as e:

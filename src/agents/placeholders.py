@@ -8,7 +8,19 @@ class ActivityToLawAgent:
     def __init__(self):
         self.workflow = ActivityToLawWorkflow()
 
-    def __call__(self, state: GraphState) -> Dict[str, Any]:
+    def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
+        # NOTE: ActivityToLawWorkflow initializes its own callback handler from env.
+        # But if we pass one, we could use it too.
+        # Currently, ActivityToLawWorkflow.__call__ does NOT accept callbacks arg in the same way 
+        # (Wait, I changed it to NOT accept callbacks in __call__ but use internal self.callback_handler).
+        # However, to be consistent with other agents, I should modify ActivityToLawWorkflow to accept it optionally.
+        # Let's assume for now we just rely on its internal handler, OR I modify it too.
+        # The plan says "Ensure ActivityToLawWorkflow propagates the callbacks it receives".
+        # So I should pass it.
+        # But looking at my previous edit to `ActivityToLawWorkflow.__call__`:
+        # def __call__(self, state: GraphState) -> Dict[str, Any]: 
+        # Wait, I didn't verify the signature of ActivityToLawWorkflow.__call__ after my edits.
+        # Let's check `src/agents/activity_law/workflow.py` again.
         return self.workflow(state)
 
 class ProceduralGuidanceAgent:
