@@ -1,39 +1,92 @@
 from langgraph.graph import StateGraph, START, END
+from typing import Literal
 
-from src.models import GraphState
+from src.models import GraphState, AgentType
 from src.nodes.query_router_node import query_router_node
 from src.nodes.intent_classifier_node import intent_classifier_node
+from src.nodes.orchestrator_node import orchestrator_node
+from src.nodes.fact_structuring_node import fact_structuring_node
+from src.nodes.statute_matching_node import statute_matching_node
+from src.nodes.rule_matching_node import rule_matching_node
+from src.nodes.risk_assessment_node import risk_assessment_node
+from src.nodes.evidence_linking_node import evidence_linking_node
+
+
+def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "__end__"]:
+    """Determine the next node based on the orchestrator's plan."""
+    plan = state.get("orchestrator_plan", [])
+    if not plan:
+        return END
+        
+    # Check the first step in the plan
+    # In a real dynamic graph, we might pop steps or manage a pointer.
+    # For this implementation, we look for the presence of specific agents.
+    first_step = plan[0]
+    
+    # We use .value to get the string representation of the Enum if needed, 
+    # but Pydantic enum fields usually compare fine.
+    if first_step["agent_id"] == AgentType.ACTIVITY_TO_LAW.value:
+        return "fact_structuring"
+        
+    return END
 
 
 def build_graph():
     """Build and compile the LangGraph workflow for legal query processing.
 
     Flow:
-        START → query_router → intent_classifier → END
+        START → query_router → intent_classifier → orchestrator
+        orchestrator --(cond)--> fact_structuring → ... → evidence_linking → END
         
     State transitions:
         1. query_router: Takes 'user_query' → produces 'router_output'
-           - Normalizes and cleans the query
-           - Translates to English if needed
-           - Extracts basic metadata (language, PII, legal question flag)
-           
         2. intent_classifier: Takes 'router_output' → produces 'classifier_output'
-           - Classifies user intent (procedure, law explanation, case, etc.)
-           - Extracts legal entities (jurisdiction, topic, time frame)
+        3. orchestrator: Takes classifier output → produces 'orchestrator_plan'
+        4. Activity to Law Pipeline (if selected):
+           - fact_structuring
+           - statute_matching
+           - rule_matching
+           - risk_assessment
+           - evidence_linking
     
     Returns:
         Compiled LangGraph workflow ready for invocation
     """
     workflow = StateGraph(GraphState)
 
-    # Register nodes for legal query processing pipeline
+    # Register nodes
     workflow.add_node("query_router", query_router_node)
     workflow.add_node("intent_classifier", intent_classifier_node)
+    workflow.add_node("orchestrator", orchestrator_node)
+    
+    # Register Activity to Law nodes
+    workflow.add_node("fact_structuring", fact_structuring_node)
+    workflow.add_node("statute_matching", statute_matching_node)
+    workflow.add_node("rule_matching", rule_matching_node)
+    workflow.add_node("risk_assessment", risk_assessment_node)
+    workflow.add_node("evidence_linking", evidence_linking_node)
 
-    # Wire edges: linear flow from router to classifier
+    # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
     workflow.add_edge("query_router", "intent_classifier")
-    workflow.add_edge("intent_classifier", END)
+    workflow.add_edge("intent_classifier", "orchestrator")
+    
+    # Conditional Edge from Orchestrator
+    workflow.add_conditional_edges(
+        "orchestrator",
+        route_from_orchestrator,
+        {
+            "fact_structuring": "fact_structuring",
+            END: END
+        }
+    )
+    
+    # Wire edges: Activity to Law Pipeline (Linear)
+    workflow.add_edge("fact_structuring", "statute_matching")
+    workflow.add_edge("statute_matching", "rule_matching")
+    workflow.add_edge("rule_matching", "risk_assessment")
+    workflow.add_edge("risk_assessment", "evidence_linking")
+    workflow.add_edge("evidence_linking", END)
 
     # Compile into an executable graph
     return workflow.compile()
