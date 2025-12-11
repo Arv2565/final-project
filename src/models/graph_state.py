@@ -11,19 +11,24 @@ class GraphState(TypedDict, total=False):
     Flow:
         user_query → QueryRouterAgent → router_output
         router_output → IntentClassifierAgent → classifier_output
+        classifier_output → OrchestratorAgent → orchestrator_plan
+        orchestrator_plan → route to specialized agents
     
     Fields:
         user_query: Original input from the user
         router_output: Cleaned query and metadata from QueryRouterAgent
         classifier_output: Intent and entities from IntentClassifierAgent
+        orchestrator_plan: List of steps with numeric agent IDs (1-6) and reasoning
     """
     
     user_query: str
     router_output: NotRequired[QueryRouterOutput]
     classifier_output: NotRequired[IntentClassifierOutput]
     
-    # Orchestrator output
-    orchestrator_plan: NotRequired[List[dict]] # Serialized OrchestratorPlan steps
+    # Orchestrator output - list of dicts with:
+    # - agent_number: int (1-6)
+    # - reasoning: str
+    orchestrator_plan: NotRequired[List[dict]]
     
     # Specialized Agent outputs
     legal_laws: NotRequired[List[str]] # ActivityToLawAgent
