@@ -12,23 +12,35 @@ from src.nodes.risk_assessment_node import risk_assessment_node
 from src.nodes.evidence_linking_node import evidence_linking_node
 
 
-def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "__end__"]:
-    """Determine the next node based on the orchestrator's plan."""
+def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "__end__"]:
+    """Route based on the first agent number in the orchestrator plan.
+    
+    Agent mapping:
+        1 → fact_structuring (Activity-to-Law pipeline)
+        2 → procedural_guidance
+        3 → draft_builder
+        4 → educational_layer
+        5 → case_retriever
+        6 → comparative_module
+    """
     plan = state.get("orchestrator_plan", [])
     if not plan:
         return END
         
     # Check the first step in the plan
-    # In a real dynamic graph, we might pop steps or manage a pointer.
-    # For this implementation, we look for the presence of specific agents.
     first_step = plan[0]
+    agent_number = first_step.get("agent_number")
     
-    # We use .value to get the string representation of the Enum if needed, 
-    # but Pydantic enum fields usually compare fine.
-    if first_step["agent_id"] == AgentType.ACTIVITY_TO_LAW.value:
-        return "fact_structuring"
-        
-    return END
+    agent_routing = {
+        1: "fact_structuring",
+        2: "procedural_guidance",
+        3: "draft_builder",
+        4: "educational_layer",
+        5: "case_retriever",
+        6: "comparative_module",
+    }
+    
+    return agent_routing.get(agent_number, END)
 
 
 def build_graph():

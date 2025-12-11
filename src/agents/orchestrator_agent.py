@@ -21,14 +21,14 @@ class OrchestratorAgent:
         ).with_structured_output(OrchestratorPlan)
 
     def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
-        """Generate an execution plan.
+        """Generate an execution plan with numeric agent IDs.
         
         Args:
             state: GraphState containing 'router_output' and 'classifier_output'
             callbacks: List of LangChain callbacks
             
         Returns:
-            Dict with 'orchestrator_plan' field containing list of steps
+            Dict with 'orchestrator_plan' field containing list of steps with numeric agent_number
         """
         router_output = state.get("router_output")
         classifier_output = state.get("classifier_output")
@@ -46,7 +46,7 @@ class OrchestratorAgent:
         Intent: {intent}
         Entities: {entities}
         
-        Create a plan to answer this query.
+        Create a plan to answer this query using only agent numbers 1-6.
         """
 
         try:
@@ -58,7 +58,7 @@ class OrchestratorAgent:
                 config={"callbacks": callbacks}
             )
             
-            # Serialize steps for graph state
+            # Serialize steps for graph state (now with agent_number instead of agent_id)
             serialized_steps = [step.model_dump() for step in plan.steps]
             
             return {"orchestrator_plan": serialized_steps}
