@@ -27,8 +27,8 @@ class StatuteMatchingAgent:
         events = activity_law_state.fact_structuring.events
         
         print(f"\n📥 Input State:")
-        print(f"   Factors: {len(factors) if factors else 0} from fact structuring")
-        print(f"   Events: {len(events) if events else 0} from fact structuring")
+        import json
+        print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
         
         try:
             result = self.llm.invoke(
@@ -42,7 +42,7 @@ class StatuteMatchingAgent:
             print(f"\n✅ Statute Matching Output:")
             if result and hasattr(result, 'candidate_statutes'):
                 print(f"   Candidate Statutes: {len(result.candidate_statutes) if result.candidate_statutes else 0} found")
-            print(f"\n📤 Return: statute_matching")
+            print(f"\n📤 Return: {result}")
             
             return {"statute_matching": result}
         except Exception as e:

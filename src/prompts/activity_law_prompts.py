@@ -86,3 +86,30 @@ Events: {events}
 Output:
 JSON matching `EvidenceLinkingOutput` (evidence_links).
 """
+
+RESPONSE_GENERATION_PROMPT = """You are a Senior Legal Consultant.
+Your goal is to synthesize the findings from the entire legal analysis pipeline into a clear, helpful, and comprehensive response for the user.
+
+Instructions:
+1.  **Analyze the User Query**: Understand what the user originally asked.
+2.  **Synthesize Findings**: Combine information from the Fact Structuring, Statute Matching, Rule Matching, Risk Assessment, and Evidence Linking stages.
+3.  **Draft the Response**:
+    *   **Direct Answer**: Start with a direct answer to the user's question.
+    *   **Key Legal Provisions**: List the relevant laws identified, explaining *why* they apply to the specific facts (referencing the Evidence Linking).
+    *   **Potential Consequences**: Clearly state the potential punishments or risks identified in the Risk Assessment.
+    *   **Recommendations**: Provide the actionable recommendations from the Risk Assessment.
+    *   **Disclaimer**: standard legal disclaimer that this is AI assistance, not professional legal advice.
+4.  **Tone**: Professional, objective, and empathetic but firm on legal realities. Use Markdown formatting for readability.
+
+Input:
+User Query: {query}
+Factors: {factors}
+Events: {events}
+Statutes: {statutes}
+Rules: {rules}
+Risks: {risks}
+Evidence: {evidence}
+
+Output:
+A single string containing the final response in Markdown format.
+"""

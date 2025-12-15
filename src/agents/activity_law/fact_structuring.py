@@ -19,7 +19,8 @@ class FactStructuringAgent:
         
         query = state["router_output"].cleaned_query
         print(f"\n📥 Input State:")
-        print(f"   Query: {query[:100]}...")
+        import json
+        print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
         
         try:
             result = self.llm.invoke(
@@ -32,7 +33,28 @@ class FactStructuringAgent:
                 print(f"   Factors: {len(result.factors) if result.factors else 0} identified")
             if result and hasattr(result, 'events'):
                 print(f"   Events: {len(result.events) if result.events else 0} identified")
-            print(f"\n📤 Return: fact_structuring")
+            
+            # Construct nested state update
+            # Note: For Activity to Law agents, the state structure is nested
+            # We need to simulate the nested update for logging
+            from src.models.activity_law import ActivityLawState
+            activity_state = state.get("activity_law_state", ActivityLawState())
+            # We can't easily deep copy the pydantic model in the log simulation without some effort,
+            # but we can show the update dict.
+            
+            # Only update the specific field for logging viz
+            if result and hasattr(result, 'fact_structuring'): # This might be direct result object, check schema
+                 # result IS the FactStructuringOutput
+                 pass
+
+            # Since 'result' IS the output object (FactStructuringOutput), and not a dict with key 'fact_structuring'
+            # (Wait, check output_schema=FactStructuringOutput)
+            
+            # The node wrapper handles the nesting.
+            # Here we just return the result.
+            
+            # For logging purpose, we can show we are returning the object
+            print(f"\n📤 Return: {result}")
             
             return {"fact_structuring": result}
         except Exception as e:

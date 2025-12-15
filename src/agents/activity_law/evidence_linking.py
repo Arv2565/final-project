@@ -27,9 +27,8 @@ class EvidenceLinkingAgent:
         risk_matrix = activity_law_state.risk_assessment.risk_matrix
         
         print(f"\n📥 Input State:")
-        print(f"   Risk Matrix: Available from risk assessment")
-        print(f"   Factors: {len(factors) if factors else 0}")
-        print(f"   Events: {len(events) if events else 0}")
+        import json
+        print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
 
         try:
             result = self.llm.invoke(
@@ -44,7 +43,7 @@ class EvidenceLinkingAgent:
             print(f"\n✅ Evidence Linking Output:")
             if result and hasattr(result, 'linked_evidence'):
                 print(f"   Linked Evidence: {len(result.linked_evidence) if result.linked_evidence else 0} connections made")
-            print(f"\n📤 Return: evidence_linking")
+            print(f"\n📤 Return: {result}")
             
             return {"evidence_linking": result}
         except Exception as e:

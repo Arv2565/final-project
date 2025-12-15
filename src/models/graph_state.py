@@ -40,4 +40,7 @@ class GraphState(TypedDict, total=False):
     
     # Activity to Law Workflow State
     activity_law_state: NotRequired['ActivityLawState']
+    
+    # Final Output
+    final_response: NotRequired[str]
 

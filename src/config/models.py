@@ -29,9 +29,9 @@ class LLMConfig:
     chat_model: str = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
     
     # Gemini Models
-    gemini_research_model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-    gemini_writer_model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-    gemini_chat_model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    gemini_research_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+    gemini_writer_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+    gemini_chat_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
     
     # Temperature settings
     temperature_research: float = float(os.getenv("RESEARCH_TEMPERATURE", "0.2"))

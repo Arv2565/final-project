@@ -3,6 +3,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent.parent / ".env")
 
+from src.config.observability import setup_observability
+setup_observability()
+
 import argparse
 from typing import Dict, Any
 
@@ -35,8 +38,13 @@ def main() -> None:
 
     graph = build_graph()
 
-    # Synchronous single-run invocation
-    final_state: Dict[str, Any] = graph.invoke(initial_state)
+    # Initialize observability callback
+    from src.config.observability import get_langfuse_callback
+    callback_handler = get_langfuse_callback()
+    config = {"callbacks": [callback_handler]} if callback_handler else {}
+
+    # Synchronous single-run invocation with config
+    final_state: Dict[str, Any] = graph.invoke(initial_state, config=config)
 
     router_output = final_state.get("router_output")
     classifier_output = final_state.get("classifier_output")
