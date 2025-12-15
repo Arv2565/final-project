@@ -6,6 +6,7 @@ Centralizes all model configurations including:
 - Chat model for GraphRAG
 - Embedding models (Qdrant vectors and Neo4j entity embeddings)
 - Temperature and other generation parameters
+- LLM provider selection (OpenAI, Gemini)
 """
 
 from dataclasses import dataclass
@@ -19,21 +20,68 @@ from openai import OpenAI
 class LLMConfig:
     """Configuration for LLM models used by LangGraph agents and GraphRAG."""
 
-    # LangGraph agent models - defaults to gpt-4o-mini (updated from gpt-4.1-mini)
+    # LLM Provider selection (openai or gemini)
+    llm_provider: str = os.getenv("LLM_PROVIDER", "openai").lower()
+    
+    # OpenAI Models
     research_model: str = os.getenv("RESEARCH_MODEL_NAME", "gpt-4o-mini")
     writer_model: str = os.getenv("WRITER_MODEL_NAME", "gpt-4o-mini")
-    
-    # GraphRAG chat model for triple extraction
     chat_model: str = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+    
+    # Gemini Models
+    gemini_research_model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    gemini_writer_model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    gemini_chat_model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     
     # Temperature settings
     temperature_research: float = float(os.getenv("RESEARCH_TEMPERATURE", "0.2"))
     temperature_writer: float = float(os.getenv("WRITER_TEMPERATURE", "0.4"))
     temperature_chat: float = float(os.getenv("CHAT_TEMPERATURE", "0.2"))
     
+    # Gemini-specific temperature settings (can override defaults)
+    gemini_temperature_research: float = float(os.getenv("GEMINI_TEMPERATURE_RESEARCH", os.getenv("RESEARCH_TEMPERATURE", "0.2")))
+    gemini_temperature_writer: float = float(os.getenv("GEMINI_TEMPERATURE_WRITER", os.getenv("WRITER_TEMPERATURE", "0.4")))
+    gemini_temperature_chat: float = float(os.getenv("GEMINI_TEMPERATURE_CHAT", os.getenv("CHAT_TEMPERATURE", "0.2")))
+    
     # Model-specific parameters
     max_tokens: Optional[int] = None
     top_p: float = 1.0
+    
+    def get_research_model(self) -> str:
+        """Get the research model based on selected provider."""
+        if self.llm_provider == "gemini":
+            return self.gemini_research_model
+        return self.research_model
+    
+    def get_writer_model(self) -> str:
+        """Get the writer model based on selected provider."""
+        if self.llm_provider == "gemini":
+            return self.gemini_writer_model
+        return self.writer_model
+    
+    def get_chat_model(self) -> str:
+        """Get the chat model based on selected provider."""
+        if self.llm_provider == "gemini":
+            return self.gemini_chat_model
+        return self.chat_model
+    
+    def get_research_temperature(self) -> float:
+        """Get the research temperature based on selected provider."""
+        if self.llm_provider == "gemini":
+            return self.gemini_temperature_research
+        return self.temperature_research
+    
+    def get_writer_temperature(self) -> float:
+        """Get the writer temperature based on selected provider."""
+        if self.llm_provider == "gemini":
+            return self.gemini_temperature_writer
+        return self.temperature_writer
+    
+    def get_chat_temperature(self) -> float:
+        """Get the chat temperature based on selected provider."""
+        if self.llm_provider == "gemini":
+            return self.gemini_temperature_chat
+        return self.temperature_chat
 
 
 @dataclass
@@ -95,3 +143,29 @@ def get_openai_client() -> OpenAI:
 def get_model_config() -> LLMConfig:
     """Deprecated: Use get_llm_config() instead."""
     return get_llm_config()
+
+
+def get_llm_provider():
+    """Get the configured LLM provider based on configuration.
+    
+    Returns:
+        BaseLLMProvider instance (OpenAIProvider or GeminiProvider)
+    """
+    from .llm_providers import LLMProviderFactory
+    
+    config = get_llm_config()
+    
+    if config.llm_provider == "gemini":
+        return LLMProviderFactory.get_provider(
+            "gemini",
+            api_key=os.getenv("GEMINI_API_KEY"),
+            model=config.get_chat_model(),
+            temperature=config.get_chat_temperature(),
+        )
+    else:  # Default to OpenAI
+        return LLMProviderFactory.get_provider(
+            "openai",
+            api_key=os.getenv("OPENAI_API_KEY"),
+            model=config.get_chat_model(),
+            temperature=config.get_chat_temperature(),
+        )

@@ -16,6 +16,7 @@ from .models import (
     get_embedding_config,
     get_openai_client,
     get_model_config,  # Backward compatibility
+    get_llm_provider,
 )
 
 from .settings import (
@@ -40,6 +41,13 @@ from .ontology import (
     LegalOntology,
 )
 
+from .llm_providers import (
+    BaseLLMProvider,
+    OpenAIProvider,
+    GeminiProvider,
+    LLMProviderFactory,
+)
+
 __all__ = [
     # LLM Configuration
     "LLMConfig",
@@ -48,6 +56,13 @@ __all__ = [
     "get_embedding_config",
     "get_openai_client",
     "get_model_config",  # Backward compatibility
+    "get_llm_provider",
+    
+    # LLM Providers
+    "BaseLLMProvider",
+    "OpenAIProvider",
+    "GeminiProvider",
+    "LLMProviderFactory",
     
     # System Configuration
     "QdrantConfig",

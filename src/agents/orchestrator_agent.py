@@ -1,9 +1,8 @@
 from typing import Dict, Any, List
 
-from langchain_openai import ChatOpenAI
-
 from src.models import GraphState, OrchestratorPlan
 from src.config import get_llm_config
+from src.agents.agent_llm_helper import get_agent_llm
 from src.prompts.orchestrator_agent import ORCHESTRATOR_SYSTEM_PROMPT
 
 
@@ -14,11 +13,10 @@ class OrchestratorAgent:
     """
 
     def __init__(self) -> None:
-        config = get_llm_config()
-        self.llm = ChatOpenAI(
-            model=config.writer_model, # Using writer model for better reasoning
-            temperature=config.temperature_writer,
-        ).with_structured_output(OrchestratorPlan)
+        self.llm = get_agent_llm(
+            model_type="writer",
+            output_schema=OrchestratorPlan,
+        )
 
     def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
         """Generate an execution plan with numeric agent IDs.
@@ -30,6 +28,10 @@ class OrchestratorAgent:
         Returns:
             Dict with 'orchestrator_plan' field containing list of steps with numeric agent_number
         """
+        print("\n" + "="*80)
+        print("🎯 ORCHESTRATOR AGENT")
+        print("="*80)
+        
         router_output = state.get("router_output")
         classifier_output = state.get("classifier_output")
         
@@ -39,6 +41,12 @@ class OrchestratorAgent:
         cleaned_query = router_output.cleaned_query
         intent = classifier_output.intent
         entities = classifier_output.entities
+
+        print(f"\n📥 Input State:")
+        print(f"   Query: {cleaned_query[:100]}...")
+        print(f"   Intent: {intent.value}")
+        print(f"   Jurisdiction: {entities.jurisdiction}")
+        print(f"   Topic: {entities.topic}")
 
         # Build user prompt
         user_prompt = f"""
@@ -58,12 +66,18 @@ class OrchestratorAgent:
                 config={"callbacks": callbacks}
             )
             
+            print(f"\n✅ Orchestrator Output:")
+            print(f"   Planning Steps:")
+            for step in plan.steps:
+                print(f"      - Agent {step.agent_number}: {step.description[:80]}...")
+            print(f"\n📤 Return: orchestrator_plan")
+            
             # Serialize steps for graph state (now with agent_number instead of agent_id)
             serialized_steps = [step.model_dump() for step in plan.steps]
             
             return {"orchestrator_plan": serialized_steps}
             
         except Exception as e:
+            print(f"\n⚠️  Orchestrator failed: {str(e)[:100]}")
             # Fallback: If LLM fails, return empty plan or default
-            print(f"Orchestrator failed: {e}")
             return {"orchestrator_plan": []}
