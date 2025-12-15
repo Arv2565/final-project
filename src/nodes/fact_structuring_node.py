@@ -12,29 +12,24 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def fact_structuring_node(state: GraphState) -> Dict[str, Any]:
+def fact_structuring_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to FactStructuringAgent.
     
     This node structures the raw query into a canonical fact pattern.
     
     Args:
         state: GraphState
+        config: Runtime configuration containing callbacks
         
     Returns:
         State update with 'activity_law_state.fact_structuring'
     """
     global _fact_structuring_agent
-    global _callback_handler
-    global _callbacks_initialized
     
     if _fact_structuring_agent is None:
         _fact_structuring_agent = FactStructuringAgent()
         
-    if not _callbacks_initialized:
-        _callback_handler = get_langfuse_callback()
-        _callbacks_initialized = True
-        
-    callbacks = [_callback_handler] if _callback_handler else []
+    callbacks = config.get("callbacks", []) if config else []
     result = _fact_structuring_agent(state, callbacks=callbacks)
     
     # Update nested state
@@ -42,4 +37,4 @@ def fact_structuring_node(state: GraphState) -> Dict[str, Any]:
     if result and result.get("fact_structuring"):
         current_activity_state.fact_structuring = result["fact_structuring"]
         
-    return {"activity_law_state": current_activity_state}
+    return {**state, "activity_law_state": current_activity_state}

@@ -27,9 +27,8 @@ class RiskAssessmentAgent:
         rule_assessments = activity_law_state.rule_matching.rule_assessments
         
         print(f"\n📥 Input State:")
-        print(f"   Rule Assessments: {len(rule_assessments) if rule_assessments else 0} to evaluate")
-        print(f"   Factors: {len(factors) if factors else 0}")
-        print(f"   Events: {len(events) if events else 0}")
+        import json
+        print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
 
         try:
             result = self.llm.invoke(
@@ -46,7 +45,7 @@ class RiskAssessmentAgent:
                 print(f"   Risk Level: {result.risk_level}")
             if result and hasattr(result, 'risk_matrix'):
                 print(f"   Risk Matrix: Available with severity levels")
-            print(f"\n📤 Return: risk_assessment")
+            print(f"\n📤 Return: {result}")
             
             return {"risk_assessment": result}
         except Exception as e:

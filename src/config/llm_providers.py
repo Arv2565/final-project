@@ -105,7 +105,7 @@ class GeminiProvider(BaseLLMProvider):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "gemini-2.0-flash",
+        model: str = "gemini-2.5-flash-lite",
         temperature: float = 0.2,
         max_tokens: Optional[int] = None,
         top_p: float = 1.0,
@@ -218,7 +218,7 @@ class LLMProviderFactory:
             return cls.get_provider(
                 "gemini",
                 api_key=os.getenv("GEMINI_API_KEY"),
-                model=os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
+                model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite"),
                 temperature=float(os.getenv("GEMINI_TEMPERATURE", "0.2")),
             )
         else:

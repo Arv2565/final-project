@@ -12,29 +12,24 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def risk_assessment_node(state: GraphState) -> Dict[str, Any]:
+def risk_assessment_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to RiskAssessmentAgent.
     
     This node evaluates the risk level of the activity against the matched rules.
     
     Args:
         state: GraphState
+        config: Runtime configuration containing callbacks
         
     Returns:
         State update with 'activity_law_state.risk_assessment'
     """
     global _risk_assessment_agent
-    global _callback_handler
-    global _callbacks_initialized
     
     if _risk_assessment_agent is None:
         _risk_assessment_agent = RiskAssessmentAgent()
         
-    if not _callbacks_initialized:
-        _callback_handler = get_langfuse_callback()
-        _callbacks_initialized = True
-        
-    callbacks = [_callback_handler] if _callback_handler else []
+    callbacks = config.get("callbacks", []) if config else []
     result = _risk_assessment_agent(state, callbacks=callbacks)
     
     # Update nested state
@@ -42,4 +37,4 @@ def risk_assessment_node(state: GraphState) -> Dict[str, Any]:
     if result and result.get("risk_assessment"):
         current_activity_state.risk_assessment = result["risk_assessment"]
         
-    return {"activity_law_state": current_activity_state}
+    return {**state, "activity_law_state": current_activity_state}

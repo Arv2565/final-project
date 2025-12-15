@@ -37,7 +37,9 @@ class QueryRouterAgent:
         print("🔄 QUERY ROUTER AGENT")
         print("="*80)
         print(f"\n📥 Input State:")
-        print(f"   user_query: {state.get('user_query', '')[:100]}...")
+        import json
+        # Filter out non-serializable objects for printing if necessary, or just print keys
+        print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
         
         user_query = state.get("user_query", "").strip()
         if not user_query:
@@ -58,7 +60,11 @@ class QueryRouterAgent:
             print(f"   Language: {router_output.metadata.language}")
             print(f"   Has Personal Data: {router_output.metadata.has_personal_data}")
             print(f"   Is Legal Question: {router_output.metadata.is_legal_question}")
-            print(f"\n📤 Return: router_output")
+            
+            # Construct the new full state for logging purposes (simulating what the node will do)
+            result_state = {**state, "router_output": router_output}
+            print(f"\n📤 Full Graph State Update:")
+            print(json.dumps({k: str(v) for k, v in result_state.items()}, indent=2))
             
             return {"router_output": router_output}
             

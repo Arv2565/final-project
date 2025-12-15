@@ -43,10 +43,8 @@ class OrchestratorAgent:
         entities = classifier_output.entities
 
         print(f"\n📥 Input State:")
-        print(f"   Query: {cleaned_query[:100]}...")
-        print(f"   Intent: {intent.value}")
-        print(f"   Jurisdiction: {entities.jurisdiction}")
-        print(f"   Topic: {entities.topic}")
+        import json
+        print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
 
         # Build user prompt
         user_prompt = f"""
@@ -69,8 +67,14 @@ class OrchestratorAgent:
             print(f"\n✅ Orchestrator Output:")
             print(f"   Planning Steps:")
             for step in plan.steps:
-                print(f"      - Agent {step.agent_number}: {step.description[:80]}...")
-            print(f"\n📤 Return: orchestrator_plan")
+                print(f"      - Agent {step.agent_number}: {step.reasoning[:80]}...")
+            
+            # Serialize steps for graph state (now with agent_number instead of agent_id)
+            serialized_steps = [step.model_dump() for step in plan.steps]
+            
+            result_state = {**state, "orchestrator_plan": serialized_steps}
+            print(f"\n📤 Full Graph State Update:")
+            print(json.dumps({k: str(v) for k, v in result_state.items()}, indent=2))
             
             # Serialize steps for graph state (now with agent_number instead of agent_id)
             serialized_steps = [step.model_dump() for step in plan.steps]

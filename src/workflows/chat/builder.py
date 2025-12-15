@@ -9,6 +9,7 @@ from src.nodes.fact_structuring_node import fact_structuring_node
 from src.nodes.statute_matching_node import statute_matching_node
 from src.nodes.rule_matching_node import rule_matching_node
 from src.nodes.risk_assessment_node import risk_assessment_node
+from src.nodes.response_generation_node import response_generation_node
 from src.nodes.evidence_linking_node import evidence_linking_node
 
 
@@ -48,21 +49,9 @@ def build_graph():
 
     Flow:
         START → query_router → intent_classifier → orchestrator
-        orchestrator --(cond)--> fact_structuring → ... → evidence_linking → END
+        orchestrator --(cond)--> fact_structuring → ... → evidence_linking → response_generation → END
         
-    State transitions:
-        1. query_router: Takes 'user_query' → produces 'router_output'
-        2. intent_classifier: Takes 'router_output' → produces 'classifier_output'
-        3. orchestrator: Takes classifier output → produces 'orchestrator_plan'
-        4. Activity to Law Pipeline (if selected):
-           - fact_structuring
-           - statute_matching
-           - rule_matching
-           - risk_assessment
-           - evidence_linking
-    
-    Returns:
-        Compiled LangGraph workflow ready for invocation
+    [...]
     """
     workflow = StateGraph(GraphState)
 
@@ -77,6 +66,7 @@ def build_graph():
     workflow.add_node("rule_matching", rule_matching_node)
     workflow.add_node("risk_assessment", risk_assessment_node)
     workflow.add_node("evidence_linking", evidence_linking_node)
+    workflow.add_node("response_generation", response_generation_node)
 
     # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
@@ -98,7 +88,8 @@ def build_graph():
     workflow.add_edge("statute_matching", "rule_matching")
     workflow.add_edge("rule_matching", "risk_assessment")
     workflow.add_edge("risk_assessment", "evidence_linking")
-    workflow.add_edge("evidence_linking", END)
+    workflow.add_edge("evidence_linking", "response_generation")
+    workflow.add_edge("response_generation", END)
 
     # Compile into an executable graph
     return workflow.compile()

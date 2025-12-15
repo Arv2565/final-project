@@ -11,7 +11,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def query_router_node(state: GraphState) -> Dict[str, Any]:
+def query_router_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to QueryRouterAgent.
     
     This node is the entry point of the legal query processing pipeline.
@@ -20,20 +20,16 @@ def query_router_node(state: GraphState) -> Dict[str, Any]:
     
     Args:
         state: GraphState with 'user_query' field
+        config: Runtime configuration containing callbacks
         
     Returns:
         State update with 'router_output' field
     """
     global _query_router_agent
-    global _callback_handler
-    global _callbacks_initialized
     
     if _query_router_agent is None:
         _query_router_agent = QueryRouterAgent()
         
-    if not _callbacks_initialized:
-        _callback_handler = get_langfuse_callback()
-        _callbacks_initialized = True
-        
-    callbacks = [_callback_handler] if _callback_handler else []
-    return _query_router_agent(state, callbacks=callbacks)
+    callbacks = config.get("callbacks", []) if config else []
+    result = _query_router_agent(state, callbacks=callbacks)
+    return {**state, **result}

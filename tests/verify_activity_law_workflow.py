@@ -9,6 +9,23 @@ from src.models.query_router import QueryRouterOutput
 from src.agents.activity_law.workflow import ActivityToLawWorkflow
 import json
 
+def load_env_manual():
+    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    try:
+                        key, value = line.split("=", 1)
+                        if key not in os.environ:
+                            os.environ[key] = value.strip().strip("'").strip('"')
+                    except ValueError:
+                        pass
+
+load_env_manual()
+
+
 def test_activity_law_workflow():
     print("Initializing Workflow...")
     workflow = ActivityToLawWorkflow()

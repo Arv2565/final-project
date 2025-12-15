@@ -45,8 +45,8 @@ class IntentClassifierAgent:
         metadata = router_output.metadata
         
         print(f"\n📥 Input State:")
-        print(f"   Cleaned Query: {cleaned_query[:100]}...")
-        print(f"   Language: {metadata.language}")
+        import json
+        print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
 
         # Build user prompt with context from router
         user_prompt = f"Query: {cleaned_query}\n\n"
@@ -69,7 +69,10 @@ class IntentClassifierAgent:
             print(f"   Jurisdiction: {classifier_output.entities.jurisdiction}")
             print(f"   Topic: {classifier_output.entities.topic}")
             print(f"   Time Frame: {classifier_output.entities.time_frame}")
-            print(f"\n📤 Return: classifier_output")
+            
+            result_state = {**state, "classifier_output": classifier_output}
+            print(f"\n📤 Full Graph State Update:")
+            print(json.dumps({k: str(v) for k, v in result_state.items()}, indent=2))
             
             return {"classifier_output": classifier_output}
             

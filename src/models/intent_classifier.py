@@ -9,6 +9,9 @@ class IntentType(str, Enum):
     ASK_PROCEDURE = "ask_procedure"
     ASK_LAW_EXPLANATION = "ask_law_explanation"
     ASK_CASE_REFERENCE = "ask_case_reference"
+    ASK_LAW_MAPPING = "ask_law_mapping"
+    ASK_DRAFT = "ask_draft"
+    ASK_COMPARISON = "ask_comparison"
     GENERAL_QUESTION = "general_question"
     CHIT_CHAT = "chit_chat"
 

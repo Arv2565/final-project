@@ -11,7 +11,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def intent_classifier_node(state: GraphState) -> Dict[str, Any]:
+def intent_classifier_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to IntentClassifierAgent.
     
     This node classifies the user's intent and extracts legal entities
@@ -19,20 +19,16 @@ def intent_classifier_node(state: GraphState) -> Dict[str, Any]:
     
     Args:
         state: GraphState with 'router_output' field
+        config: Runtime configuration containing callbacks
         
     Returns:
         State update with 'classifier_output' field
     """
     global _intent_classifier_agent
-    global _callback_handler
-    global _callbacks_initialized
 
     if _intent_classifier_agent is None:
         _intent_classifier_agent = IntentClassifierAgent()
 
-    if not _callbacks_initialized:
-        _callback_handler = get_langfuse_callback()
-        _callbacks_initialized = True
-
-    callbacks = [_callback_handler] if _callback_handler else []
-    return _intent_classifier_agent(state, callbacks=callbacks)
+    callbacks = config.get("callbacks", []) if config else []
+    result = _intent_classifier_agent(state, callbacks=callbacks)
+    return {**state, **result}
