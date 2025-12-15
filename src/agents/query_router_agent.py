@@ -1,9 +1,8 @@
 from typing import Dict, Any, List
 
-from langchain_openai import ChatOpenAI
-
 from src.models import GraphState, QueryRouterOutput, QueryMetadata
 from src.config import get_llm_config
+from src.agents.agent_llm_helper import get_agent_llm
 from src.prompts.query_router_agent import QUERY_ROUTER_SYSTEM_PROMPT
 
 
@@ -16,11 +15,10 @@ class QueryRouterAgent:
     """
 
     def __init__(self) -> None:
-        config = get_llm_config()
-        self.llm = ChatOpenAI(
-            model=config.research_model,
-            temperature=config.temperature_research,
-        ).with_structured_output(QueryRouterOutput)
+        self.llm = get_agent_llm(
+            model_type="research",
+            output_schema=QueryRouterOutput,
+        )
 
     def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
         """Process user query through query router.
@@ -35,6 +33,12 @@ class QueryRouterAgent:
         Raises:
             ValueError: If user_query is missing from state
         """
+        print("\n" + "="*80)
+        print("🔄 QUERY ROUTER AGENT")
+        print("="*80)
+        print(f"\n📥 Input State:")
+        print(f"   user_query: {state.get('user_query', '')[:100]}...")
+        
         user_query = state.get("user_query", "").strip()
         if not user_query:
             raise ValueError("GraphState missing 'user_query' for QueryRouterAgent")
@@ -49,9 +53,17 @@ class QueryRouterAgent:
                 config={"callbacks": callbacks}
             )
             
+            print(f"\n✅ Router Output:")
+            print(f"   Cleaned Query: {router_output.cleaned_query[:100]}...")
+            print(f"   Language: {router_output.metadata.language}")
+            print(f"   Has Personal Data: {router_output.metadata.has_personal_data}")
+            print(f"   Is Legal Question: {router_output.metadata.is_legal_question}")
+            print(f"\n📤 Return: router_output")
+            
             return {"router_output": router_output}
             
         except Exception as e:
+            print(f"\n⚠️  Router failed, using fallback: {str(e)[:100]}")
             # Fallback: If LLM fails to produce valid structured output,
             # pass through the original query with default metadata
             fallback_output = QueryRouterOutput(
