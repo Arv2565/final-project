@@ -100,6 +100,7 @@ Instructions:
     *   **Recommendations**: Provide the actionable recommendations from the Risk Assessment.
     *   **Disclaimer**: standard legal disclaimer that this is AI assistance, not professional legal advice.
 4.  **Tone**: Professional, objective, and empathetic but firm on legal realities. Use Markdown formatting for readability.
+5.  **Language**: The final response MUST be written in {language}.
 
 Input:
 User Query: {query}
