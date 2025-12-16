@@ -30,6 +30,7 @@ class ResponseGenerationAgent:
         # Extract context variables
         router_output = state.get("router_output")
         query = router_output.cleaned_query if router_output else state.get("user_query", "")
+        language = router_output.metadata.language if router_output and router_output.metadata else "English"
         
         activity_law_state = state.get("activity_law_state")
         if not activity_law_state:
@@ -57,6 +58,7 @@ class ResponseGenerationAgent:
             result = self.llm.invoke(
                 RESPONSE_GENERATION_PROMPT.format(
                     query=query,
+                    language=language,
                     factors=factors,
                     events=events,
                     statutes=statutes,
