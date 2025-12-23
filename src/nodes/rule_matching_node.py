@@ -1,4 +1,6 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
+
+from langchain_core.runnables import RunnableConfig
 
 from src.models import GraphState
 from src.agents.activity_law.rule_matching import RuleMatchingAgent
@@ -12,7 +14,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def rule_matching_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
+def rule_matching_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
     """LangGraph node that delegates to RuleMatchingAgent.
     
     This node breaks down statutes into logical rules (Premise-Conclusion).

@@ -1,4 +1,6 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
+
+from langchain_core.runnables import RunnableConfig
 
 from src.models import GraphState
 from src.agents.query_router_agent import QueryRouterAgent
@@ -11,7 +13,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def query_router_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
+def query_router_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
     """LangGraph node that delegates to QueryRouterAgent.
     
     This node is the entry point of the legal query processing pipeline.

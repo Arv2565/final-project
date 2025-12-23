@@ -21,7 +21,7 @@ Your goal is to identify candidate statutory provisions that could apply to the 
 
 Instructions:
 1. Analyze the provided Factors and Events.
-2. Identify 3-5 potential statutory provisions (e.g., specific sections of IPC or other relevant laws) that might apply.
+2. Identify 3-5 potential statutory provisions (e.g., specific sections of BNS (Bharatiya Nyaya Sanhita) or other relevant laws) that might apply.
 3. For each, calculate a `match_score` (0.0 to 1.0) based on how well the elements are satisfied.
 4. Provide a short reasoning for each.
 
@@ -41,6 +41,10 @@ Instructions:
 2. Check for exceptions (e.g., age, private defense, consent) or thresholds (e.g., value of property).
 3. Determine applicability: "applicable", "uncertain", or "not_applicable".
 4. Provide notes explaining your decision.
+
+Important context for Indian criminal law domain:
+- The Bharatiya Nyaya Sanhita (BNS), 2023, replaces the Indian Penal Code (IPC) as the primary criminal code. Prefer BNS provisions when mapping criminal offences.
+- Where a candidate statute names an IPC section, attempt to map it to the corresponding BNS provision. If a direct mapping is not possible (renumbered, merged, removed, or judicially struck down), note this clearly in the `notes` field and indicate whether the historic IPC reference is superseded.
 
 Input:
 Candidate Statutes: {candidate_statutes}
@@ -101,6 +105,9 @@ Instructions:
     *   **Disclaimer**: standard legal disclaimer that this is AI assistance, not professional legal advice.
 4.  **Tone**: Professional, objective, and empathetic but firm on legal realities. Use Markdown formatting for readability.
 5.  **Language**: The final response MUST be written in {language}.
+
+Important note about criminal law references:
+- The Bharatiya Nyaya Sanhita (BNS), 2023 replaces the IPC for criminal offences. When producing the final response, prefer citing BNS sections (e.g., "BNS Section 120") for criminal offences. If the analysis refers to an historic IPC section, include the IPC citation only to explain mapping (e.g., "formerly IPC Section 302, now BNS Section XYZ") and clearly state if a provision was removed or substituted by BNS.
 
 Input:
 User Query: {query}

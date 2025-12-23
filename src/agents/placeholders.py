@@ -36,7 +36,7 @@ class DraftBuilderAgent:
 class EducationalLayerAgent:
     """Placeholder for Educational Layer Agent."""
     def __call__(self, state: GraphState) -> Dict[str, Any]:
-        return {"educational_content": "The Indian Penal Code (IPC) is the official criminal code of India."}
+        return {"educational_content": "The Bharatiya Nyaya Sanhita (BNS), 2023, replaces the Indian Penal Code (IPC) as the primary criminal code; refer to BNS for current criminal provisions."}
 
 class CaseRetrieverAgent:
     """Placeholder for Case Retriever Agent."""
