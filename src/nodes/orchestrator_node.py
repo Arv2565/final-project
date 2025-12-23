@@ -1,4 +1,6 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
+
+from langchain_core.runnables import RunnableConfig
 
 from src.models import GraphState
 from src.agents.orchestrator_agent import OrchestratorAgent
@@ -11,7 +13,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def orchestrator_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
+def orchestrator_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
     """LangGraph node that delegates to OrchestratorAgent.
     
     This node serves as the central brain, deciding the next steps in the workflow

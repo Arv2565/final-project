@@ -1,4 +1,6 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional, TYPE_CHECKING
+
+from langchain_core.runnables import RunnableConfig
 
 from src.models import GraphState
 from src.agents.intent_classifier_agent import IntentClassifierAgent
@@ -11,7 +13,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def intent_classifier_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
+def intent_classifier_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
     """LangGraph node that delegates to IntentClassifierAgent.
     
     This node classifies the user's intent and extracts legal entities

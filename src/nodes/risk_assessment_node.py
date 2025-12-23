@@ -1,4 +1,6 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
+
+from langchain_core.runnables import RunnableConfig
 
 from src.models import GraphState
 from src.agents.activity_law.risk_assessment import RiskAssessmentAgent
@@ -12,7 +14,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def risk_assessment_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
+def risk_assessment_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
     """LangGraph node that delegates to RiskAssessmentAgent.
     
     This node evaluates the risk level of the activity against the matched rules.

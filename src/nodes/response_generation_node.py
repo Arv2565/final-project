@@ -1,4 +1,6 @@
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
+
+from langchain_core.runnables import RunnableConfig
 
 from src.models import GraphState
 from src.agents.activity_law.response_generation import ResponseGenerationAgent
@@ -10,7 +12,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def response_generation_node(state: GraphState, config: Dict[str, Any] = None) -> Dict[str, Any]:
+def response_generation_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
     """LangGraph node that delegates to ResponseGenerationAgent.
     
     This node synthesizes the final response for the user.
