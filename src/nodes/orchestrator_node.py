@@ -20,7 +20,7 @@ def orchestrator_node(state: GraphState, config: RunnableConfig | None = None) -
     based on the intent and entities.
     
     Args:
-        state: GraphState with 'router_output' and 'classifier_output'
+        state: GraphState with 'router_output'
         config: Runtime configuration containing callbacks
         
     Returns:
