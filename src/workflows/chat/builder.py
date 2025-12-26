@@ -3,7 +3,6 @@ from typing import Literal
 
 from src.models import GraphState, AgentType
 from src.nodes.query_router_node import query_router_node
-from src.nodes.intent_classifier_node import intent_classifier_node
 from src.nodes.orchestrator_node import orchestrator_node
 from src.nodes.fact_structuring_node import fact_structuring_node
 from src.nodes.statute_matching_node import statute_matching_node
@@ -24,13 +23,30 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         5 → case_retriever
         6 → comparative_module
     """
-    plan = state.get("orchestrator_plan", [])
-    if not plan:
+    plan_data = state.get("orchestrator_plan")
+    
+    if not plan_data:
+        return END
+
+    # Handle both new dict format (with steps key) and old list format (just steps)
+    if isinstance(plan_data, dict):
+        steps = plan_data.get("steps", [])
+    elif isinstance(plan_data, list):
+        steps = plan_data
+    else:
+        return END
+
+    if not steps:
         return END
         
     # Check the first step in the plan
-    first_step = plan[0]
-    agent_number = first_step.get("agent_number")
+    first_step = steps[0]
+    
+    # Handle if step is dict or object (it should be dict as we serialized it)
+    if isinstance(first_step, dict):
+        agent_number = first_step.get("agent_number")
+    else:
+        agent_number = getattr(first_step, "agent_number", None)
     
     agent_routing = {
         1: "fact_structuring",
@@ -57,7 +73,6 @@ def build_graph():
 
     # Register nodes
     workflow.add_node("query_router", query_router_node)
-    workflow.add_node("intent_classifier", intent_classifier_node)
     workflow.add_node("orchestrator", orchestrator_node)
     
     # Register Activity to Law nodes
@@ -70,8 +85,7 @@ def build_graph():
 
     # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
-    workflow.add_edge("query_router", "intent_classifier")
-    workflow.add_edge("intent_classifier", "orchestrator")
+    workflow.add_edge("query_router", "orchestrator")
     
     # Conditional Edge from Orchestrator
     workflow.add_conditional_edges(

@@ -248,6 +248,8 @@ Your task: Extract structured triples (head, relation, tail) from legal text, ca
 - procedure_for: Procedural relationships
 - applies_to / excludes: Applicability scope
 - Other valid relations: prerequisite_to, jurisdiction_of, grounded_in, etc.
+- has_illustration: Links a Section to its Illustration (head: Section X, tail: Illustration description)
+- has_explanation: Links a Section to its Explanation (head: Section X, tail: Explanation text)
 
 **Output Format** (MUST be valid JSON array):
 [
@@ -273,7 +275,12 @@ Your task: Extract structured triples (head, relation, tail) from legal text, ca
 7. For definitional sections: use defines, classifies, is_instance_of.
 8. For amendment/repeal: use amends, supersedes, repeals (NOT just "amended").
 9. If relation type unclear, omit the triple rather than using a wrong type.
+7. For definitional sections: use defines, classifies, is_instance_of.
+8. For amendment/repeal: use amends, supersedes, repeals (NOT just "amended").
+9. If relation type unclear, omit the triple rather than using a wrong type.
 10. Confidence in relationships matters—prioritize clear, explicit relationships over inferred ones.
+11. NEW: Extract Illustrations and Explanations as distinct nodes linked to the Section they belong to.
+    Example: {{"head": "Section 100", "head_type": "Section", "relation": "has_illustration", "tail": "A stabs B...", "tail_type": "Illustration"}}
 
 Document Context: {doc_context}
 """
@@ -453,7 +460,13 @@ Document Context: {doc_context}
         """Infer document context from source path for prompt guidance."""
         source_lower = source.lower()
         
-        if "constitution" in source_lower:
+        if "bnss" in source_lower or "bharatiya_nagarik" in source_lower:
+            return "This text is from the Bharatiya Nagarik Suraksha Sanhita (BNSS), the new criminal procedure code replacing CrPC."
+        elif "bns" in source_lower or "bharatiya_nyaya" in source_lower:
+            return "This text is from the Bharatiya Nyaya Sanhita (BNS), the new penal code replacing IPC. It contains specific sections, explanations, and illustrations defining offences and punishments."
+        elif "bsa" in source_lower or "bharatiya_sakshya" in source_lower or "new_evidence" in source_lower:
+            return "This text is from the Bharatiya Sakshya Adhiniyam (BSA), the new evidence act replacing IEA. Pay close attention to ILLUSTRATIONS and EXPLANATIONS attached to sections."
+        elif "constitution" in source_lower:
             return "This text is from the Constitution of India (foundational law, articles and schedules)"
         elif "ipc" in source_lower or "penal" in source_lower:
             return "This text is from the Indian Penal Code (criminal law, sections with offences and penalties)"
@@ -463,10 +476,8 @@ Document Context: {doc_context}
             return "This text is from the Code of Criminal Procedure (criminal investigation/trial procedures)"
         elif "evidence" in source_lower or "iea" in source_lower:
             return "This text is from the Indian Evidence Act (rules for admissibility of evidence)"
-        elif "marriage" in source_lower or "hma" in source_lower:
-            return "This text is from the Hindu Marriage Act (marriage and divorce law)"
-        elif "motor" in source_lower or "mva" in source_lower:
-            return "This text is from the Motor Vehicle Act (traffic and vehicle regulations)"
+        elif "bsa" in source_lower or "bharatiya_sakshya" in source_lower or "new_evidence" in source_lower:
+            return "This text is from the Bharatiya Sakshya Adhiniyam (BSA), the new evidence act replacing IEA. Pay close attention to ILLUSTRATIONS and EXPLANATIONS attached to sections."
         else:
             return "This text is from Indian legal documents"
     

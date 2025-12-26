@@ -58,6 +58,10 @@ class EntityType(str, Enum):
     
     # General
     OTHER = "Other"  # Unclassified legal entities
+    
+    # New Entities for BNS/BNSS/BSA
+    ILLUSTRATION = "Illustration"  # Hypothetical example clarifying a section
+    EXPLANATION = "Explanation"  # Statutory explanation attached to a section
 
 
 class RelationType(str, Enum):
@@ -178,6 +182,12 @@ class RelationType(str, Enum):
     CONFLICTS_WITH = "conflicts_with"  # X conflicts with Y
     HARMONIZES_WITH = "harmonizes_with"  # X harmonizes with Y
     
+    # Explanatory Relations
+    HAS_ILLUSTRATION = "has_illustration"  # X has illustration Y
+    HAS_EXPLANATION = "has_explanation"  # X has explanation Y
+    ILLUSTRATES = "illustrates"  # Y illustrates X
+    EXPLAINS = "explains"  # Y explains X
+    
     # Relationship Relations
     RELATED_TO = "related_to"  # X is related to Y (generic/weak relation)
     RELATED = "related"  # X is related to Y (variant)
@@ -254,7 +264,17 @@ class LegalOntology:
         # Procedures
         "procedure": "procedure_for",
         "procedure for": "procedure_for",
+        # Procedures
+        "procedure": "procedure_for",
+        "procedure for": "procedure_for",
         "procedural": "procedure_for",
+        
+        # Illustrations/Explanations
+        "illustration": "has_illustration",
+        "example": "has_illustration",
+        "explanation": "has_explanation",
+        "explains": "explains",
+        "illustrates": "illustrates",
         
         # Penalties
         "penalize": "penalizes",
@@ -381,9 +401,16 @@ class LegalOntology:
         "grounded_in": "GROUNDED_IN",
         
         # Conflict Resolution Relations
+        # Conflict Resolution Relations
         "resolves_conflict": "RESOLVES_CONFLICT",
         "conflicts_with": "CONFLICTS_WITH",
         "harmonizes_with": "HARMONIZES_WITH",
+        
+        # Explanatory Relations
+        "has_illustration": "HAS_ILLUSTRATION",
+        "has_explanation": "HAS_EXPLANATION",
+        "illustrates": "ILLUSTRATES",
+        "explains": "EXPLAINS",
         
         # Relationship Relations
         "related_to": "RELATED_TO",
@@ -501,7 +528,10 @@ class LegalOntology:
             EntityType.PROCEDURE.value: "Legal procedure or process",
             EntityType.COURT.value: "Court institution",
             EntityType.AUTHORITY.value: "Administrative or regulatory authority",
+            EntityType.AUTHORITY.value: "Administrative or regulatory authority",
             EntityType.JURISDICTION.value: "Jurisdictional area",
+            EntityType.ILLUSTRATION.value: "Hypothetical example clarifying a section",
+            EntityType.EXPLANATION.value: "Statutory explanation attached to a section",
         }
         return descriptions.get(entity_type, "Legal entity")
 

@@ -68,7 +68,7 @@ def ingest_single_file(file_path: str, metadata: Optional[Dict[str, Any]] = None
 
             # Index document into Neo4j to capture hierarchical triples
             try:
-                from pipelines.graphs.graph_rag_indexer import GraphRAGIndexer
+                from pipelines.graph_index.indexer import GraphRAGIndexer
                 indexer = GraphRAGIndexer(create_vector_index=False)
                 print(f"🔗 Indexing {Path(file_path).name} into Neo4j for hierarchical relations...")
                 indexer.index_json_files(paths=[Path(file_path)], recursive=False, max_chunks_per_file=50, embed_entities=False)

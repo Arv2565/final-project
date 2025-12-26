@@ -326,6 +326,18 @@ class DocumentProcessor:
         filename_lower = file_path.stem.lower()
         content_sample = extracted_metadata.get("title", "").lower() + " " + extracted_metadata.get("subject", "").lower()
         
+        # Check BNSS (Bharatiya Nagarik Suraksha Sanhita)
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["bnss", "bharatiya_nagarik_suraksha_sanhita", "bharatiya nagarik suraksha sanhita"]):
+            return "bnss"
+
+        # Check BNS (Bharatiya Nyaya Sanhita)
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["bns", "bharatiya_nyaya_sanhita", "bharatiya nyaya sanhita"]):
+            return "bns"
+
+        # Check BSA (Bharatiya Sakshya Adhiniyam)
+        if any(keyword in filename_lower or keyword in content_sample for keyword in ["bsa", "bharatiya_sakshya_adhiniyam", "bharatiya sakshya adhiniyam"]):
+            return "bsa"
+
         # Check IPC (Indian Penal Code)
         if any(keyword in filename_lower or keyword in content_sample for keyword in ["ipc", "penal_code", "penal code"]):
             return "ipc"
@@ -365,7 +377,7 @@ class DocumentProcessor:
         # Check Kerala Acts
         if any(keyword in filename_lower or keyword in content_sample for keyword in ["kerala", "kerala_acts"]):
             return "kerala_acts"
-        
+
         # Default generic legal document
         return "legal_document"
     
@@ -508,7 +520,12 @@ class DocumentProcessor:
             "contract": "contract_law",
             "property": "property_law",
             "company": "company_law",
-            "constitution": "constitutional_law"
+            "company": "company_law",
+            "constitution": "constitutional_law",
+            "bns": "bharatiya_nyaya_sanhita",
+            "bnss": "bharatiya_nagarik_suraksha_sanhita",
+            "bsa": "bharatiya_sakshya_adhiniyam",
+            "new_evidence": "bharatiya_sakshya_adhiniyam"
         }
         
         # Try exact match first
@@ -565,10 +582,26 @@ class DocumentProcessor:
                 "secondary": "commercial_law",
                 "tags": ["negotiable_instruments", "banking", "commercial", "legal"]
             },
+
             "indian_penal_code": {
                 "primary": "legal",
                 "secondary": "criminal_law",
                 "tags": ["penal_code", "criminal", "offences", "legal"]
+            },
+            "bharatiya_nyaya_sanhita": {
+                "primary": "legal",
+                "secondary": "criminal_law",
+                "tags": ["bns", "bharatiya_nyaya_sanhita", "criminal_law", "penal_code", "new_laws"]
+            },
+            "bharatiya_nagarik_suraksha_sanhita": {
+                "primary": "legal",
+                "secondary": "criminal_procedure",
+                "tags": ["bnss", "bharatiya_nagarik_suraksha_sanhita", "criminal_procedure", "crpc", "new_laws"]
+            },
+            "bharatiya_sakshya_adhiniyam": {
+                "primary": "legal",
+                "secondary": "evidence_law",
+                "tags": ["bsa", "bharatiya_sakshya_adhiniyam", "evidence_act", "evidence", "new_laws"]
             }
         }
         
