@@ -73,6 +73,11 @@ CHUNK_OVERLAP=50
 OPENAI_API_KEY=your_openai_key
 OPENAI_CHAT_MODEL=gpt-4o-mini
 
+# Langfuse Observability
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=http://localhost:3000
+
 # Optional cost tracking (defaults are sane)
 OPENAI_RATE_CHAT_INPUT_PER_1K=5.00
 OPENAI_RATE_CHAT_OUTPUT_PER_1K=15.00
@@ -81,25 +86,36 @@ OPENAI_RATE_EMBED_PER_1K=0.13
 
 ### 2.4 Start Services
 
-**Qdrant (vector database)**
-
+**1. Qdrant (Vector Database)**
 ```bash
-docker run -p 6333:6333 qdrant/qdrant
+docker pull qdrant/qdrant
+docker run -d -p 6333:6333 -v $(pwd)/qdrant_storage:/qdrant/storage qdrant/qdrant
 ```
 
-**Neo4j + APOC (recommended Docker setup)**
-
+**2. Neo4j (Graph Database)**
 ```bash
+docker pull neo4j:5.21.0
 docker run -d \
-  --name neo4j \
-  -p 7687:7687 -p 7474:7474 \
-  -e NEO4J_AUTH=neo4j/password \
-  -e NEO4JLABS_PLUGINS='["apoc"]' \
-  neo4j:5.21-enterprise
+    --name neo4j \
+    -p 7474:7474 -p 7687:7687 \
+    -e NEO4J_AUTH=neo4j/password \
+    -e NEO4J_PLUGINS='["apoc"]' \
+    neo4j:5.21.0
 ```
 
-Verify environment:
+**3. Langfuse (Observability)**
+```bash
+# Clone the official repository
+git clone https://github.com/langfuse/langfuse.git
+cd langfuse
 
+# Start via Docker Compose
+docker compose up -d
+```
+*   Access Langfuse at: [http://localhost:3000](http://localhost:3000)
+*   Create an account to get your generic `PUBLIC_KEY` and `SECRET_KEY`.
+
+**4. Verify Environment**
 ```bash
 python -c "from src.config.settings import validate_environment; print('✅ Ready!' if validate_environment() else '❌ Check config')"
 ```
