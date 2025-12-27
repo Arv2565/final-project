@@ -13,7 +13,7 @@ from src.nodes.evidence_linking_node import evidence_linking_node
 
 
 def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "__end__"]:
-    """Route based on the first agent number in the orchestrator plan.
+    """Route based on the next_module selected by the orchestrator.
     
     Agent mapping:
         1 → fact_structuring (Activity-to-Law pipeline)
@@ -28,26 +28,25 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
     if not plan_data:
         return END
 
-    # Handle both new dict format (with steps key) and old list format (just steps)
+    # Extract next_module from the orchestrator plan
     if isinstance(plan_data, dict):
-        steps = plan_data.get("steps", [])
-    elif isinstance(plan_data, list):
-        steps = plan_data
+        next_module = plan_data.get("next_module")
     else:
         return END
 
-    if not steps:
+    if not next_module:
         return END
-        
-    # Check the first step in the plan
-    first_step = steps[0]
     
-    # Handle if step is dict or object (it should be dict as we serialized it)
-    if isinstance(first_step, dict):
-        agent_number = first_step.get("agent_number")
+    # Extract agent_number from next_module
+    if isinstance(next_module, dict):
+        agent_number = next_module.get("agent_number")
     else:
-        agent_number = getattr(first_step, "agent_number", None)
+        agent_number = getattr(next_module, "agent_number", None)
     
+    if agent_number is None:
+        return END
+    
+    # Map agent number to node name
     agent_routing = {
         1: "fact_structuring",
         2: "procedural_guidance",

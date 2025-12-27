@@ -19,17 +19,17 @@ class OrchestratorAgent:
         )
 
     def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
-        """Classify, extract entities, and generate an execution plan.
+        """Select the next appropriate module for the query.
         
         Args:
             state: GraphState containing 'router_output'
             callbacks: List of LangChain callbacks
             
         Returns:
-            Dict with 'orchestrator_plan' field containing intent, entities, and steps
+            Dict with 'orchestrator_plan' field containing next_module
         """
         print("\n" + "="*80)
-        print("🎯 ORCHESTRATOR AGENT (Merged)")
+        print("🎯 ORCHESTRATOR AGENT (Single Step)")
         print("="*80)
         
         router_output = state.get("router_output")
@@ -42,7 +42,8 @@ class OrchestratorAgent:
 
         print(f"\n📥 Input State:")
         import json
-        print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
+        # Safe printing of state (excluding large objects if any)
+        print(json.dumps({k: str(v) for k, v in state.items() if k != "messages"}, indent=2))
 
         # Build user prompt
         user_prompt = f"Query: {cleaned_query}\n\n"
@@ -50,9 +51,7 @@ class OrchestratorAgent:
             user_prompt += f"(Originally in: {metadata.language})\n"
         
         user_prompt += """
-        1. Classify the intent.
-        2. Extract relevant entities.
-        3. Create a plan to answer this query using only agent numbers 1-6.
+        Determine the single best next module (agent number 1-6) to handle this query.
         """
 
         try:
@@ -65,37 +64,24 @@ class OrchestratorAgent:
             )
             
             print(f"\n✅ Orchestrator Output:")
-            print(f"   Intent: {plan.intent}")
-            print(f"   Entities: {plan.entities}")
-            print(f"   Planning Steps:")
-            for step in plan.steps:
-                print(f"      - Agent {step.agent_number}: {step.reasoning[:80]}...")
+            print(f"   Selected Module: {plan.next_module.agent_number}")
+            print(f"   Reasoning: {plan.next_module.reasoning}")
             
             # Serialize for graph state
             serialized_plan = plan.model_dump()
             
-            # We also populate 'classifier_output' for backward compatibility if other nodes rely on it,
-            # BUT based on the plan we are removing the classifier node, so we might just put everything in orchestrator_plan.
-            # However, for safety, let's also construct valid classifier_output structure if needed, 
-            # but per plan, we are simplifying. Let's stick to orchestrator_plan carrying everything.
+            # We no longer generate 'classifier_output' or 'intent'
             
             result_state = {**state, "orchestrator_plan": serialized_plan}
             
-            # Update 'classifier_output' in state just in case other nodes need it directly (e.g. downstream agents reading intent)
-            # It's safer to keep the state consistent with what IntentClassifierAgent WOULD have produced.
-            from src.models import IntentClassifierOutput
-            classifier_output = IntentClassifierOutput(
-                intent=plan.intent,
-                entities=plan.entities
-            )
-            result_state["classifier_output"] = classifier_output
-            
             print(f"\n📤 Full Graph State Update:")
-            print(json.dumps({k: str(v) for k, v in result_state.items()}, indent=2))
+            print(json.dumps({k: str(v) for k, v in result_state.items() if k != "messages"}, indent=2))
             
-            return {"orchestrator_plan": serialized_plan, "classifier_output": classifier_output}
+            return {"orchestrator_plan": serialized_plan}
             
         except Exception as e:
             print(f"\n⚠️  Orchestrator failed: {str(e)[:100]}")
-            # Fallback: Return empty plan
-            return {"orchestrator_plan": [], "classifier_output": None}
+            # Fallback: Return empty plan or handle error
+            # Since next_module is required, we might want to default to something or raise. 
+            # For now, let's re-raise to see the error during dev.
+            raise e
