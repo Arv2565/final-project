@@ -2,6 +2,7 @@ from .query_router import QueryRouterOutput, QueryMetadata
 from .intent_classifier import IntentClassifierOutput, IntentType, ExtractedEntities
 from .graph_state import GraphState
 from .orchestrator import OrchestratorPlan, NextModule, AgentType
+from .procedural_guidance import ProceduralGuidanceState
 
 __all__ = [
     "QueryRouterOutput",
@@ -13,4 +14,5 @@ __all__ = [
     "OrchestratorPlan",
     "NextModule",
     "AgentType",
+    "ProceduralGuidanceState",
 ]

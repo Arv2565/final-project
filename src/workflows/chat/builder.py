@@ -10,6 +10,7 @@ from src.nodes.rule_matching_node import rule_matching_node
 from src.nodes.risk_assessment_node import risk_assessment_node
 from src.nodes.response_generation_node import response_generation_node
 from src.nodes.evidence_linking_node import evidence_linking_node
+from src.nodes.procedural_guidance_node import procedural_guidance_node
 
 
 def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "__end__"]:
@@ -81,6 +82,9 @@ def build_graph():
     workflow.add_node("risk_assessment", risk_assessment_node)
     workflow.add_node("evidence_linking", evidence_linking_node)
     workflow.add_node("response_generation", response_generation_node)
+    
+    # Register Procedural Guidance node
+    workflow.add_node("procedural_guidance", procedural_guidance_node)
 
     # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
@@ -92,6 +96,7 @@ def build_graph():
         route_from_orchestrator,
         {
             "fact_structuring": "fact_structuring",
+            "procedural_guidance": "procedural_guidance",
             END: END
         }
     )
@@ -103,6 +108,9 @@ def build_graph():
     workflow.add_edge("risk_assessment", "evidence_linking")
     workflow.add_edge("evidence_linking", "response_generation")
     workflow.add_edge("response_generation", END)
+    
+    # Wire edge: Procedural Guidance to end (for now, can add response generation later)
+    workflow.add_edge("procedural_guidance", END)
 
     # Compile into an executable graph
     return workflow.compile()
