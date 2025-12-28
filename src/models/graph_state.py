@@ -3,6 +3,7 @@ from typing_extensions import NotRequired
 from src.models.query_router import QueryRouterOutput
 from src.models.intent_classifier import IntentClassifierOutput
 from src.models.activity_law import ActivityLawState
+from src.models.procedural_guidance import ProceduralGuidanceState
 
 
 class GraphState(TypedDict, total=False):
@@ -32,14 +33,17 @@ class GraphState(TypedDict, total=False):
     
     # Specialized Agent outputs
     legal_laws: NotRequired[List[str]] # ActivityToLawAgent
-    procedural_advice: NotRequired[str] # ProceduralGuidanceAgent
+    procedural_advice: NotRequired[str] # ProceduralGuidanceAgent (legacy field)
     draft_document: NotRequired[str] # DraftBuilderAgent
     educational_content: NotRequired[str] # EducationalLayerAgent
     case_law: NotRequired[List[str]] # CaseRetrieverAgent
     comparison_result: NotRequired[str] # ComparativeModuleAgent
     
     # Activity to Law Workflow State
-    activity_law_state: NotRequired['ActivityLawState']
+    activity_law_state: NotRequired[ActivityLawState]
+    
+    # Procedural Guidance Workflow State
+    procedural_guidance_state: NotRequired[ProceduralGuidanceState]
     
     # Final Output
     final_response: NotRequired[str]

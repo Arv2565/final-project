@@ -2,6 +2,7 @@ from typing import Dict, Any, List
 from src.models import GraphState
 
 from src.agents.activity_law.workflow import ActivityToLawWorkflow
+from src.agents.procedural.workflow import ProceduralGuidanceWorkflow
 
 class ActivityToLawAgent:
     """Wrapper for activity to law mapping workflow."""
@@ -24,9 +25,12 @@ class ActivityToLawAgent:
         return self.workflow(state)
 
 class ProceduralGuidanceAgent:
-    """Placeholder for Procedural Guidance Agent."""
-    def __call__(self, state: GraphState) -> Dict[str, Any]:
-        return {"procedural_advice": "Step 1: File an FIR at the nearest police station.\nStep 2: Consult a lawyer."}
+    """Wrapper for Procedural Guidance workflow."""
+    def __init__(self):
+        self.workflow = ProceduralGuidanceWorkflow()
+    
+    def __call__(self, state: GraphState, callbacks: List[Any] = []) -> Dict[str, Any]:
+        return self.workflow(state, callbacks=callbacks)
 
 class DraftBuilderAgent:
     """Placeholder for Draft Builder Agent."""
