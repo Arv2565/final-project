@@ -10,6 +10,14 @@ from src.workflows.procedural.nodes import (
     procedural_response_node
 )
 
+from typing import Literal
+
+def route_from_timeline(state: GraphState) -> Literal["checklist_generator", "__end__"]:
+    """Route from timeline, checking for clarification."""
+    if state.get("pending_clarification"):
+        return END
+    return "checklist_generator"
+
 def build_procedural_graph():
     """Build and compile the Procedural Guidance subgraph.
     
@@ -26,9 +34,19 @@ def build_procedural_graph():
     workflow.add_node("estimated_effort", estimated_effort_node)
     workflow.add_node("procedural_response", procedural_response_node)
     
-    # Wire Edges (Linear Flow)
+    # Wire Edges (Linear Flow with Check)
     workflow.add_edge(START, "timeline_constraint")
-    workflow.add_edge("timeline_constraint", "checklist_generator")
+    
+    workflow.add_conditional_edges(
+        "timeline_constraint",
+        route_from_timeline,
+        {
+            "checklist_generator": "checklist_generator",
+            END: END
+        }
+    )
+    
+    # workflow.add_edge("timeline_constraint", "checklist_generator") # Replaced
     workflow.add_edge("checklist_generator", "responsible_actor")
     workflow.add_edge("responsible_actor", "estimated_effort")
     workflow.add_edge("estimated_effort", "procedural_response")

@@ -47,4 +47,9 @@ class GraphState(TypedDict, total=False):
     
     # Final Output
     final_response: NotRequired[str]
+    
+    # Clarification System
+    clarification_history: NotRequired[List[dict]]  # List of {question: str, answer: str}
+    clarification_counts: NotRequired[dict]         # Count of questions per agent: {agent_name: count}
+    pending_clarification: NotRequired[dict]        # Serialized ClarificationRequest
 

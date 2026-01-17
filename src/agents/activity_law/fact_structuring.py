@@ -22,13 +22,42 @@ class FactStructuringAgent:
         import json
         print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
         
+        
+        # Clarification Logic
+        clarification_counts = state.get("clarification_counts", {})
+        current_count = clarification_counts.get("fact_structuring", 0)
+        MAX_CLARIFICATION = 3 
+        
+        clarification_history = state.get("clarification_history", [])
+        
+        prompt = FACT_STRUCTURING_PROMPT.format(query=query)
+        
+        if clarification_history:
+             prompt += "\n\nPrevious Clarifications:\n"
+             for item in clarification_history:
+                 prompt += f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}\n"
+        
+        if current_count < MAX_CLARIFICATION:
+             prompt += "\nIf the incident description is missing critical details (e.g. Jurisdiction, specific actions), you MAY request clarification. Set 'clarification' field and leave factors/events empty."
+        else:
+             prompt += "\nYou have reached the limit for clarifications. You MUST make a best-guess extraction."
+
         try:
             result = self.llm.invoke(
-                FACT_STRUCTURING_PROMPT.format(query=query),
+                prompt,
                 config={"callbacks": callbacks}
             )
             
             print(f"\n✅ Fact Structuring Output:")
+            if result.clarification:
+                print(f"   Requesting Clarification: {result.clarification.question}")
+                clarification_counts["fact_structuring"] = current_count + 1
+                return {
+                    "fact_structuring": result,
+                    "pending_clarification": result.clarification.dict(),
+                    "clarification_counts": clarification_counts
+                }
+
             if result and hasattr(result, 'factors'):
                 print(f"   Factors: {len(result.factors) if result.factors else 0} identified")
             if result and hasattr(result, 'events'):
@@ -39,19 +68,6 @@ class FactStructuringAgent:
             # We need to simulate the nested update for logging
             from src.models.activity_law import ActivityLawState
             activity_state = state.get("activity_law_state", ActivityLawState())
-            # We can't easily deep copy the pydantic model in the log simulation without some effort,
-            # but we can show the update dict.
-            
-            # Only update the specific field for logging viz
-            if result and hasattr(result, 'fact_structuring'): # This might be direct result object, check schema
-                 # result IS the FactStructuringOutput
-                 pass
-
-            # Since 'result' IS the output object (FactStructuringOutput), and not a dict with key 'fact_structuring'
-            # (Wait, check output_schema=FactStructuringOutput)
-            
-            # The node wrapper handles the nesting.
-            # Here we just return the result.
             
             # For logging purpose, we can show we are returning the object
             print(f"\n📤 Return: {result}")
@@ -59,4 +75,6 @@ class FactStructuringAgent:
             return {"fact_structuring": result}
         except Exception as e:
             print(f"\n⚠️  FactStructuringAgent failed: {str(e)[:100]}")
+            # If failing, default to None? OR maybe empty result
+            # Returning None might break next steps, but error handling is outside scope right now
             return {"fact_structuring": None}

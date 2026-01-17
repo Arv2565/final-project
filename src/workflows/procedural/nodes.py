@@ -24,7 +24,15 @@ def timeline_constraint_node(state: GraphState, config: RunnableConfig | None = 
     if result and result.get("timeline_constraints"):
         current_state.timeline_constraints = result["timeline_constraints"]
         
-    return {"procedural_guidance_state": current_state}
+    output = {"procedural_guidance_state": current_state}
+    
+    # Merge other result keys (pending_clarification, clarification_counts)
+    if result:
+         for k, v in result.items():
+            if k != "timeline_constraints":
+                output[k] = v
+                
+    return output
 
 def checklist_generator_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
     """Node for generating procedural checklist."""

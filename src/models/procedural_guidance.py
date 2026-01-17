@@ -1,5 +1,6 @@
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
+from src.models.clarification import ClarificationRequest
 
 
 class TimelineConstraint(BaseModel):
@@ -20,6 +21,7 @@ class TimelineConstraintOutput(BaseModel):
         default_factory=list,
         description="List of identified timeline constraints"
     )
+    clarification: Optional[ClarificationRequest] = Field(None, description="Request for clarification if jurisdiction or procedure type is missing.")
 
 
 class ChecklistItem(BaseModel):

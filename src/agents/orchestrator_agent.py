@@ -45,14 +45,31 @@ class OrchestratorAgent:
         # Safe printing of state (excluding large objects if any)
         print(json.dumps({k: str(v) for k, v in state.items() if k != "messages"}, indent=2))
 
+        # Clarification Logic
+        clarification_counts = state.get("clarification_counts", {})
+        current_count = clarification_counts.get("orchestrator", 0)
+        MAX_CLARIFICATION = 3 
+        
+        clarification_history = state.get("clarification_history", [])
+        
         # Build user prompt
         user_prompt = f"Query: {cleaned_query}\n\n"
         if metadata.language and metadata.language != "en":
             user_prompt += f"(Originally in: {metadata.language})\n"
+            
+        if clarification_history:
+             user_prompt += "\nPrevious Clarifications:\n"
+             for item in clarification_history:
+                 user_prompt += f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}\n"
         
         user_prompt += """
         Determine the single best next module (agent number 1-6) to handle this query.
         """
+        
+        if current_count < MAX_CLARIFICATION:
+             user_prompt += "\nIf the query is too vague to select a single module, or missing critical info, you MAY request clarification. Set 'clarification' field and leave 'next_module' empty."
+        else:
+             user_prompt += "\nYou have reached the limit for clarifications. You MUST make a best-guess selection."
 
         try:
             plan = self.llm.invoke(
@@ -64,8 +81,20 @@ class OrchestratorAgent:
             )
             
             print(f"\n✅ Orchestrator Output:")
-            print(f"   Selected Module: {plan.next_module.agent_number}")
-            print(f"   Reasoning: {plan.next_module.reasoning}")
+            if plan.clarification:
+                print(f"   Requesting Clarification: {plan.clarification.question}")
+                # Increment counter
+                clarification_counts["orchestrator"] = current_count + 1
+                serialized_plan = plan.dict() # or model_dump
+                return {
+                    "orchestrator_plan": serialized_plan,
+                    "pending_clarification": plan.clarification.dict(),
+                    "clarification_counts": clarification_counts
+                }
+
+            if plan.next_module:
+                print(f"   Selected Module: {plan.next_module.agent_number}")
+                print(f"   Reasoning: {plan.next_module.reasoning}")
             
             # Serialize for graph state
             serialized_plan = plan.model_dump()

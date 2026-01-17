@@ -3,6 +3,7 @@ from .intent_classifier import IntentClassifierOutput, IntentType, ExtractedEnti
 from .graph_state import GraphState
 from .orchestrator import OrchestratorPlan, NextModule, AgentType
 from .procedural_guidance import ProceduralGuidanceState
+from .clarification import ClarificationRequest
 
 __all__ = [
     "QueryRouterOutput",
@@ -15,4 +16,5 @@ __all__ = [
     "NextModule",
     "AgentType",
     "ProceduralGuidanceState",
+    "ClarificationRequest",
 ]

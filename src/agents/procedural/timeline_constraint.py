@@ -33,6 +33,13 @@ class TimelineConstraintAgent:
         
         cleaned_query = router_output.cleaned_query
         
+        # Clarification Logic
+        clarification_counts = state.get("clarification_counts", {})
+        current_count = clarification_counts.get("procedural_guidance", 0)
+        MAX_CLARIFICATION = 3
+        
+        clarification_history = state.get("clarification_history", [])
+        
         # Build user prompt
         user_prompt = f"""Query: {cleaned_query}
 
@@ -44,6 +51,16 @@ Consider:
 - What are the consequences of missing these deadlines?
 
 Be precise with BNSS section references."""
+
+        if clarification_history:
+             user_prompt += "\n\nPrevious Clarifications:\n"
+             for item in clarification_history:
+                 user_prompt += f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}\n"
+
+        if current_count < MAX_CLARIFICATION:
+             user_prompt += "\n\nIf the query is missing critical procedural context (e.g. Jurisdiction, Type of Case/Appeals), you MAY request clarification. Set 'clarification' field and leave 'constraints' empty."
+        else:
+             user_prompt += "\n\nYou have reached the limit for clarifications. You MUST make best-guess assumptions based on general Indian criminal procedure."
         
         try:
             output = self.llm.invoke(
@@ -53,6 +70,17 @@ Be precise with BNSS section references."""
                 ],
                 config={"callbacks": callbacks}
             )
+            
+            print(f"✅ Timeline Agent Output Check")
+            
+            if output.clarification:
+                print(f"   Requesting Clarification: {output.clarification.question}")
+                clarification_counts["procedural_guidance"] = current_count + 1
+                return {
+                    "timeline_constraints": output,
+                    "pending_clarification": output.clarification.dict(),
+                    "clarification_counts": clarification_counts
+                } # Node must handle the merge
             
             print(f"✅ Identified {len(output.constraints)} timeline constraints")
             for constraint in output.constraints:

@@ -26,6 +26,9 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         6 → comparative_module
         0 → general_chat
     """
+    if state.get("pending_clarification"):
+        return END
+
     plan_data = state.get("orchestrator_plan")
     
     if not plan_data:
@@ -36,9 +39,12 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         next_module = plan_data.get("next_module")
     else:
         return END
-
+        
+    # If next_module is None (e.g. only clarification was returned but somehow pending_clarification wasn't set?), return END
     if not next_module:
         return END
+
+    # ... rest of logic ...
     
     # Extract agent_number from next_module
     if isinstance(next_module, dict):
@@ -61,6 +67,13 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
     }
     
     return agent_routing.get(agent_number, END)
+
+
+def route_from_fact_structuring(state: GraphState) -> Literal["statute_matching", "__end__"]:
+    """Route from fact_structuring, checking for clarification."""
+    if state.get("pending_clarification"):
+        return END
+    return "statute_matching"
 
 
 def build_graph():
@@ -103,13 +116,26 @@ def build_graph():
         {
             "fact_structuring": "fact_structuring",
             "procedural_guidance": "procedural_guidance",
+            "draft_builder": END, # placeholders
+            "educational_layer": END,
+            "case_retriever": END,
+            "comparative_module": END,
             "general_chat": "general_chat",
             END: END
         }
     )
     
-    # Wire edges: Activity to Law Pipeline (Linear)
-    workflow.add_edge("fact_structuring", "statute_matching")
+    # Wire edges: Activity to Law Pipeline (Linear with Check)
+    # workflow.add_edge("fact_structuring", "statute_matching") # REPLACED
+    workflow.add_conditional_edges(
+        "fact_structuring",
+        route_from_fact_structuring,
+        {
+            "statute_matching": "statute_matching",
+            END: END
+        }
+    )
+
     workflow.add_edge("statute_matching", "rule_matching")
     workflow.add_edge("rule_matching", "risk_assessment")
     workflow.add_edge("risk_assessment", "evidence_linking")
