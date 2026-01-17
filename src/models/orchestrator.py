@@ -6,6 +6,7 @@ class AgentType(str, Enum):
     """Available agents for the orchestrator to call.
     
     Numeric mapping:
+        0 = general_chat
         1 = activity_to_law
         2 = procedural_guidance
         3 = draft_builder
@@ -13,6 +14,7 @@ class AgentType(str, Enum):
         5 = case_retriever
         6 = comparative_module
     """
+    GENERAL_CHAT = "general_chat"
     ACTIVITY_TO_LAW = "activity_to_law"
     PROCEDURAL_GUIDANCE = "procedural_guidance"
     DRAFT_BUILDER = "draft_builder"
@@ -22,7 +24,7 @@ class AgentType(str, Enum):
     
     @classmethod
     def from_number(cls, num: int) -> "AgentType":
-        """Convert numeric agent ID (1-6) to AgentType enum.
+        """Convert numeric agent ID (0-6) to AgentType enum.
         
         Args:
             num: Agent number (1-6)
@@ -34,6 +36,7 @@ class AgentType(str, Enum):
             ValueError: If num is not between 1 and 6
         """
         mapping = {
+            0: cls.GENERAL_CHAT,
             1: cls.ACTIVITY_TO_LAW,
             2: cls.PROCEDURAL_GUIDANCE,
             3: cls.DRAFT_BUILDER,
@@ -42,12 +45,12 @@ class AgentType(str, Enum):
             6: cls.COMPARATIVE_MODULE,
         }
         if num not in mapping:
-            raise ValueError(f"Agent number must be 1-6, got {num}")
+            raise ValueError(f"Agent number must be 0-6, got {num}")
         return mapping[num]
     
     @classmethod
     def to_number(cls, agent: "AgentType") -> int:
-        """Convert AgentType enum to numeric ID (1-6).
+        """Convert AgentType enum to numeric ID (0-6).
         
         Args:
             agent: AgentType enum value
@@ -56,6 +59,7 @@ class AgentType(str, Enum):
             Corresponding numeric ID
         """
         mapping = {
+            cls.GENERAL_CHAT: 0,
             cls.ACTIVITY_TO_LAW: 1,
             cls.PROCEDURAL_GUIDANCE: 2,
             cls.DRAFT_BUILDER: 3,
@@ -67,14 +71,14 @@ class AgentType(str, Enum):
 
 class NextModule(BaseModel):
     """The next module (agent) selected by the orchestrator."""
-    agent_number: int = Field(..., description="Numeric ID of the agent to call (1-6).")
+    agent_number: int = Field(..., description="Numeric ID of the agent to call (0-6).")
     reasoning: str = Field(..., description="Why this agent is chosen for the current query.")
     
     @validator('agent_number')
     def validate_agent_number(cls, v):
-        """Ensure agent_number is between 1 and 6."""
-        if not isinstance(v, int) or v < 1 or v > 6:
-            raise ValueError(f"agent_number must be an integer between 1 and 6, got {v}")
+        """Ensure agent_number is between 0 and 6."""
+        if not isinstance(v, int) or v < 0 or v > 6:
+            raise ValueError(f"agent_number must be an integer between 0 and 6, got {v}")
         return v
 
 class OrchestratorPlan(BaseModel):

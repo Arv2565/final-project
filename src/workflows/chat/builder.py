@@ -11,9 +11,10 @@ from src.nodes.risk_assessment_node import risk_assessment_node
 from src.nodes.response_generation_node import response_generation_node
 from src.nodes.evidence_linking_node import evidence_linking_node
 from src.nodes.procedural_guidance_node import procedural_guidance_node
+from src.nodes.general_chat_node import general_chat_node
 
 
-def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "__end__"]:
+def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "general_chat", "__end__"]:
     """Route based on the next_module selected by the orchestrator.
     
     Agent mapping:
@@ -23,6 +24,7 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         4 → educational_layer
         5 → case_retriever
         6 → comparative_module
+        0 → general_chat
     """
     plan_data = state.get("orchestrator_plan")
     
@@ -55,6 +57,7 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         4: "educational_layer",
         5: "case_retriever",
         6: "comparative_module",
+        0: "general_chat",
     }
     
     return agent_routing.get(agent_number, END)
@@ -85,6 +88,9 @@ def build_graph():
     
     # Register Procedural Guidance node
     workflow.add_node("procedural_guidance", procedural_guidance_node)
+    
+    # Register General Chat node
+    workflow.add_node("general_chat", general_chat_node)
 
     # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
@@ -97,6 +103,7 @@ def build_graph():
         {
             "fact_structuring": "fact_structuring",
             "procedural_guidance": "procedural_guidance",
+            "general_chat": "general_chat",
             END: END
         }
     )
@@ -111,6 +118,9 @@ def build_graph():
     
     # Wire edge: Procedural Guidance to end (for now, can add response generation later)
     workflow.add_edge("procedural_guidance", END)
+    
+    # Wire edge: General Chat to end
+    workflow.add_edge("general_chat", END)
 
     # Compile into an executable graph
     return workflow.compile()

@@ -1,8 +1,7 @@
 from typing import Dict, Any
 from langchain_core.runnables import RunnableConfig
 from src.models import GraphState
-from src.agents.placeholders import ProceduralGuidanceAgent
-
+from src.workflows.procedural.builder import build_procedural_graph
 
 def procedural_guidance_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
     """Node wrapper for Procedural Guidance workflow.
@@ -14,7 +13,7 @@ def procedural_guidance_node(state: GraphState, config: RunnableConfig | None = 
     Returns:
         Dict with procedural_guidance_state
     """
-    callbacks = config.get("callbacks", []) if config else []
-    agent = ProceduralGuidanceAgent()
-    return agent(state, callbacks=callbacks)
+    procedural_graph = build_procedural_graph()
+    # Invoke the subgraph with the current state and config
+    return procedural_graph.invoke(state, config=config)
 
