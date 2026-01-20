@@ -38,19 +38,61 @@ def main() -> None:
 
     graph = build_graph()
 
-    # Initialize observability callback
+    # Initialize observability callback with session tracking
     from src.config.observability import get_langfuse_callback
-    callback_handler = get_langfuse_callback()
-    config = {"callbacks": [callback_handler]} if callback_handler else {}
-
+    from langfuse import get_client
+    import uuid
+    
+    session_id = str(uuid.uuid4())
+    langfuse_client = None
+    try:
+        langfuse_client = get_client()
+    except Exception:
+        pass  # Langfuse not configured
+    
     # Synchronous invocation loop
     current_state = initial_state
+    clarification_count = 0
+    MAX_CLARIFICATIONS = 5  # Prevent infinite loops
+    iteration = 0
     
     while True:
+        iteration += 1
+        # Create callback handler with session and iteration metadata
+        callback_handler = get_langfuse_callback()
+        config = {"callbacks": [callback_handler]} if callback_handler else {}
+        
+        # Add session metadata to callback if available
+        if callback_handler:
+            callback_handler.session_id = session_id
+            callback_handler.metadata = {
+                "iteration": iteration,
+                "clarification_count": clarification_count,
+                "has_clarification_history": bool(current_state.get("clarification_history")),
+            }
+        
+        print(f"\n{'='*80}")
+        print(f"🔄 Iteration {iteration} (Session: {session_id[:8]}...)")
+        print(f"{'='*80}")
+        
         final_state: Dict[str, Any] = graph.invoke(current_state, config=config)
         
         # Check for clarification request
         if final_state.get("pending_clarification"):
+            clarification_count += 1
+            
+            # Safety check for infinite loops
+            if clarification_count > MAX_CLARIFICATIONS:
+                print("\n⚠️  Maximum clarification limit reached. Proceeding with available information.")
+                # Remove pending clarification and continue
+                current_state = {**final_state}
+                if "pending_clarification" in current_state:
+                    del current_state["pending_clarification"]
+                # Also clear orchestrator_plan to force re-execution
+                if "orchestrator_plan" in current_state:
+                    del current_state["orchestrator_plan"]
+                continue
+            
             clarification = final_state["pending_clarification"]
             
             print("\n" + "="*50)
@@ -69,24 +111,54 @@ def main() -> None:
             if not user_response:
                 print("Exiting due to empty response.")
                 break
+            
+            # Map numeric response to actual option text if options are provided
+            actual_answer = user_response
+            if clarification.get('options') and user_response.isdigit():
+                option_idx = int(user_response) - 1
+                if 0 <= option_idx < len(clarification['options']):
+                    actual_answer = clarification['options'][option_idx]
                 
             # Update state with history and remove pending flag
             history = final_state.get("clarification_history", [])
             history.append({
                 "question": clarification['question'],
-                "answer": user_response
+                "answer": actual_answer
             })
             
-            # Prepare next state: keep current state + updated history, remove pending
-            current_state = {**final_state, "clarification_history": history}
-            if "pending_clarification" in current_state:
-                del current_state["pending_clarification"]
+            # Prepare next state: keep essential state but clear orchestrator_plan to force re-execution
+            current_state = {
+                "user_query": final_state.get("user_query"),
+                "router_output": final_state.get("router_output"),
+                "clarification_history": history,
+                "clarification_counts": final_state.get("clarification_counts", {}),
+            }
+            # Keep any other non-orchestrator state that might be needed
+            for key in final_state:
+                if key not in ["pending_clarification", "orchestrator_plan", "user_query", "router_output", "clarification_history", "clarification_counts"]:
+                    if key not in current_state:
+                        current_state[key] = final_state[key]
             
             print("\n🔄 Resuming workflow with new information...\n")
+            
+            # Flush callback to ensure trace is sent before next iteration
+            if langfuse_client:
+                try:
+                    langfuse_client.flush()
+                except Exception as e:
+                    print(f"Warning: Failed to flush LangFuse: {e}")
+            
             continue
         
         # If no clarification needed, break
         break
+    
+    # Final flush to ensure all traces are sent
+    if langfuse_client:
+        try:
+            langfuse_client.flush()
+        except Exception as e:
+            print(f"Warning: Failed to flush LangFuse: {e}")
 
     router_output = final_state.get("router_output")
     classifier_output = final_state.get("classifier_output")

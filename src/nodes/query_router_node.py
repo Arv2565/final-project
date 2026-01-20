@@ -27,6 +27,10 @@ def query_router_node(state: GraphState, config: RunnableConfig | None = None) -
     Returns:
         State update with 'router_output' field
     """
+    # Skip if we already have router output (resuming after clarification)
+    if state.get("router_output"):
+        return {}
+    
     global _query_router_agent
     
     if _query_router_agent is None:

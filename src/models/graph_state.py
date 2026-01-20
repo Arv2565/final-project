@@ -43,7 +43,9 @@ class GraphState(TypedDict, total=False):
     activity_law_state: NotRequired[ActivityLawState]
     
     # Procedural Guidance Workflow State
-    procedural_guidance_state: NotRequired[ProceduralGuidanceState]
+    procedural_guidance_state: NotRequired[ProceduralGuidanceState] # Legacy/Generic
+    procedural_guidance_civil_state: NotRequired[ProceduralGuidanceState]
+    procedural_guidance_criminal_state: NotRequired[ProceduralGuidanceState]
     
     # Final Output
     final_response: NotRequired[str]
@@ -52,4 +54,7 @@ class GraphState(TypedDict, total=False):
     clarification_history: NotRequired[List[dict]]  # List of {question: str, answer: str}
     clarification_counts: NotRequired[dict]         # Count of questions per agent: {agent_name: count}
     pending_clarification: NotRequired[dict]        # Serialized ClarificationRequest
+    
+    # Internal State
+    active_legal_domain: NotRequired[str]           # 'civil' or 'criminal' - Explicit override for subgraphs
 

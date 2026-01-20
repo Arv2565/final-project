@@ -26,6 +26,11 @@ def orchestrator_node(state: GraphState, config: RunnableConfig | None = None) -
     Returns:
         State update with 'orchestrator_plan' field
     """
+    # Skip if we already have orchestrator plan
+    # (After clarification, app.py clears orchestrator_plan to force re-execution)
+    if state.get("orchestrator_plan"):
+        return {}
+    
     global _orchestrator_agent
     
     if _orchestrator_agent is None:
@@ -34,3 +39,4 @@ def orchestrator_node(state: GraphState, config: RunnableConfig | None = None) -
     callbacks = config.get("callbacks", []) if config else []
     result = _orchestrator_agent(state, callbacks=callbacks)
     return {**state, **result}
+

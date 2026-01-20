@@ -3,6 +3,7 @@ from src.models import GraphState, ProceduralGuidanceState
 from src.models.procedural_guidance import ActorMappingOutput
 from src.agents.agent_llm_helper import get_agent_llm
 from src.prompts.procedural_prompts import RESPONSIBLE_ACTOR_MAPPER_SYSTEM_PROMPT
+from src.prompts.procedural_civil_prompts import CIVIL_RESPONSIBLE_ACTOR_MAPPER_SYSTEM_PROMPT
 
 
 class ResponsibleActorMapperAgent:
@@ -28,6 +29,8 @@ class ResponsibleActorMapperAgent:
         print("=" * 60)
         
         router_output = state.get("router_output")
+        active_domain = state.get("active_legal_domain", "criminal")
+        
         if not router_output:
             raise ValueError("Missing 'router_output' in state")
         
@@ -56,10 +59,12 @@ Consider:
 
 Be specific about roles and jurisdictions."""
         
+        system_prompt = CIVIL_RESPONSIBLE_ACTOR_MAPPER_SYSTEM_PROMPT if active_domain == "civil" else RESPONSIBLE_ACTOR_MAPPER_SYSTEM_PROMPT
+        
         try:
             output = self.llm.invoke(
                 [
-                    {"role": "system", "content": RESPONSIBLE_ACTOR_MAPPER_SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 config={"callbacks": callbacks}

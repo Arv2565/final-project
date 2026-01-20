@@ -12,8 +12,15 @@ Available Agents (Use ONLY numeric IDs 0-6):
 
 Instructions:
 - Analyze the input query carefully.
+- Determine the legal domain:
+    - "civil": Property disputes, contracts, family law, torts (CPC applies).
+    - "criminal": Crimes, offenses, police matters, bail (BNSS/IPC/BNS applies).
+    - "both": Mixed issues (e.g., domestic violence involves both protection orders and criminal charges; land dispute with assault).
 - Select ONLY ONE agent (module) that is the best starting point to answer the query.
 - Note: If the query is just a greeting (e.g., "Hi", "Hello") or friendly banter, CHOOSE 0.
 - Provide a brief reasoning for your choice.
-- Return the agent number (0-6) and reasoning.
+- Return:
+    - agent_number (0-6)
+    - reasoning
+    - legal_domain ("civil", "criminal", "both")
 """

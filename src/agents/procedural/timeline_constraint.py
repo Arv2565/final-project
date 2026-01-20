@@ -3,6 +3,7 @@ from src.models import GraphState
 from src.models.procedural_guidance import TimelineConstraintOutput
 from src.agents.agent_llm_helper import get_agent_llm
 from src.prompts.procedural_prompts import TIMELINE_CONSTRAINT_SYSTEM_PROMPT
+from src.prompts.procedural_civil_prompts import CIVIL_TIMELINE_CONSTRAINT_SYSTEM_PROMPT
 
 
 class TimelineConstraintAgent:
@@ -28,6 +29,8 @@ class TimelineConstraintAgent:
         print("=" * 60)
         
         router_output = state.get("router_output")
+        active_domain = state.get("active_legal_domain", "criminal") # Default to criminal if not set
+        
         if not router_output:
             raise ValueError("Missing 'router_output' in state")
         
@@ -53,19 +56,31 @@ Consider:
 Be precise with BNSS section references."""
 
         if clarification_history:
-             user_prompt += "\n\nPrevious Clarifications:\n"
+             user_prompt += "\n\n### ADDITIONAL CONTEXT FROM CLARIFICATIONS (CRITICAL - DO NOT IGNORE):\n"
              for item in clarification_history:
                  user_prompt += f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}\n"
+             user_prompt += "\n\n‼️ CRITICAL INSTRUCTION: The user has ALREADY provided answers to the above questions. You MUST incorporate this information into your analysis. DO NOT REQUEST CLARIFICATION FOR ANY INFORMATION THAT HAS ALREADY BEEN PROVIDED ABOVE. If the user answered 'Muslim', you have all the information you need about personal law. Proceed with your analysis based on Muslim Personal Law."
 
         if current_count < MAX_CLARIFICATION:
-             user_prompt += "\n\nIf the query is missing critical procedural context (e.g. Jurisdiction, Type of Case/Appeals), you MAY request clarification. Set 'clarification' field and leave 'constraints' empty."
+             user_prompt += """
+
+If the query is missing critical procedural context (e.g., Jurisdiction, Relief Sought, Religion for personal law, or specific relevant dates), you MAY request clarification. 
+
+CRITICAL INSTRUCTION FOR CLARIFICATION:
+- You are speaking to a layman who does not know legal terms.
+- Do NOT ask "Which personal law applies?".
+- INSTEAD ask simple questions like: "Are you Hindu, Muslim, Christian, or married under a Special Marriage Act?" or "Where did the incident happen?"
+- Keep the question SIMPLE, DIRECT, and human-like.
+- Set 'clarification' field and leave 'constraints' empty."""
         else:
              user_prompt += "\n\nYou have reached the limit for clarifications. You MUST make best-guess assumptions based on general Indian criminal procedure."
+        
+        system_prompt = CIVIL_TIMELINE_CONSTRAINT_SYSTEM_PROMPT if active_domain == "civil" else TIMELINE_CONSTRAINT_SYSTEM_PROMPT
         
         try:
             output = self.llm.invoke(
                 [
-                    {"role": "system", "content": TIMELINE_CONSTRAINT_SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 config={"callbacks": callbacks}

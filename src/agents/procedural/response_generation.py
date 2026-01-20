@@ -3,7 +3,7 @@ from src.models import GraphState, ProceduralGuidanceState
 from src.agents.agent_llm_helper import get_agent_llm
 from pydantic import BaseModel, Field
 
-
+from src.prompts.procedural_civil_prompts import CIVIL_PROCEDURAL_RESPONSE_PROMPT
 class ProceduralResponseOutput(BaseModel):
     """Final user-facing response for procedural guidance."""
     summary: str = Field(..., description="Executive summary of the procedural guidance")
@@ -143,10 +143,13 @@ Synthesize all the above information into a clear, comprehensive, user-friendly 
 Follow the structured format provided in the system prompt.
 Make it actionable and easy to understand for someone navigating the legal system."""
         
+        active_domain = state.get("active_legal_domain", "criminal")
+        system_prompt = CIVIL_PROCEDURAL_RESPONSE_PROMPT if active_domain == "civil" else PROCEDURAL_RESPONSE_PROMPT
+
         try:
             output = self.llm.invoke(
                 [
-                    {"role": "system", "content": PROCEDURAL_RESPONSE_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 config={"callbacks": callbacks}

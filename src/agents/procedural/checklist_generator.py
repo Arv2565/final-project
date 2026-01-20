@@ -3,6 +3,7 @@ from src.models import GraphState, ProceduralGuidanceState
 from src.models.procedural_guidance import ChecklistOutput
 from src.agents.agent_llm_helper import get_agent_llm
 from src.prompts.procedural_prompts import CHECKLIST_GENERATOR_SYSTEM_PROMPT
+from src.prompts.procedural_civil_prompts import CIVIL_CHECKLIST_GENERATOR_SYSTEM_PROMPT
 
 
 class ChecklistGeneratorAgent:
@@ -28,6 +29,8 @@ class ChecklistGeneratorAgent:
         print("=" * 60)
         
         router_output = state.get("router_output")
+        active_domain = state.get("active_legal_domain", "criminal")
+        
         if not router_output:
             raise ValueError("Missing 'router_output' in state")
         
@@ -58,10 +61,12 @@ Prioritize items as:
 - MEDIUM: Important but not immediately required
 - LOW: Helpful but optional"""
         
+        system_prompt = CIVIL_CHECKLIST_GENERATOR_SYSTEM_PROMPT if active_domain == "civil" else CHECKLIST_GENERATOR_SYSTEM_PROMPT
+        
         try:
             output = self.llm.invoke(
                 [
-                    {"role": "system", "content": CHECKLIST_GENERATOR_SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 config={"callbacks": callbacks}
