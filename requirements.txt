@@ -54,7 +54,10 @@ python-dotenv>=1.0.0
 pydantic>=1.10.0
 requests>=2.28.0
 PyYAML>=5.4
+<<<<<<< HEAD
 python-docx>=1.1.0
 
 # PDF Generation
 reportlab>=4.0.0
+=======
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e

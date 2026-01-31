@@ -13,7 +13,11 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
+<<<<<<< HEAD
 def orchestrator_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
+=======
+def orchestrator_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     """LangGraph node that delegates to OrchestratorAgent.
     
     This node serves as the central brain, deciding the next steps in the workflow
@@ -26,6 +30,14 @@ def orchestrator_node(state: GraphState, config: Optional[RunnableConfig] = None
     Returns:
         State update with 'orchestrator_plan' field
     """
+<<<<<<< HEAD
+=======
+    # Skip if we already have orchestrator plan
+    # (After clarification, app.py clears orchestrator_plan to force re-execution)
+    if state.get("orchestrator_plan"):
+        return {}
+    
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     global _orchestrator_agent
     
     if _orchestrator_agent is None:
@@ -34,3 +46,7 @@ def orchestrator_node(state: GraphState, config: Optional[RunnableConfig] = None
     callbacks = config.get("callbacks", []) if config else []
     result = _orchestrator_agent(state, callbacks=callbacks)
     return {**state, **result}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e

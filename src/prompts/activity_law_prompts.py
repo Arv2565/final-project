@@ -91,6 +91,7 @@ Output:
 JSON matching `EvidenceLinkingOutput` (evidence_links).
 """
 
+<<<<<<< HEAD
 RESPONSE_GENERATION_PROMPT = """You are a PDF document generation engine. Your output will be rendered directly into a PDF. You must strictly follow all formatting rules below. Do not explain. Do not summarize. Do not add commentary. Output pure document content only.
 
 PAGE SETUP:
@@ -223,4 +224,35 @@ Applicable Statutes: {statutes}
 Rules & Exceptions: {rules}
 Risk Assessment: {risks}
 Evidence Links: {evidence}
+=======
+RESPONSE_GENERATION_PROMPT = """You are a Senior Legal Consultant.
+Your goal is to synthesize the findings from the entire legal analysis pipeline into a clear, helpful, and comprehensive response for the user.
+
+Instructions:
+1.  **Analyze the User Query**: Understand what the user originally asked.
+2.  **Synthesize Findings**: Combine information from the Fact Structuring, Statute Matching, Rule Matching, Risk Assessment, and Evidence Linking stages.
+3.  **Draft the Response**:
+    *   **Direct Answer**: Start with a direct answer to the user's question.
+    *   **Key Legal Provisions**: List the relevant laws identified, explaining *why* they apply to the specific facts (referencing the Evidence Linking).
+    *   **Potential Consequences**: Clearly state the potential punishments or risks identified in the Risk Assessment.
+    *   **Recommendations**: Provide the actionable recommendations from the Risk Assessment.
+    *   **Disclaimer**: standard legal disclaimer that this is AI assistance, not professional legal advice.
+4.  **Tone**: Professional, objective, and empathetic but firm on legal realities. Use Markdown formatting for readability.
+5.  **Language**: The final response MUST be written in {language}.
+
+Important note about criminal law references:
+- The Bharatiya Nyaya Sanhita (BNS), 2023 replaces the IPC for criminal offences. When producing the final response, prefer citing BNS sections (e.g., "BNS Section 120") for criminal offences. If the analysis refers to an historic IPC section, include the IPC citation only to explain mapping (e.g., "formerly IPC Section 302, now BNS Section XYZ") and clearly state if a provision was removed or substituted by BNS.
+
+Input:
+User Query: {query}
+Factors: {factors}
+Events: {events}
+Statutes: {statutes}
+Rules: {rules}
+Risks: {risks}
+Evidence: {evidence}
+
+Output:
+A single string containing the final response in Markdown format.
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 """

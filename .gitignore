@@ -166,6 +166,10 @@ myenv/
 
 
 WARP.md
+<<<<<<< HEAD
 
+=======
+data/karnataka_acts
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 myenv/
 .env

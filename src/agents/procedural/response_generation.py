@@ -3,13 +3,18 @@ from src.models import GraphState, ProceduralGuidanceState
 from src.agents.agent_llm_helper import get_agent_llm
 from pydantic import BaseModel, Field
 
+<<<<<<< HEAD
 
+=======
+from src.prompts.procedural_civil_prompts import CIVIL_PROCEDURAL_RESPONSE_PROMPT
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 class ProceduralResponseOutput(BaseModel):
     """Final user-facing response for procedural guidance."""
     summary: str = Field(..., description="Executive summary of the procedural guidance")
     detailed_response: str = Field(..., description="Comprehensive, well-formatted response with all steps")
 
 
+<<<<<<< HEAD
 PROCEDURAL_RESPONSE_PROMPT = """You are a legal document generator. Your output will be converted to a formal PDF.
 
 formatting instructions:
@@ -41,6 +46,50 @@ IMPORTANT:
   - INCORRECT: `[Name]`, `...`, `___`, `(Date)`
 - Do not invent details. Leave them as `[MISSING: ...]` so the user can fill them in later.
 """
+=======
+PROCEDURAL_RESPONSE_PROMPT = """You are a legal assistant providing clear, actionable procedural guidance.
+
+Your role is to synthesize all procedural information into a comprehensive, user-friendly response.
+
+Format the response as follows:
+
+## SUMMARY
+[2-3 sentence overview of what the user needs to do]
+
+## TIMELINE & DEADLINES
+[List all critical deadlines and time constraints]
+
+## DOCUMENTS REQUIRED
+[Prioritized checklist of documents to prepare]
+- HIGH PRIORITY: [Items that are legally mandatory or time-critical]
+- MEDIUM PRIORITY: [Important items]
+- LOW PRIORITY: [Optional but helpful items]
+
+## WHO TO CONTACT
+[List responsible parties and officers with contact information]
+
+## STEP-BY-STEP PROCEDURE
+[Numbered list of ordered steps with details for each]
+
+For each step include:
+- What to do
+- Who is responsible
+- Required documents
+- Estimated time
+- Estimated cost
+- Where to go/whom to contact
+- Legal reference
+
+## TOTAL ESTIMATES
+- Overall Timeline: [X to Y timeframe]
+- Overall Cost: [₹X to ₹Y range]
+
+## IMPORTANT NOTES
+[Any critical warnings, tips, or considerations]
+
+Make the response conversational but precise. Use bullet points and formatting for easy readability.
+Reference BNSS sections where relevant for legal credibility."""
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 
 
 class ProceduralResponseGenerationAgent:
@@ -132,10 +181,20 @@ Synthesize all the above information into a clear, comprehensive, user-friendly 
 Follow the structured format provided in the system prompt.
 Make it actionable and easy to understand for someone navigating the legal system."""
         
+<<<<<<< HEAD
         try:
             output = self.llm.invoke(
                 [
                     {"role": "system", "content": PROCEDURAL_RESPONSE_PROMPT},
+=======
+        active_domain = state.get("active_legal_domain", "criminal")
+        system_prompt = CIVIL_PROCEDURAL_RESPONSE_PROMPT if active_domain == "civil" else PROCEDURAL_RESPONSE_PROMPT
+
+        try:
+            output = self.llm.invoke(
+                [
+                    {"role": "system", "content": system_prompt},
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
                     {"role": "user", "content": user_prompt},
                 ],
                 config={"callbacks": callbacks}

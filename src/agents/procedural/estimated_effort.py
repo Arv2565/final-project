@@ -3,6 +3,10 @@ from src.models import GraphState, ProceduralGuidanceState
 from src.models.procedural_guidance import EstimatedEffortOutput
 from src.agents.agent_llm_helper import get_agent_llm
 from src.prompts.procedural_prompts import ESTIMATED_EFFORT_SYSTEM_PROMPT
+<<<<<<< HEAD
+=======
+from src.prompts.procedural_civil_prompts import CIVIL_ESTIMATED_EFFORT_SYSTEM_PROMPT
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 
 
 class EstimatedEffortAgent:
@@ -28,6 +32,11 @@ class EstimatedEffortAgent:
         print("=" * 60)
         
         router_output = state.get("router_output")
+<<<<<<< HEAD
+=======
+        active_domain = state.get("active_legal_domain", "criminal")
+        
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
         if not router_output:
             raise ValueError("Missing 'router_output' in state")
         
@@ -74,10 +83,19 @@ Be realistic about Indian judicial timelines. Account for typical delays.
 Provide cost ranges, not fixed amounts.
 Make this actionable and user-friendly."""
         
+<<<<<<< HEAD
         try:
             output = self.llm.invoke(
                 [
                     {"role": "system", "content": ESTIMATED_EFFORT_SYSTEM_PROMPT},
+=======
+        system_prompt = CIVIL_ESTIMATED_EFFORT_SYSTEM_PROMPT if active_domain == "civil" else ESTIMATED_EFFORT_SYSTEM_PROMPT
+        
+        try:
+            output = self.llm.invoke(
+                [
+                    {"role": "system", "content": system_prompt},
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
                     {"role": "user", "content": user_prompt},
                 ],
                 config={"callbacks": callbacks}
@@ -91,6 +109,7 @@ Make this actionable and user-friendly."""
             
         except Exception as e:
             print(f"⚠️  Effort estimation failed: {str(e)[:100]}")
+<<<<<<< HEAD
             # Return a fallback object to prevent crash
             from src.models.procedural_guidance import StepEstimate
             
@@ -110,3 +129,6 @@ Make this actionable and user-friendly."""
                 total_estimated_cost="Unknown"
             )
             return {"estimated_effort": fallback}
+=======
+            raise
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e

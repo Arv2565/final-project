@@ -1,5 +1,6 @@
 {
   "processed_files": [
+<<<<<<< HEAD
     "MVA.json",
     "constitution_of_india.pdf",
     "cpc.json",
@@ -122,4 +123,11 @@
   ],
   "last_updated": "2025-10-19T13:12:46.953523",
   "total_files_processed": 13
+=======
+  ],
+  "processing_history": [
+  ],
+  "last_updated": "",
+  "total_files_processed": 0
+>>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 }
