@@ -1,10 +1,10 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from langchain_core.runnables import RunnableConfig
 from src.models import GraphState
 from src.agents.placeholders import ProceduralGuidanceAgent
 
 
-def procedural_guidance_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
+def procedural_guidance_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
     """Node wrapper for Procedural Guidance workflow.
     
     Args:

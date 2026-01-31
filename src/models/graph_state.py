@@ -47,4 +47,6 @@ class GraphState(TypedDict, total=False):
     
     # Final Output
     final_response: NotRequired[str]
+    generated_document_content: NotRequired[str] # Content specifically for PDF generation (before user prompts added)
+    generated_document_path: NotRequired[str]
 

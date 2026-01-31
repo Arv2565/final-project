@@ -11,6 +11,8 @@ from src.nodes.risk_assessment_node import risk_assessment_node
 from src.nodes.response_generation_node import response_generation_node
 from src.nodes.evidence_linking_node import evidence_linking_node
 from src.nodes.procedural_guidance_node import procedural_guidance_node
+from src.nodes.placeholder_node import placeholder_node
+
 
 
 def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "__end__"]:
@@ -86,6 +88,20 @@ def build_graph():
     # Register Procedural Guidance node
     workflow.add_node("procedural_guidance", procedural_guidance_node)
 
+    # Register Placeholder nodes for unimplemented agents
+    workflow.add_node("draft_builder", placeholder_node)
+    workflow.add_node("educational_layer", placeholder_node)
+    workflow.add_node("case_retriever", placeholder_node)
+    workflow.add_node("comparative_module", placeholder_node)
+
+    # Register Document Generation node
+    from src.nodes.document_generation_node import document_generation_node
+    workflow.add_node("document_generation", document_generation_node)
+
+    # Register Refinement node
+    from src.nodes.refinement_node import refinement_node
+    workflow.add_node("refinement_node", refinement_node)
+
     # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
     workflow.add_edge("query_router", "orchestrator")
@@ -97,6 +113,10 @@ def build_graph():
         {
             "fact_structuring": "fact_structuring",
             "procedural_guidance": "procedural_guidance",
+            "draft_builder": "draft_builder",
+            "educational_layer": "educational_layer",
+            "case_retriever": "case_retriever",
+            "comparative_module": "comparative_module",
             END: END
         }
     )
@@ -107,10 +127,25 @@ def build_graph():
     workflow.add_edge("rule_matching", "risk_assessment")
     workflow.add_edge("risk_assessment", "evidence_linking")
     workflow.add_edge("evidence_linking", "response_generation")
-    workflow.add_edge("response_generation", END)
     
-    # Wire edge: Procedural Guidance to end (for now, can add response generation later)
-    workflow.add_edge("procedural_guidance", END)
+    # Route response generation to refinement node (instead of document_generation directly)
+    workflow.add_edge("response_generation", "refinement_node")
+    
+    # Wire edge: Procedural Guidance to refinement node
+    workflow.add_edge("procedural_guidance", "refinement_node")
+    
+    # Wire refinement node to document generation
+    workflow.add_edge("refinement_node", "document_generation")
+    
+    # Wire placeholder nodes to end (or document generation if they produce text)
+    # Keeping them pointing to END for now as they are placeholders
+    workflow.add_edge("draft_builder", END)
+    workflow.add_edge("educational_layer", END)
+    workflow.add_edge("case_retriever", END)
+    workflow.add_edge("comparative_module", END)
+    
+    # Wire document generation to END
+    workflow.add_edge("document_generation", END)
 
     # Compile into an executable graph
     return workflow.compile()

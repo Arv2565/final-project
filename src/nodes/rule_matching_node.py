@@ -14,7 +14,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def rule_matching_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
+def rule_matching_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to RuleMatchingAgent.
     
     This node breaks down statutes into logical rules (Premise-Conclusion).

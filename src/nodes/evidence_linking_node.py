@@ -14,7 +14,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def evidence_linking_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
+def evidence_linking_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to EvidenceLinkingAgent.
     
     This node links facts and documents to the compliance assessment.

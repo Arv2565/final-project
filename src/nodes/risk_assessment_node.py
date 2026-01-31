@@ -14,7 +14,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def risk_assessment_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
+def risk_assessment_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to RiskAssessmentAgent.
     
     This node evaluates the risk level of the activity against the matched rules.

@@ -13,7 +13,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def query_router_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
+def query_router_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to QueryRouterAgent.
     
     This node is the entry point of the legal query processing pipeline.

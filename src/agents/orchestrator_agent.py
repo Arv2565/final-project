@@ -70,8 +70,6 @@ class OrchestratorAgent:
             # Serialize for graph state
             serialized_plan = plan.model_dump()
             
-            # We no longer generate 'classifier_output' or 'intent'
-            
             result_state = {**state, "orchestrator_plan": serialized_plan}
             
             print(f"\n📤 Full Graph State Update:")
@@ -81,7 +79,29 @@ class OrchestratorAgent:
             
         except Exception as e:
             print(f"\n⚠️  Orchestrator failed: {str(e)[:100]}")
-            # Fallback: Return empty plan or handle error
-            # Since next_module is required, we might want to default to something or raise. 
-            # For now, let's re-raise to see the error during dev.
+            # If the LLM returned a raw integer or something that failed parsing, we might be able to recover
+            # But since we're using structued output, debugging the prompt is better.
+            # However, let's at least try to be helpful if it's a known pattern.
+            
+            import re
+            # Check if the error message mentions "Input should be a valid dictionary... input_value=1"
+            # This happens if the model just returned "1"
+            
+            match = re.search(r"input_value=(\d+)", str(e))
+            if match:
+                agent_num = int(match.group(1))
+                print(f"⚠️  Recovering from raw integer output: {agent_num}")
+                
+                from src.models import OrchestratorPlan, NextModule
+                
+                # Construct a fallback plan
+                fallback_plan = OrchestratorPlan(
+                    next_module=NextModule(
+                        agent_number=agent_num,
+                        reasoning="Fallback recovery from raw integer output."
+                    )
+                )
+                serialized_plan = fallback_plan.model_dump()
+                return {"orchestrator_plan": serialized_plan}
+
             raise e

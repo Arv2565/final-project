@@ -18,7 +18,7 @@ def get_langfuse_callback() -> Optional["CallbackHandler"]:
     
     public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
     secret_key = os.getenv("LANGFUSE_SECRET_KEY")
-    host = os.getenv("LANGFUSE_HOST", "http://localhost:3000")
+    host = os.getenv("LANGFUSE_HOST") or os.getenv("LANGFUSE_BASE_URL", "http://localhost:3000")
     
     if public_key and secret_key:
         return CallbackHandler(
@@ -36,7 +36,7 @@ def setup_observability() -> None:
     """
     public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
     secret_key = os.getenv("LANGFUSE_SECRET_KEY")
-    host = os.getenv("LANGFUSE_HOST", "http://localhost:3000")
+    host = os.getenv("LANGFUSE_HOST") or os.getenv("LANGFUSE_BASE_URL", "http://localhost:3000")
     
     # If HOST is not set in env, the Langfuse SDK defaults to Cloud (https://cloud.langfuse.com).
     # However, this project defaults to localhost:3000. We must align them.
@@ -46,6 +46,22 @@ def setup_observability() -> None:
     if public_key and secret_key:
         try:
             import langfuse
+            import requests
+            
+            # Check if the host is reachable
+            if host.startswith("http"):
+                try:
+                    # Quick ping to see if server is up
+                    requests.get(f"{host}/api/public/health", timeout=1)
+                except requests.exceptions.RequestException:
+                    print(f"⚠️  Langfuse server at {host} is unreachable. Skipping observability.")
+                    # Unset the env var so other parts don't try to connect
+                    if "LANGFUSE_HOST" in os.environ:
+                        del os.environ["LANGFUSE_HOST"]
+                    if "LANGFUSE_PUBLIC_KEY" in os.environ:
+                        del os.environ["LANGFUSE_PUBLIC_KEY"]
+                    return
+
             # Instantiate a client to ensure environment variables are correctly picked up
             # and to validate credentials before the application starts.
             # This also helps ensure the global configuration is ready.

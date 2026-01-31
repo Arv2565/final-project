@@ -14,7 +14,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def fact_structuring_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
+def fact_structuring_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to FactStructuringAgent.
     
     This node structures the raw query into a canonical fact pattern.

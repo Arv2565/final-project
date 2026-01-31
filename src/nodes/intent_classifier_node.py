@@ -13,7 +13,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def intent_classifier_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
+def intent_classifier_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to IntentClassifierAgent.
     
     This node classifies the user's intent and extracts legal entities

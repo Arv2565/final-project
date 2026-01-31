@@ -9,9 +9,12 @@ Submodules:
     - chat: LangGraph workflow for multi-agent conversation
 """
 
-from .chat import build_graph, GraphState
-
-__all__ = [
-    "build_graph",
-    "GraphState",
-]
+try:
+    from .chat import build_graph, GraphState
+    __all__ = [
+        "build_graph",
+        "GraphState",
+    ]
+except ImportError:
+    # Allow importing other modules even if chat dependencies (langgraph) are missing/broken
+    __all__ = []

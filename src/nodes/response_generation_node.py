@@ -12,7 +12,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-def response_generation_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
+def response_generation_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
     """LangGraph node that delegates to ResponseGenerationAgent.
     
     This node synthesizes the final response for the user.

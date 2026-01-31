@@ -54,6 +54,19 @@ def main() -> None:
     print("\n=== Classifier Output ===")
     print(classifier_output or "(no classifier output produced)")
 
+    # Generate PDF Report
+    if final_state.get("final_response"):
+        from src.utils.pdf_generator import generate_pdf_report
+        import time
+        
+        timestamp = int(time.time())
+        filename = f"output/response_{timestamp}.pdf"
+        try:
+            pdf_path = generate_pdf_report(final_state["final_response"], filename)
+            print(f"\n📄 PDF Report generated: {pdf_path}")
+        except Exception as e:
+            print(f"\n❌ Failed to generate PDF: {e}")
+
 
 if __name__ == "__main__":
     main()

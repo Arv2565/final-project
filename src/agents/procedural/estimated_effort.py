@@ -91,4 +91,22 @@ Make this actionable and user-friendly."""
             
         except Exception as e:
             print(f"⚠️  Effort estimation failed: {str(e)[:100]}")
-            raise
+            # Return a fallback object to prevent crash
+            from src.models.procedural_guidance import StepEstimate
+            
+            fallback = EstimatedEffortOutput(
+                ordered_steps=[
+                    StepEstimate(
+                        step_number=1,
+                        description="Consult a lawyer (Automated fallback due to high system load).",
+                        estimated_time="1-2 days",
+                        estimated_cost="Consultation fees vary",
+                        required_documents=[],
+                        forms_to_fill=[],
+                        contact_points=[]
+                    )
+                ],
+                total_estimated_time="Unknown (System Load)",
+                total_estimated_cost="Unknown"
+            )
+            return {"estimated_effort": fallback}
