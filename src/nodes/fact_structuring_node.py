@@ -14,11 +14,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-<<<<<<< HEAD
 def fact_structuring_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
-=======
-def fact_structuring_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     """LangGraph node that delegates to FactStructuringAgent.
     
     This node structures the raw query into a canonical fact pattern.
@@ -42,14 +38,6 @@ def fact_structuring_node(state: GraphState, config: RunnableConfig | None = Non
     current_activity_state = state.get("activity_law_state", ActivityLawState())
     if result and result.get("fact_structuring"):
         current_activity_state.fact_structuring = result["fact_structuring"]
-<<<<<<< HEAD
-        
-    return {**state, "activity_law_state": current_activity_state}
-=======
-    
-    # We want to keep other keys returned by agent (like pending_clarification, clarification_counts)
-    # But we don't want to duplicate fact_structuring in the top level if it's not needed (it's not needed by GraphState at top level, only in activity_law_state really, but let's follow existing pattern).
-    # actually, GraphState doesn't have 'fact_structuring' at top level.
     
     output = {**state, "activity_law_state": current_activity_state}
     
@@ -60,4 +48,3 @@ def fact_structuring_node(state: GraphState, config: RunnableConfig | None = Non
                 output[k] = v
                 
     return output
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e

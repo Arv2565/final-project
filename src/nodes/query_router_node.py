@@ -13,11 +13,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-<<<<<<< HEAD
 def query_router_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
-=======
-def query_router_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     """LangGraph node that delegates to QueryRouterAgent.
     
     This node is the entry point of the legal query processing pipeline.
@@ -31,13 +27,10 @@ def query_router_node(state: GraphState, config: RunnableConfig | None = None) -
     Returns:
         State update with 'router_output' field
     """
-<<<<<<< HEAD
-=======
     # Skip if we already have router output (resuming after clarification)
     if state.get("router_output"):
         return {}
-    
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
+        
     global _query_router_agent
     
     if _query_router_agent is None:

@@ -22,12 +22,6 @@ class FactStructuringAgent:
         import json
         print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
         
-<<<<<<< HEAD
-        try:
-            result = self.llm.invoke(
-                FACT_STRUCTURING_PROMPT.format(query=query),
-=======
-        
         # Clarification Logic
         clarification_counts = state.get("clarification_counts", {})
         current_count = clarification_counts.get("fact_structuring", 0)
@@ -50,13 +44,10 @@ class FactStructuringAgent:
         try:
             result = self.llm.invoke(
                 prompt,
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
                 config={"callbacks": callbacks}
             )
             
             print(f"\n✅ Fact Structuring Output:")
-<<<<<<< HEAD
-=======
             if result.clarification:
                 print(f"   Requesting Clarification: {result.clarification.question}")
                 clarification_counts["fact_structuring"] = current_count + 1
@@ -66,7 +57,6 @@ class FactStructuringAgent:
                     "clarification_counts": clarification_counts
                 }
 
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
             if result and hasattr(result, 'factors'):
                 print(f"   Factors: {len(result.factors) if result.factors else 0} identified")
             if result and hasattr(result, 'events'):
@@ -77,22 +67,6 @@ class FactStructuringAgent:
             # We need to simulate the nested update for logging
             from src.models.activity_law import ActivityLawState
             activity_state = state.get("activity_law_state", ActivityLawState())
-<<<<<<< HEAD
-            # We can't easily deep copy the pydantic model in the log simulation without some effort,
-            # but we can show the update dict.
-            
-            # Only update the specific field for logging viz
-            if result and hasattr(result, 'fact_structuring'): # This might be direct result object, check schema
-                 # result IS the FactStructuringOutput
-                 pass
-
-            # Since 'result' IS the output object (FactStructuringOutput), and not a dict with key 'fact_structuring'
-            # (Wait, check output_schema=FactStructuringOutput)
-            
-            # The node wrapper handles the nesting.
-            # Here we just return the result.
-=======
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
             
             # For logging purpose, we can show we are returning the object
             print(f"\n📤 Return: {result}")
@@ -100,9 +74,6 @@ class FactStructuringAgent:
             return {"fact_structuring": result}
         except Exception as e:
             print(f"\n⚠️  FactStructuringAgent failed: {str(e)[:100]}")
-<<<<<<< HEAD
-=======
             # If failing, default to None? OR maybe empty result
             # Returning None might break next steps, but error handling is outside scope right now
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
             return {"fact_structuring": None}

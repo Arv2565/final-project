@@ -1,9 +1,5 @@
 from langgraph.graph import StateGraph, START, END
-<<<<<<< HEAD
-from typing import Literal
-=======
 from typing import Literal, Optional
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 
 from src.models import GraphState, AgentType
 from src.nodes.query_router_node import query_router_node
@@ -14,16 +10,7 @@ from src.nodes.rule_matching_node import rule_matching_node
 from src.nodes.risk_assessment_node import risk_assessment_node
 from src.nodes.response_generation_node import response_generation_node
 from src.nodes.evidence_linking_node import evidence_linking_node
-<<<<<<< HEAD
-from src.nodes.procedural_guidance_node import procedural_guidance_node
-from src.nodes.placeholder_node import placeholder_node
-
-
-
-def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "__end__"]:
-=======
 from src.nodes.procedural_guidance_node import (
-    procedural_guidance_node, 
     civil_procedural_guidance_node, 
     criminal_procedural_guidance_node
 )
@@ -31,9 +18,12 @@ from src.nodes.general_chat_node import general_chat_node
 from src.nodes.ambiguity_remover_node import ambiguity_remover_node, set_ambiguity_remover
 from src.agents.ambiguity_remover import AmbiguityRemover
 
+from src.nodes.document_generation_node import document_generation_node
+from src.nodes.refinement_node import refinement_node
+from src.nodes.placeholder_node import placeholder_node
 
-def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "general_chat", "__end__"]:
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
+
+def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance_civil", "procedural_guidance_criminal", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "general_chat", "__end__"]:
     """Route based on the next_module selected by the orchestrator.
     
     Agent mapping:
@@ -43,15 +33,11 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         4 → educational_layer
         5 → case_retriever
         6 → comparative_module
-<<<<<<< HEAD
-    """
-=======
         0 → general_chat
     """
     if state.get("pending_clarification"):
         return END
 
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     plan_data = state.get("orchestrator_plan")
     
     if not plan_data:
@@ -62,18 +48,10 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         next_module = plan_data.get("next_module")
     else:
         return END
-<<<<<<< HEAD
-
-    if not next_module:
-        return END
-=======
         
     # If next_module is None (e.g. only clarification was returned but somehow pending_clarification wasn't set?), return END
     if not next_module:
         return END
-
-    # ... rest of logic ...
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     
     # Extract agent_number from next_module
     if isinstance(next_module, dict):
@@ -84,12 +62,6 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
     if agent_number is None:
         return END
     
-<<<<<<< HEAD
-    # Map agent number to node name
-    agent_routing = {
-        1: "fact_structuring",
-        2: "procedural_guidance",
-=======
     # Extract legal_domain
     legal_domain = plan_data.get("legal_domain", "criminal") # Default to criminal
     
@@ -100,29 +72,25 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         elif legal_domain == "criminal":
             return "procedural_guidance_criminal"
         elif legal_domain == "both":
+            # Note: Parallel execution logic would be handled by LangGraph if we returned a list,
+            # but for now we might need to be careful. The return type hints valid nodes.
+            # Returning a list is valid in LangGraph for parallel branches actions.
             return ["procedural_guidance_civil", "procedural_guidance_criminal"]
         else:
             return "procedural_guidance_criminal" # Fallback
 
     agent_routing = {
         1: "fact_structuring",
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
         3: "draft_builder",
         4: "educational_layer",
         5: "case_retriever",
         6: "comparative_module",
-<<<<<<< HEAD
-=======
         0: "general_chat",
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     }
     
     return agent_routing.get(agent_number, END)
 
 
-<<<<<<< HEAD
-def build_graph():
-=======
 def route_from_fact_structuring(state: GraphState) -> Literal["ambiguity_remover", "statute_matching", "__end__"]:
     """Route from fact_structuring, checking for ambiguity or clarification."""
     # Check if agent flagged ambiguity needing removal
@@ -147,20 +115,11 @@ def route_from_ambiguity_remover(state: GraphState) -> Literal["statute_matching
 
 
 def build_graph(llm_provider=None):
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     """Build and compile the LangGraph workflow for legal query processing.
 
     Flow:
         START → query_router → intent_classifier → orchestrator
-<<<<<<< HEAD
-        orchestrator --(cond)--> fact_structuring → ... → evidence_linking → response_generation → END
-        
-    [...]
-    """
-    workflow = StateGraph(GraphState)
-
-=======
-        orchestrator --(cond)--> fact_structuring → [ambiguity_remover] → statute_matching → ... → response_generation → END
+        orchestrator --(cond)--> fact_structuring → [ambiguity_remover] → statute_matching → ... → response_generation → refinement → document_generation → END
         
     Args:
         llm_provider: Optional LLM provider for AmbiguityRemover. If not provided, 
@@ -180,26 +139,25 @@ def build_graph(llm_provider=None):
     ambiguity_remover = AmbiguityRemover(llm=llm_provider)
     set_ambiguity_remover(ambiguity_remover)
 
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     # Register nodes
     workflow.add_node("query_router", query_router_node)
     workflow.add_node("orchestrator", orchestrator_node)
     
     # Register Activity to Law nodes
     workflow.add_node("fact_structuring", fact_structuring_node)
-<<<<<<< HEAD
-=======
     workflow.add_node("ambiguity_remover", ambiguity_remover_node)
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     workflow.add_node("statute_matching", statute_matching_node)
     workflow.add_node("rule_matching", rule_matching_node)
     workflow.add_node("risk_assessment", risk_assessment_node)
     workflow.add_node("evidence_linking", evidence_linking_node)
     workflow.add_node("response_generation", response_generation_node)
     
-<<<<<<< HEAD
-    # Register Procedural Guidance node
-    workflow.add_node("procedural_guidance", procedural_guidance_node)
+    # Register Procedural Guidance nodes
+    workflow.add_node("procedural_guidance_civil", civil_procedural_guidance_node)
+    workflow.add_node("procedural_guidance_criminal", criminal_procedural_guidance_node)
+    
+    # Register General Chat node
+    workflow.add_node("general_chat", general_chat_node)
 
     # Register Placeholder nodes for unimplemented agents
     workflow.add_node("draft_builder", placeholder_node)
@@ -208,20 +166,10 @@ def build_graph(llm_provider=None):
     workflow.add_node("comparative_module", placeholder_node)
 
     # Register Document Generation node
-    from src.nodes.document_generation_node import document_generation_node
     workflow.add_node("document_generation", document_generation_node)
 
     # Register Refinement node
-    from src.nodes.refinement_node import refinement_node
     workflow.add_node("refinement_node", refinement_node)
-=======
-    # Register Procedural Guidance nodes
-    workflow.add_node("procedural_guidance_civil", civil_procedural_guidance_node)
-    workflow.add_node("procedural_guidance_criminal", criminal_procedural_guidance_node)
-    
-    # Register General Chat node
-    workflow.add_node("general_chat", general_chat_node)
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 
     # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
@@ -233,13 +181,6 @@ def build_graph(llm_provider=None):
         route_from_orchestrator,
         {
             "fact_structuring": "fact_structuring",
-<<<<<<< HEAD
-            "procedural_guidance": "procedural_guidance",
-            "draft_builder": "draft_builder",
-            "educational_layer": "educational_layer",
-            "case_retriever": "case_retriever",
-            "comparative_module": "comparative_module",
-=======
             "procedural_guidance_civil": "procedural_guidance_civil",
             "procedural_guidance_criminal": "procedural_guidance_criminal",
             "draft_builder": END, # placeholders
@@ -247,15 +188,10 @@ def build_graph(llm_provider=None):
             "case_retriever": END,
             "comparative_module": END,
             "general_chat": "general_chat",
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
             END: END
         }
     )
     
-<<<<<<< HEAD
-    # Wire edges: Activity to Law Pipeline (Linear)
-    workflow.add_edge("fact_structuring", "statute_matching")
-=======
     # Wire edges: Activity to Law Pipeline (with AmbiguityRemover integration)
     workflow.add_conditional_edges(
         "fact_structuring",
@@ -277,41 +213,26 @@ def build_graph(llm_provider=None):
         }
     )
 
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     workflow.add_edge("statute_matching", "rule_matching")
     workflow.add_edge("rule_matching", "risk_assessment")
     workflow.add_edge("risk_assessment", "evidence_linking")
     workflow.add_edge("evidence_linking", "response_generation")
-<<<<<<< HEAD
     
-    # Route response generation to refinement node (instead of document_generation directly)
+    # Route response generation to refinement node
     workflow.add_edge("response_generation", "refinement_node")
     
-    # Wire edge: Procedural Guidance to refinement node
-    workflow.add_edge("procedural_guidance", "refinement_node")
+    # Wire procedural nodes to refinement node (merging flows to doc gen)
+    workflow.add_edge("procedural_guidance_civil", "refinement_node")
+    workflow.add_edge("procedural_guidance_criminal", "refinement_node")
+    
+    # Wire edge: General Chat to end (or cleanup if needed)
+    workflow.add_edge("general_chat", END)
     
     # Wire refinement node to document generation
     workflow.add_edge("refinement_node", "document_generation")
     
-    # Wire placeholder nodes to end (or document generation if they produce text)
-    # Keeping them pointing to END for now as they are placeholders
-    workflow.add_edge("draft_builder", END)
-    workflow.add_edge("educational_layer", END)
-    workflow.add_edge("case_retriever", END)
-    workflow.add_edge("comparative_module", END)
-    
     # Wire document generation to END
     workflow.add_edge("document_generation", END)
-=======
-    workflow.add_edge("response_generation", END)
-    
-    # Wire procedural nodes to end
-    workflow.add_edge("procedural_guidance_civil", END)
-    workflow.add_edge("procedural_guidance_criminal", END)
-    
-    # Wire edge: General Chat to end
-    workflow.add_edge("general_chat", END)
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 
     # Compile into an executable graph
     return workflow.compile()

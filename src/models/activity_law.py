@@ -1,9 +1,6 @@
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
-<<<<<<< HEAD
-=======
 from src.models.clarification import ClarificationRequest
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 
 class FactFactor(BaseModel):
     """A legally relevant factual element."""
@@ -22,14 +19,9 @@ class Event(BaseModel):
 
 class FactStructuringOutput(BaseModel):
     """Output of the Fact Structuring Agent."""
-<<<<<<< HEAD
-    factors: List[FactFactor]
-    events: List[Event]
-=======
     factors: List[FactFactor] = Field(default_factory=list)
     events: List[Event] = Field(default_factory=list)
     clarification: Optional[ClarificationRequest] = Field(None, description="Request for clarification if facts are missing.")
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 
 class StatuteMatch(BaseModel):
     """A candidate statute provision."""

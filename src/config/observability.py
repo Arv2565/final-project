@@ -18,11 +18,7 @@ def get_langfuse_callback() -> Optional["CallbackHandler"]:
     
     public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
     secret_key = os.getenv("LANGFUSE_SECRET_KEY")
-<<<<<<< HEAD
     host = os.getenv("LANGFUSE_HOST") or os.getenv("LANGFUSE_BASE_URL", "http://localhost:3000")
-=======
-    host = os.getenv("LANGFUSE_HOST", "http://localhost:3000")
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     
     if public_key and secret_key:
         return CallbackHandler(
@@ -40,11 +36,7 @@ def setup_observability() -> None:
     """
     public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
     secret_key = os.getenv("LANGFUSE_SECRET_KEY")
-<<<<<<< HEAD
     host = os.getenv("LANGFUSE_HOST") or os.getenv("LANGFUSE_BASE_URL", "http://localhost:3000")
-=======
-    host = os.getenv("LANGFUSE_HOST", "http://localhost:3000")
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     
     # If HOST is not set in env, the Langfuse SDK defaults to Cloud (https://cloud.langfuse.com).
     # However, this project defaults to localhost:3000. We must align them.
@@ -54,7 +46,6 @@ def setup_observability() -> None:
     if public_key and secret_key:
         try:
             import langfuse
-<<<<<<< HEAD
             import requests
             
             # Check if the host is reachable
@@ -71,8 +62,6 @@ def setup_observability() -> None:
                         del os.environ["LANGFUSE_PUBLIC_KEY"]
                     return
 
-=======
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
             # Instantiate a client to ensure environment variables are correctly picked up
             # and to validate credentials before the application starts.
             # This also helps ensure the global configuration is ready.

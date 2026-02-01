@@ -3,10 +3,7 @@ from src.models import GraphState
 from src.models.procedural_guidance import TimelineConstraintOutput
 from src.agents.agent_llm_helper import get_agent_llm
 from src.prompts.procedural_prompts import TIMELINE_CONSTRAINT_SYSTEM_PROMPT
-<<<<<<< HEAD
-=======
 from src.prompts.procedural_civil_prompts import CIVIL_TIMELINE_CONSTRAINT_SYSTEM_PROMPT
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 
 
 class TimelineConstraintAgent:
@@ -32,18 +29,13 @@ class TimelineConstraintAgent:
         print("=" * 60)
         
         router_output = state.get("router_output")
-<<<<<<< HEAD
-=======
         active_domain = state.get("active_legal_domain", "criminal") # Default to criminal if not set
         
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
         if not router_output:
             raise ValueError("Missing 'router_output' in state")
         
         cleaned_query = router_output.cleaned_query
         
-<<<<<<< HEAD
-=======
         # Clarification Logic
         clarification_counts = state.get("clarification_counts", {})
         current_count = clarification_counts.get("procedural_guidance", 0)
@@ -51,7 +43,6 @@ class TimelineConstraintAgent:
         
         clarification_history = state.get("clarification_history", [])
         
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
         # Build user prompt
         user_prompt = f"""Query: {cleaned_query}
 
@@ -63,8 +54,6 @@ Consider:
 - What are the consequences of missing these deadlines?
 
 Be precise with BNSS section references."""
-<<<<<<< HEAD
-=======
 
         if clarification_history:
              user_prompt += "\n\n### ADDITIONAL CONTEXT FROM CLARIFICATIONS (CRITICAL - DO NOT IGNORE):\n"
@@ -87,23 +76,16 @@ CRITICAL INSTRUCTION FOR CLARIFICATION:
              user_prompt += "\n\nYou have reached the limit for clarifications. You MUST make best-guess assumptions based on general Indian criminal procedure."
         
         system_prompt = CIVIL_TIMELINE_CONSTRAINT_SYSTEM_PROMPT if active_domain == "civil" else TIMELINE_CONSTRAINT_SYSTEM_PROMPT
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
         
         try:
             output = self.llm.invoke(
                 [
-<<<<<<< HEAD
-                    {"role": "system", "content": TIMELINE_CONSTRAINT_SYSTEM_PROMPT},
-=======
                     {"role": "system", "content": system_prompt},
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
                     {"role": "user", "content": user_prompt},
                 ],
                 config={"callbacks": callbacks}
             )
             
-<<<<<<< HEAD
-=======
             print(f"✅ Timeline Agent Output Check")
             
             if output.clarification:
@@ -115,7 +97,6 @@ CRITICAL INSTRUCTION FOR CLARIFICATION:
                     "clarification_counts": clarification_counts
                 } # Node must handle the merge
             
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
             print(f"✅ Identified {len(output.constraints)} timeline constraints")
             for constraint in output.constraints:
                 print(f"   - {constraint.constraint_type}: {constraint.description}")

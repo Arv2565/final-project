@@ -38,36 +38,6 @@ def main() -> None:
 
     graph = build_graph()
 
-<<<<<<< HEAD
-    # Initialize observability callback
-    from src.config.observability import get_langfuse_callback
-    callback_handler = get_langfuse_callback()
-    config = {"callbacks": [callback_handler]} if callback_handler else {}
-
-    # Synchronous single-run invocation with config
-    final_state: Dict[str, Any] = graph.invoke(initial_state, config=config)
-
-    router_output = final_state.get("router_output")
-    classifier_output = final_state.get("classifier_output")
-
-    print("\n=== Router Output ===")
-    print(router_output or "(no router output produced)")
-    print("\n=== Classifier Output ===")
-    print(classifier_output or "(no classifier output produced)")
-
-    # Generate PDF Report
-    if final_state.get("final_response"):
-        from src.utils.pdf_generator import generate_pdf_report
-        import time
-        
-        timestamp = int(time.time())
-        filename = f"output/response_{timestamp}.pdf"
-        try:
-            pdf_path = generate_pdf_report(final_state["final_response"], filename)
-            print(f"\n📄 PDF Report generated: {pdf_path}")
-        except Exception as e:
-            print(f"\n❌ Failed to generate PDF: {e}")
-=======
     # Initialize observability callback with session tracking
     from src.config.observability import get_langfuse_callback
     from langfuse import get_client
@@ -118,7 +88,7 @@ def main() -> None:
                 current_state = {**final_state}
                 if "pending_clarification" in current_state:
                     del current_state["pending_clarification"]
-                # Also clear orchestrator_plan to force re-execution
+                # also clear orchestrator_plan to force re-execution
                 if "orchestrator_plan" in current_state:
                     del current_state["orchestrator_plan"]
                 continue
@@ -216,11 +186,18 @@ def main() -> None:
              print(f"Factors: {len(activity_state.fact_structuring.factors)}")
              print(f"Events: {len(activity_state.fact_structuring.events)}")
     
-    # print("\n=== Router Output ===")
-    # print(router_output or "(no router output produced)")
-    # print("\n=== Classifier Output ===")
-    # print(classifier_output or "(no classifier output produced)")
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
+    # Generate PDF Report
+    if final_response:
+        from src.utils.pdf_generator import generate_pdf_report
+        import time
+        
+        timestamp = int(time.time())
+        filename = f"output/response_{timestamp}.pdf"
+        try:
+            pdf_path = generate_pdf_report(final_response, filename)
+            print(f"\n📄 PDF Report generated: {pdf_path}")
+        except Exception as e:
+            print(f"\n❌ Failed to generate PDF: {e}")
 
 
 if __name__ == "__main__":

@@ -14,11 +14,7 @@ _callback_handler = None
 _callbacks_initialized = False
 
 
-<<<<<<< HEAD
 def statute_matching_node(state: GraphState, config: Optional[RunnableConfig] = None) -> Dict[str, Any]:
-=======
-def statute_matching_node(state: GraphState, config: RunnableConfig | None = None) -> Dict[str, Any]:
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
     """LangGraph node that delegates to StatuteMatchingAgent.
     
     This node identifies relevant statutes for the structured facts.

@@ -45,8 +45,6 @@ class OrchestratorAgent:
         # Safe printing of state (excluding large objects if any)
         print(json.dumps({k: str(v) for k, v in state.items() if k != "messages"}, indent=2))
 
-<<<<<<< HEAD
-=======
         # Clarification Logic
         clarification_counts = state.get("clarification_counts", {})
         current_count = clarification_counts.get("orchestrator", 0)
@@ -54,31 +52,24 @@ class OrchestratorAgent:
         
         clarification_history = state.get("clarification_history", [])
         
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
         # Build user prompt
         user_prompt = f"Query: {cleaned_query}\n\n"
         if metadata.language and metadata.language != "en":
             user_prompt += f"(Originally in: {metadata.language})\n"
-<<<<<<< HEAD
-=======
             
         if clarification_history:
              user_prompt += "\nPrevious Clarifications:\n"
              for item in clarification_history:
                  user_prompt += f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}\n"
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
         
         user_prompt += """
-        Determine the single best next module (agent number 1-6) to handle this query.
+        Determine the single best next module (agent number 0-6) to handle this query.
         """
-<<<<<<< HEAD
-=======
         
         if current_count < MAX_CLARIFICATION:
              user_prompt += "\nIf the query is too vague to select a single module, or missing critical info, you MAY request clarification. Set 'clarification' field and leave 'next_module' empty."
         else:
              user_prompt += "\nYou have reached the limit for clarifications. You MUST make a best-guess selection."
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
 
         try:
             plan = self.llm.invoke(
@@ -90,10 +81,6 @@ class OrchestratorAgent:
             )
             
             print(f"\n✅ Orchestrator Output:")
-<<<<<<< HEAD
-            print(f"   Selected Module: {plan.next_module.agent_number}")
-            print(f"   Reasoning: {plan.next_module.reasoning}")
-=======
             if plan.clarification:
                 print(f"   Requesting Clarification: {plan.clarification.question}")
                 # Increment counter
@@ -108,16 +95,12 @@ class OrchestratorAgent:
             if plan.next_module:
                 print(f"   Selected Module: {plan.next_module.agent_number}")
                 print(f"   Reasoning: {plan.next_module.reasoning}")
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
             
             # Serialize for graph state
             serialized_plan = plan.model_dump()
             
-<<<<<<< HEAD
-=======
             # We no longer generate 'classifier_output' or 'intent'
             
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
             result_state = {**state, "orchestrator_plan": serialized_plan}
             
             print(f"\n📤 Full Graph State Update:")
@@ -127,35 +110,7 @@ class OrchestratorAgent:
             
         except Exception as e:
             print(f"\n⚠️  Orchestrator failed: {str(e)[:100]}")
-<<<<<<< HEAD
-            # If the LLM returned a raw integer or something that failed parsing, we might be able to recover
-            # But since we're using structued output, debugging the prompt is better.
-            # However, let's at least try to be helpful if it's a known pattern.
-            
-            import re
-            # Check if the error message mentions "Input should be a valid dictionary... input_value=1"
-            # This happens if the model just returned "1"
-            
-            match = re.search(r"input_value=(\d+)", str(e))
-            if match:
-                agent_num = int(match.group(1))
-                print(f"⚠️  Recovering from raw integer output: {agent_num}")
-                
-                from src.models import OrchestratorPlan, NextModule
-                
-                # Construct a fallback plan
-                fallback_plan = OrchestratorPlan(
-                    next_module=NextModule(
-                        agent_number=agent_num,
-                        reasoning="Fallback recovery from raw integer output."
-                    )
-                )
-                serialized_plan = fallback_plan.model_dump()
-                return {"orchestrator_plan": serialized_plan}
-
-=======
             # Fallback: Return empty plan or handle error
             # Since next_module is required, we might want to default to something or raise. 
             # For now, let's re-raise to see the error during dev.
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
             raise e

@@ -43,20 +43,14 @@ class GraphState(TypedDict, total=False):
     activity_law_state: NotRequired[ActivityLawState]
     
     # Procedural Guidance Workflow State
-<<<<<<< HEAD
-    procedural_guidance_state: NotRequired[ProceduralGuidanceState]
-    
-    # Final Output
-    final_response: NotRequired[str]
-    generated_document_content: NotRequired[str] # Content specifically for PDF generation (before user prompts added)
-    generated_document_path: NotRequired[str]
-=======
     procedural_guidance_state: NotRequired[ProceduralGuidanceState] # Legacy/Generic
     procedural_guidance_civil_state: NotRequired[ProceduralGuidanceState]
     procedural_guidance_criminal_state: NotRequired[ProceduralGuidanceState]
     
     # Final Output
     final_response: NotRequired[str]
+    generated_document_content: NotRequired[str] # Content specifically for PDF generation (before user prompts added)
+    generated_document_path: NotRequired[str]
     
     # Clarification System
     clarification_history: NotRequired[List[dict]]  # List of {question: str, answer: str}
@@ -65,5 +59,3 @@ class GraphState(TypedDict, total=False):
     
     # Internal State
     active_legal_domain: NotRequired[str]           # 'civil' or 'criminal' - Explicit override for subgraphs
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
-
