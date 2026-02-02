@@ -162,14 +162,26 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+# Virtual environments (conda & venv)
 myenv/
+newenv/
+backend/venv/
+tool/venv/
+frontend/node_modules/
 
-
-WARP.md
-<<<<<<< HEAD
-
-=======
-data/karnataka_acts
->>>>>>> 14a165ddc199668c3ad8563ab4d99d899b1c0e5e
-myenv/
+# Environment files for 3-directory structure
 .env
+backend/.env
+tool/.env
+frontend/.env.local
+frontend/.env.production.local
+
+# Cache and temporary files
+cache.json
+current_output.txt
+debug_*.txt
+repro_*.py
+
+# Project-specific
+WARP.md
+data/karnataka_acts

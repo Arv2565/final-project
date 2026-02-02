@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: legal-assistant-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./tool/qdrant_storage:/qdrant/storage
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: legal-assistant-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - TOOL_PATH=/app/tool
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+    volumes:
+      - ./backend:/app/backend
+      - ./tool:/app/tool
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+    # Uncomment when Dockerfile is created
+    # command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: legal-assistant-frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+  #   depends_on:
+  #     - backend
+  #   restart: unless-stopped
+    # Uncomment when frontend is implemented
+    # command: npm run dev
+
+networks:
+  default:
+    name: legal-assistant-network

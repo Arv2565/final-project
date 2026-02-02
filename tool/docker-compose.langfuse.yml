@@ -1,0 +1,40 @@
+version: "3"
+services:
+  langfuse:
+    image: langfuse/langfuse:latest
+    depends_on:
+      - db
+      - clickhouse
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - CLICKHOUSE_MIGRATION_URL=clickhouse://clickhouse:9000
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - NEXTAUTH_SECRET=mysecret
+      - SALT=mysalt
+      - NEXTAUTH_URL=http://localhost:3000
+    command: >
+      sh -c " npm run db:migrate && npm run start"
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - langfuse_db_data:/var/lib/postgresql/data
+
+  clickhouse:
+    image: clickhouse/clickhouse-server
+    restart: always
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+
+volumes:
+  langfuse_db_data:
+  langfuse_clickhouse_data:
