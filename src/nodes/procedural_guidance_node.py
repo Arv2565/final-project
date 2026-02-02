@@ -20,6 +20,10 @@ def civil_procedural_guidance_node(state: GraphState, config: RunnableConfig | N
     if "procedural_guidance_state" in result:
         output["procedural_guidance_civil_state"] = result["procedural_guidance_state"]
     
+    # Propagate final_response
+    if "final_response" in result:
+        output["final_response"] = result["final_response"]
+    
     # Propagate clarification requests
     if "pending_clarification" in result:
         output["pending_clarification"] = result["pending_clarification"]
@@ -43,6 +47,10 @@ def criminal_procedural_guidance_node(state: GraphState, config: RunnableConfig 
         output["procedural_guidance_criminal_state"] = result["procedural_guidance_state"]
         # Also populate legacy field for compatibility
         output["procedural_guidance_state"] = result["procedural_guidance_state"]
+    
+    # Propagate final_response
+    if "final_response" in result:
+        output["final_response"] = result["final_response"]
     
     # Propagate clarification requests
     if "pending_clarification" in result:

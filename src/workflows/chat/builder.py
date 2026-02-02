@@ -19,7 +19,6 @@ from src.nodes.ambiguity_remover_node import ambiguity_remover_node, set_ambigui
 from src.agents.ambiguity_remover import AmbiguityRemover
 
 # from src.nodes.document_generation_node import document_generation_node
-from src.nodes.refinement_node import refinement_node
 from src.nodes.placeholder_node import placeholder_node
 
 
@@ -165,12 +164,6 @@ def build_graph(llm_provider=None):
     workflow.add_node("case_retriever", placeholder_node)
     workflow.add_node("comparative_module", placeholder_node)
 
-    # Register Document Generation node
-    workflow.add_node("document_generation", placeholder_node)
-
-    # Register Refinement node
-    workflow.add_node("refinement_node", refinement_node)
-
     # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
     workflow.add_edge("query_router", "orchestrator")
@@ -218,21 +211,11 @@ def build_graph(llm_provider=None):
     workflow.add_edge("risk_assessment", "evidence_linking")
     workflow.add_edge("evidence_linking", "response_generation")
     
-    # Route response generation to refinement node
-    workflow.add_edge("response_generation", "refinement_node")
-    
-    # Wire procedural nodes to refinement node (merging flows to doc gen)
-    workflow.add_edge("procedural_guidance_civil", "refinement_node")
-    workflow.add_edge("procedural_guidance_criminal", "refinement_node")
-    
-    # Wire edge: General Chat to end (or cleanup if needed)
+    # Route all terminal nodes directly to END
+    workflow.add_edge("response_generation", END)
+    workflow.add_edge("procedural_guidance_civil", END)
+    workflow.add_edge("procedural_guidance_criminal", END)
     workflow.add_edge("general_chat", END)
-    
-    # Wire refinement node to document generation
-    workflow.add_edge("refinement_node", "document_generation")
-    
-    # Wire document generation to END
-    workflow.add_edge("document_generation", END)
 
     # Compile into an executable graph
     return workflow.compile()

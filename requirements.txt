@@ -58,3 +58,8 @@ python-docx>=1.1.0
 
 # PDF Generation
 reportlab>=4.0.0
+
+# API Dependencies
+fastapi>=0.100.0
+uvicorn>=0.20.0
+websockets>=10.0
