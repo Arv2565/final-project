@@ -109,25 +109,50 @@ async def handle_websocket_connection(websocket: WebSocket):
                         "has_clarification_history": bool(current_state.get("clarification_history"))
                     }
 
-                # Invoke graph
-                # Note: build_graph returns a compiled graph which is synchronous .invoke() by default.
-                # If we want async, we should use .ainvoke().
-                # Assuming standard LangGraph, let's try ainvoke if we want to be async friendly, 
-                # but 'app.py' used invoke. Let's use invoke for now but wrap in sync context if strictly needed,
-                # but FastAPI handles blocking code if we are careful. 
-                # Ideally we should use ainvoke if the graph nodes support it.
-                # For safety with existing synchronous code, we might need to run in threadpool or use invoke if it's fast enough.
-                # Let's try .ainvoke() - LangGraph usually supports it.
-                
+                # Node name mapping for user-friendly messages
+                NODE_STATUS_MESSAGES = {
+                    "query_router": "🔍 Analyzing your query...",
+                    "orchestrator": "🎯 Understanding your legal needs...",
+                    "fact_structuring": "📋 Structuring the facts...",
+                    "statute_matching": "⚖️ Finding relevant laws...",
+                    "rule_matching": "📜 Matching legal rules...",
+                    "risk_assessment": "⚠️ Assessing legal implications...",
+                    "evidence_linking": "🔗 Linking evidence to law...",
+                    "response_generation": "✍️ Preparing your response...",
+                    "procedural_guidance_civil": "📑 Preparing civil procedure guidance...",
+                    "procedural_guidance_criminal": "⚖️ Preparing criminal procedure guidance...",
+                    "timeline_constraint": "📅 Identifying deadlines...",
+                    "checklist_generator": "✅ Creating document checklist...",
+                    "responsible_actor": "👥 Mapping responsible parties...",
+                    "estimated_effort": "💰 Estimating time and cost...",
+                    "procedural_response": "📝 Formatting procedural guidance...",
+                    "general_chat": "💬 Preparing response...",
+                }
+
                 try:
-                    final_state = await graph.ainvoke(current_state, config=config)
+                    final_state = None
+                    
+                    # Use streaming to capture node events
+                    async for event in graph.astream_events(current_state, config=config, version="v2"):
+                        kind = event.get("event")
+                        name = event.get("name", "")
+                        
+                        # Send status update when a node starts
+                        if kind == "on_chain_start" and name in NODE_STATUS_MESSAGES:
+                            status_msg = NODE_STATUS_MESSAGES[name]
+                            await websocket.send_json({"type": "status", "payload": status_msg})
+                        
+                        # Capture the final state
+                        if kind == "on_chain_end" and name == "LangGraph":
+                            final_state = event.get("data", {}).get("output", {})
+                    
+                    # Fallback if streaming didn't capture state
+                    if not final_state:
+                        final_state = await graph.ainvoke(current_state, config=config)
+                        
                 except Exception as e:
-                    # Fallback to sync invoke if ainvoke fails or just wrap it?
-                    # Most LangChain/Graph tools are async compatible. 
-                    # If existing nodes are purely sync, ainvoke usually still works by submitting to threadpool.
                     logger.error(f"Graph execution failed: {e}")
-                    # Try sync invoke as fallback? No, let's assume async or threadpool.
-                    # If this fails, we might need to use `run_in_executor`.
+                    # Fallback to sync invoke
                     final_state = graph.invoke(current_state, config=config)
                 
                 # Check for clarification
