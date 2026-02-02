@@ -18,7 +18,7 @@ from src.nodes.general_chat_node import general_chat_node
 from src.nodes.ambiguity_remover_node import ambiguity_remover_node, set_ambiguity_remover
 from src.agents.ambiguity_remover import AmbiguityRemover
 
-from src.nodes.document_generation_node import document_generation_node
+# from src.nodes.document_generation_node import document_generation_node
 from src.nodes.refinement_node import refinement_node
 from src.nodes.placeholder_node import placeholder_node
 
@@ -166,7 +166,7 @@ def build_graph(llm_provider=None):
     workflow.add_node("comparative_module", placeholder_node)
 
     # Register Document Generation node
-    workflow.add_node("document_generation", document_generation_node)
+    workflow.add_node("document_generation", placeholder_node)
 
     # Register Refinement node
     workflow.add_node("refinement_node", refinement_node)
