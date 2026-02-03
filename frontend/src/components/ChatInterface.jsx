@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import DocumentPreviewButton from './DocumentPreviewButton';
 import LoadingIndicator from './LoadingIndicator';
 
-const ChatInterface = ({ toggleDraft, toggleSettings }) => {
+const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMessages }) => {
 
 
-    const [messages, setMessages] = useState([]);
+    // Use messages from props, fallback to empty array
+    const messages = currentSession?.messages || [];
+
+    // Internal state for input and UI controls
     const [inputValue, setInputValue] = useState('');
-    const [hasStartedChat, setHasStartedChat] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingStage, setLoadingStage] = useState(0);
     const messagesEndRef = useRef(null);
@@ -28,24 +30,34 @@ const ChatInterface = ({ toggleDraft, toggleSettings }) => {
                 type: 'user',
                 content: inputValue
             };
-            setMessages(prev => [...prev, userMessage]);
+
+            // Create a new array with the user message
+            const updatedMessagesWithUser = [...messages, userMessage];
+
+            // Optimistically update parent
+            onUpdateMessages(updatedMessagesWithUser);
+
             setInputValue('');
-            setHasStartedChat(true);
             setIsLoading(true);
             setLoadingStage(0);
 
-            // Add empty assistant message placeholder
+            // Add placeholder AI message
             const aiMessageId = Date.now() + 1;
             const emptyAiMessage = {
                 id: aiMessageId,
                 type: 'assistant',
                 content: ''
             };
-            setMessages(prev => [...prev, emptyAiMessage]);
+
+            // Temporary local update for immediate feedback if needed, 
+            // but effectively we are triggering a stream of updates to parent
+            const updatedMessagesWithPlaceholder = [...updatedMessagesWithUser, emptyAiMessage];
+            onUpdateMessages(updatedMessagesWithPlaceholder);
+
 
             // Timer for loading stages
             const timers = [];
-            
+
             // Stage 1: Processing query (0 seconds)
             timers.push(setTimeout(() => {
                 setLoadingStage(1);
@@ -68,9 +80,13 @@ const ChatInterface = ({ toggleDraft, toggleSettings }) => {
                     type: 'assistant',
                     content: 'Hey! I\'m here to help you with your legal queries. Please provide more details about what you need assistance with.'
                 };
-                setMessages(prev => 
-                    prev.map(msg => msg.id === aiMessageId ? aiMessage : msg)
+
+                // Replace the placeholder with the actual message
+                const finalMessages = updatedMessagesWithPlaceholder.map(msg =>
+                    msg.id === aiMessageId ? aiMessage : msg
                 );
+
+                onUpdateMessages(finalMessages);
                 setIsLoading(false);
                 setLoadingStage(0);
             }, 10000));
@@ -90,7 +106,8 @@ const ChatInterface = ({ toggleDraft, toggleSettings }) => {
     };
 
     // Landing page view - when no messages and chat hasn't started
-    if (!hasStartedChat && messages.length === 0) {
+    // We check messages.length directly
+    if (messages.length === 0) {
         return (
             <div className="w-full max-w-4xl mx-auto px-4 pb-4 flex flex-col justify-center items-center h-full bg-legal-lightGray dark:bg-[#131416]">
                 {/* Greeting Section */}
@@ -147,82 +164,81 @@ const ChatInterface = ({ toggleDraft, toggleSettings }) => {
                     {messages.map((message, index) => {
                         const showExtraSpacing = index > 0 && messages[index - 1].type !== message.type;
                         return (
-                        <div
-                            key={message.id}
-                            className={`flex flex-col ${message.type === 'user' ? 'items-end' : 'items-start'} ${
-                                showExtraSpacing ? 'pt-4' : ''
-                            }`}
-                        >
-                            {message.type !== 'user' && (
-                                <>
-                                    <span className="text-[10px] tracking-widest text-gray-500 dark:text-gray-500 light:text-gray-500 font-semibold mb-1 uppercase">
-                                        DIKE
-                                    </span>
-                                    {/* Loading Indicator */}
-                                    {isLoading && messages[messages.length - 1]?.id === message.id && (
-                                        <LoadingIndicator loadingStage={loadingStage} />
-                                    )}
-                                </>
-                            )}
-                            {message.type === 'user' ? (
-                                <div className="bg-indigo-100 dark:bg-indigo-950/40 light:bg-indigo-100 text-indigo-900 dark:text-indigo-100 light:text-indigo-900 border border-indigo-300 dark:border-indigo-700/40 light:border-indigo-300 px-6 py-4 rounded-2xl">
-                                    <p className="text-sm leading-relaxed">
-                                        {message.content}
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-3 w-full">
-                                    {message.content && (
-                                        <>
-                                            <p className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800">
-                                                {message.content}
-                                            </p>
-                                            <div className="flex items-stretch gap-2 w-full">
-                                        <DocumentPreviewButton toggleDraft={toggleDraft} />
-                                        <button
-                                            className="border border-gray-500 dark:border-gray-500 light:border-gray-500 hover:border-gray-700 dark:hover:border-gray-300 light:hover:border-gray-700 rounded-lg p-3 transition-all hover:bg-gray-200 dark:hover:bg-white/5 light:hover:bg-gray-200 group flex items-center justify-center h-full"
-                                            title="Download"
-                                        >
-                                            <span className="material-symbols-outlined text-gray-600 dark:text-gray-400 light:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white light:group-hover:text-gray-900" style={{ fontSize: '20px' }}>download</span>
-                                        </button>
+                            <div
+                                key={message.id}
+                                className={`flex flex-col ${message.type === 'user' ? 'items-end' : 'items-start'} ${showExtraSpacing ? 'pt-4' : ''
+                                    }`}
+                            >
+                                {message.type !== 'user' && (
+                                    <>
+                                        <span className="text-[10px] tracking-widest text-gray-500 dark:text-gray-500 light:text-gray-500 font-semibold mb-1 uppercase">
+                                            DIKE
+                                        </span>
+                                        {/* Loading Indicator */}
+                                        {isLoading && messages[messages.length - 1]?.id === message.id && (
+                                            <LoadingIndicator loadingStage={loadingStage} />
+                                        )}
+                                    </>
+                                )}
+                                {message.type === 'user' ? (
+                                    <div className="bg-indigo-100 dark:bg-indigo-950/40 light:bg-indigo-100 text-indigo-900 dark:text-indigo-100 light:text-indigo-900 border border-indigo-300 dark:border-indigo-700/40 light:border-indigo-300 px-6 py-4 rounded-2xl">
+                                        <p className="text-sm leading-relaxed">
+                                            {message.content}
+                                        </p>
                                     </div>
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-2 pt-2 items-center">
-                                        <button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(message.content);
-                                            }}
-                                            className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-gray-900 dark:hover:text-white light:hover:text-gray-900 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
-                                            title="Copy"
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>content_copy</span>
-                                        </button>
-                                        <button
-                                            className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-green-600 dark:hover:text-green-400 light:hover:text-green-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
-                                            title="Like"
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>thumb_up</span>
-                                        </button>
-                                        <button
-                                            className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-red-600 dark:hover:text-red-400 light:hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
-                                            title="Dislike"
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>thumb_down</span>
-                                        </button>
-                                        <button
-                                            className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-blue-600 dark:hover:text-blue-400 light:hover:text-blue-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
-                                            title="Regenerate"
-                                        >
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 2.2"></path>
-                                            </svg>
-                                        </button>
+                                ) : (
+                                    <div className="flex flex-col gap-3 w-full">
+                                        {message.content && (
+                                            <>
+                                                <p className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800">
+                                                    {message.content}
+                                                </p>
+                                                <div className="flex items-stretch gap-2 w-full">
+                                                    <DocumentPreviewButton toggleDraft={toggleDraft} />
+                                                    <button
+                                                        className="border border-gray-500 dark:border-gray-500 light:border-gray-500 hover:border-gray-700 dark:hover:border-gray-300 light:hover:border-gray-700 rounded-lg p-3 transition-all hover:bg-gray-200 dark:hover:bg-white/5 light:hover:bg-gray-200 group flex items-center justify-center h-full"
+                                                        title="Download"
+                                                    >
+                                                        <span className="material-symbols-outlined text-gray-600 dark:text-gray-400 light:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white light:group-hover:text-gray-900" style={{ fontSize: '20px' }}>download</span>
+                                                    </button>
+                                                </div>
+                                                {/* Action Buttons */}
+                                                <div className="flex gap-2 pt-2 items-center">
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(message.content);
+                                                        }}
+                                                        className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-gray-900 dark:hover:text-white light:hover:text-gray-900 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
+                                                        title="Copy"
+                                                    >
+                                                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>content_copy</span>
+                                                    </button>
+                                                    <button
+                                                        className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-green-600 dark:hover:text-green-400 light:hover:text-green-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
+                                                        title="Like"
+                                                    >
+                                                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>thumb_up</span>
+                                                    </button>
+                                                    <button
+                                                        className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-red-600 dark:hover:text-red-400 light:hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
+                                                        title="Dislike"
+                                                    >
+                                                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>thumb_down</span>
+                                                    </button>
+                                                    <button
+                                                        className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-blue-600 dark:hover:text-blue-400 light:hover:text-blue-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
+                                                        title="Regenerate"
+                                                    >
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 2.2"></path>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
                         );
                     })}
                     <div ref={messagesEndRef} />

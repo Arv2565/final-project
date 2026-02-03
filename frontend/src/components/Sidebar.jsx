@@ -1,27 +1,19 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import ProfileMenu from './ProfileMenu';
 
-const Sidebar = ({ isExpanded, toggleSidebar, onSettingsClick }) => {
-    const [chats, setChats] = useState([
-        { id: 1, title: 'Project Discussion 1' },
-        { id: 2, title: 'Project Discussion 2' },
-        { id: 3, title: 'Legal Advice Setup' },
-    ]);
+const Sidebar = ({
+    isExpanded,
+    toggleSidebar,
+    onSettingsClick,
+    sessions = [],
+    currentSessionId,
+    onNewChat,
+    onSelectChat,
+    onDeleteChat
+}) => {
     const [searchQuery, setSearchQuery] = useState('');
 
-    const handleNewChat = () => {
-        if (!isExpanded) return;
-
-        const newChat = {
-            id: Date.now(),
-            title: `New Discussion ${chats.length + 1}`,
-        };
-        setChats([newChat, ...chats]);
-    };
-
-
-    const filteredChats = chats.filter(chat =>
+    const filteredChats = sessions.filter(chat =>
         chat.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -54,7 +46,7 @@ const Sidebar = ({ isExpanded, toggleSidebar, onSettingsClick }) => {
                 {/* New Chat Button */}
                 {isExpanded ? (
                     <button
-                        onClick={handleNewChat}
+                        onClick={onNewChat}
                         className="flex items-center gap-3 w-full bg-legal-navy dark:bg-white/10 hover:bg-legal-darkNavy dark:hover:bg-white/15 text-white dark:text-gray-300 rounded-full py-1.5 px-4 transition-all duration-300"
                         title="New Chat"
                     >
@@ -64,7 +56,7 @@ const Sidebar = ({ isExpanded, toggleSidebar, onSettingsClick }) => {
                 ) : (
                     <div className="px-2 py-2">
                         <button
-                            onClick={handleNewChat}
+                            onClick={onNewChat}
                             className="flex items-center justify-center w-full text-legal-darkNavy dark:text-gray-300 hover:text-legal-navy rounded-full py-1.5 transition-all duration-300"
                             title="New Chat"
                         >
@@ -103,15 +95,40 @@ const Sidebar = ({ isExpanded, toggleSidebar, onSettingsClick }) => {
                         </div>
                         <div className="space-y-1">
                             {filteredChats.map((chat) => (
-                                <div key={chat.id} className="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-legal-navy/10 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                                    <div className="text-legal-navy dark:text-gray-400 group-hover:text-legal-darkNavy dark:group-hover:text-white shrink-0">
+                                <div
+                                    key={chat.id}
+                                    onClick={() => onSelectChat(chat.id)}
+                                    className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${currentSessionId === chat.id
+                                            ? 'bg-legal-navy/10 dark:bg-white/10'
+                                            : 'hover:bg-legal-navy/5 dark:hover:bg-white/5'
+                                        }`}
+                                >
+                                    <div className={`shrink-0 ${currentSessionId === chat.id
+                                            ? 'text-legal-navy dark:text-white'
+                                            : 'text-legal-gray dark:text-gray-400 group-hover:text-legal-darkNavy dark:group-hover:text-white'
+                                        }`}>
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                         </svg>
                                     </div>
-                                    <span className="text-sm text-legal-darkNavy dark:text-gray-300 group-hover:text-legal-darkNavy dark:group-hover:text-white whitespace-nowrap overflow-hidden truncate">
+                                    <span className={`text-sm whitespace-nowrap overflow-hidden truncate flex-1 ${currentSessionId === chat.id
+                                            ? 'text-legal-darkNavy dark:text-white font-medium'
+                                            : 'text-legal-darkNavy dark:text-gray-300 group-hover:text-legal-darkNavy dark:group-hover:text-white'
+                                        }`}>
                                         {chat.title}
                                     </span>
+
+                                    {/* Delete Button (visible on hover) */}
+                                    <button
+                                        onClick={(e) => onDeleteChat(chat.id, e)}
+                                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-gray-400 hover:text-red-500 transition-all"
+                                        title="Delete chat"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
                                 </div>
                             ))}
                             {filteredChats.length === 0 && (
