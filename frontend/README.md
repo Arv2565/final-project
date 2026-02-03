@@ -1,41 +1,8 @@
-# Legal Assistant Frontend
+# React + Vite
 
-Web UI for the AI Legal Assistant.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Coming Soon
+Currently, two official plugins are available:
 
-This directory is reserved for the frontend application.
-
-## Recommended Stack
-
-- **Framework**: Next.js 14 (App Router) or Vite + React
-- **UI Library**: shadcn/ui with Tailwind CSS
-- **State Management**: Zustand or Redux Toolkit  
-- **API Client**: Axios or fetch with React Query/TanStack Query
-- **WebSocket**: Socket.IO or native WebSocket API
-
-## API Integration
-
-The frontend will connect to the backend API:
-
-- **Development**: `http://localhost:8000/api`
-- **WebSocket**: `ws://localhost:8000/api/ws/chat`
-- **Production**: TBD
-
-## Quick Start (When Implemented)
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-## Features to Implement
-
-- [ ] Chat interface for legal queries
-- [ ] Real-time streaming responses via WebSocket
-- [ ] Session management and history
-- [ ] Document upload and analysis
-- [ ] Multi-language support
-- [ ] Responsive design (mobile, tablet, desktop)
-- [ ] Dark mode support
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
