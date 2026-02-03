@@ -1,10 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import DocumentPreviewButton from './DocumentPreviewButton';
+import LoadingIndicator from './LoadingIndicator';
 
 const ChatInterface = ({ toggleDraft, toggleSettings }) => {
+
+
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [hasStartedChat, setHasStartedChat] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadingStage, setLoadingStage] = useState(0);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -26,16 +31,54 @@ const ChatInterface = ({ toggleDraft, toggleSettings }) => {
             setMessages(prev => [...prev, userMessage]);
             setInputValue('');
             setHasStartedChat(true);
+            setIsLoading(true);
+            setLoadingStage(0);
 
-            // Simulate AI response after a short delay
-            setTimeout(() => {
+            // Add empty assistant message placeholder
+            const aiMessageId = Date.now() + 1;
+            const emptyAiMessage = {
+                id: aiMessageId,
+                type: 'assistant',
+                content: ''
+            };
+            setMessages(prev => [...prev, emptyAiMessage]);
+
+            // Timer for loading stages
+            const timers = [];
+            
+            // Stage 1: Processing query (0 seconds)
+            timers.push(setTimeout(() => {
+                setLoadingStage(1);
+            }, 0));
+
+            // Stage 2: Extracting data (4 seconds)
+            timers.push(setTimeout(() => {
+                setLoadingStage(2);
+            }, 4000));
+
+            // Stage 3: Finalizing content (7 seconds)
+            timers.push(setTimeout(() => {
+                setLoadingStage(3);
+            }, 7000));
+
+            // Stage 4: Show output (10 seconds)
+            timers.push(setTimeout(() => {
                 const aiMessage = {
-                    id: Date.now() + 1,
+                    id: aiMessageId,
                     type: 'assistant',
                     content: 'Hey! I\'m here to help you with your legal queries. Please provide more details about what you need assistance with.'
                 };
-                setMessages(prev => [...prev, aiMessage]);
-            }, 500);
+                setMessages(prev => 
+                    prev.map(msg => msg.id === aiMessageId ? aiMessage : msg)
+                );
+                setIsLoading(false);
+                setLoadingStage(0);
+            }, 10000));
+
+            // Cleanup function to clear timers if component unmounts
+            return () => {
+                timers.forEach(timer => clearTimeout(timer));
+            };
         }
     };
 
@@ -111,9 +154,15 @@ const ChatInterface = ({ toggleDraft, toggleSettings }) => {
                             }`}
                         >
                             {message.type !== 'user' && (
-                                <span className="text-[10px] tracking-widest text-gray-500 dark:text-gray-500 light:text-gray-500 font-semibold mb-1 uppercase">
-                                    DIKE
-                                </span>
+                                <>
+                                    <span className="text-[10px] tracking-widest text-gray-500 dark:text-gray-500 light:text-gray-500 font-semibold mb-1 uppercase">
+                                        DIKE
+                                    </span>
+                                    {/* Loading Indicator */}
+                                    {isLoading && messages[messages.length - 1]?.id === message.id && (
+                                        <LoadingIndicator loadingStage={loadingStage} />
+                                    )}
+                                </>
                             )}
                             {message.type === 'user' ? (
                                 <div className="bg-indigo-100 dark:bg-indigo-950/40 light:bg-indigo-100 text-indigo-900 dark:text-indigo-100 light:text-indigo-900 border border-indigo-300 dark:border-indigo-700/40 light:border-indigo-300 px-6 py-4 rounded-2xl">
@@ -123,10 +172,12 @@ const ChatInterface = ({ toggleDraft, toggleSettings }) => {
                                 </div>
                             ) : (
                                 <div className="flex flex-col gap-3 w-full">
-                                    <p className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800">
-                                        {message.content}
-                                    </p>
-                                    <div className="flex items-stretch gap-2 w-full">
+                                    {message.content && (
+                                        <>
+                                            <p className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800">
+                                                {message.content}
+                                            </p>
+                                            <div className="flex items-stretch gap-2 w-full">
                                         <DocumentPreviewButton toggleDraft={toggleDraft} />
                                         <button
                                             className="border border-gray-500 dark:border-gray-500 light:border-gray-500 hover:border-gray-700 dark:hover:border-gray-300 light:hover:border-gray-700 rounded-lg p-3 transition-all hover:bg-gray-200 dark:hover:bg-white/5 light:hover:bg-gray-200 group flex items-center justify-center h-full"
@@ -167,6 +218,8 @@ const ChatInterface = ({ toggleDraft, toggleSettings }) => {
                                             </svg>
                                         </button>
                                     </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
