@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import DocumentPreviewButton from './DocumentPreviewButton';
 import LoadingIndicator from './LoadingIndicator';
 
@@ -11,91 +13,186 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     // Internal state for input and UI controls
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [loadingStage, setLoadingStage] = useState(0);
+    const [loadingStatus, setLoadingStatus] = useState(''); // Text status from server
     const messagesEndRef = useRef(null);
+
+    // WebSocket Reference
+    const ws = useRef(null);
+    // Messages Reference to avoid stale closures in socket handlers
+    const messagesRef = useRef(messages);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    // Keep messagesRef in sync
     useEffect(() => {
+        messagesRef.current = messages;
         scrollToBottom();
-    }, [messages]);
+    }, [messages, loadingStatus]);
 
-    const handleSendMessage = () => {
-        if (inputValue.trim()) {
-            // Add user message
-            const userMessage = {
-                id: Date.now(),
-                type: 'user',
-                content: inputValue
-            };
+    // WebSocket Connection Effect
+    useEffect(() => {
+        // Close existing connection if any
+        if (ws.current) {
+            ws.current.close();
+        }
 
-            // Create a new array with the user message
-            const updatedMessagesWithUser = [...messages, userMessage];
+        // Initialize WebSocket
+        const socket = new WebSocket('ws://localhost:8000/api/ws/chat');
+        ws.current = socket;
 
-            // Optimistically update parent
-            onUpdateMessages(updatedMessagesWithUser);
+        socket.onopen = () => {
+            console.log('WebSocket Connected');
+        };
 
-            setInputValue('');
-            setIsLoading(true);
-            setLoadingStage(0);
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+            }
+        };
 
-            // Add placeholder AI message
-            const aiMessageId = Date.now() + 1;
-            const emptyAiMessage = {
-                id: aiMessageId,
-                type: 'assistant',
-                content: ''
-            };
+        socket.onclose = () => {
+            console.log('WebSocket Disconnected');
+        };
 
-            // Temporary local update for immediate feedback if needed, 
-            // but effectively we are triggering a stream of updates to parent
-            const updatedMessagesWithPlaceholder = [...updatedMessagesWithUser, emptyAiMessage];
-            onUpdateMessages(updatedMessagesWithPlaceholder);
+        socket.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+            setIsLoading(false);
+            setLoadingStatus('');
+        };
 
+        // Cleanup on unmount or session change
+        return () => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        };
+    }, [currentSession?.id]); // Re-connect when session ID changes
 
-            // Timer for loading stages
-            const timers = [];
+    const handleServerMessage = (data) => {
+        // Use ref to get latest messages
+        const currentMessages = Array.isArray(messagesRef.current) ? messagesRef.current : [];
 
-            // Stage 1: Processing query (0 seconds)
-            timers.push(setTimeout(() => {
-                setLoadingStage(1);
-            }, 0));
+        switch (data.type) {
+            case 'status':
+                setLoadingStatus(data.payload);
+                setIsLoading(true);
+                break;
 
-            // Stage 2: Extracting data (4 seconds)
-            timers.push(setTimeout(() => {
-                setLoadingStage(2);
-            }, 4000));
-
-            // Stage 3: Finalizing content (7 seconds)
-            timers.push(setTimeout(() => {
-                setLoadingStage(3);
-            }, 7000));
-
-            // Stage 4: Show output (10 seconds)
-            timers.push(setTimeout(() => {
-                const aiMessage = {
-                    id: aiMessageId,
+            case 'clarification_request':
+                setIsLoading(false);
+                setLoadingStatus('');
+                // Add clarification question as an assistant message
+                const clarificationMsg = {
+                    id: Date.now(),
                     type: 'assistant',
-                    content: 'Hey! I\'m here to help you with your legal queries. Please provide more details about what you need assistance with.'
+                    content: data.payload.question,
+                    isClarification: true,
+                    payload: data.payload // Store full payload if needed
+                };
+                if (onUpdateMessages) {
+                    onUpdateMessages([...currentMessages, clarificationMsg]);
+                }
+                break;
+
+            case 'final_result':
+                setIsLoading(false);
+                setLoadingStatus('');
+
+                let content = '';
+                if (data.payload.text) {
+                    content = data.payload.text;
+                } else if (data.payload.data) {
+                    // Format structured data/JSON as a string for now, or handled by a specific renderer
+                    // For the "final outputs payload should be displayed" requirement
+                    content = JSON.stringify(data.payload.data, null, 2);
+
+                    // If it's a procedural workflow, we might want to format it nicely
+                    if (data.payload.workflow === 'procedural') {
+                        // Construct a friendly summary if possible, otherwise just dump the JSON
+                        // The user said "final outputs payload should be displayed"
+                        // We'll stick to text for the main bubble
+                    }
+                }
+
+                const resultMsg = {
+                    id: Date.now(),
+                    type: 'assistant',
+                    content: content,
+                    payload: data.payload // Store full payload for custom rendering if needed
                 };
 
-                // Replace the placeholder with the actual message
-                const finalMessages = updatedMessagesWithPlaceholder.map(msg =>
-                    msg.id === aiMessageId ? aiMessage : msg
-                );
+                // Functional update: need to get previous messages.
+                // Since we don't have direct access to setMessages (it's in parent), 
+                // we rely on 'messages' prop being fresh due to re-renders.
+                // However, onUpdateMessages expects the NEW VALUE, not a callback usually, 
+                // unless the parent handles it. Home.jsx calls updateSessionMessages(id, msgs).
+                // Let's assume we need to pass the full array.
+                if (onUpdateMessages) {
+                    onUpdateMessages([...currentMessages, resultMsg]);
+                }
+                break;
 
-                onUpdateMessages(finalMessages);
+            case 'error':
                 setIsLoading(false);
-                setLoadingStage(0);
-            }, 10000));
+                setLoadingStatus('');
+                const errorMsg = {
+                    id: Date.now(),
+                    type: 'system', // or assistant
+                    content: `Error: ${data.payload}`
+                };
+                if (onUpdateMessages) {
+                    onUpdateMessages([...currentMessages, errorMsg]);
+                }
+                break;
 
-            // Cleanup function to clear timers if component unmounts
-            return () => {
-                timers.forEach(timer => clearTimeout(timer));
-            };
+            default:
+                console.warn('Unknown message type:', data.type);
         }
+    };
+
+    const handleSendMessage = () => {
+        if (!inputValue.trim()) return;
+
+        if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+            console.error('WebSocket not connected');
+            // Optionally try to reconnect or alert user
+            return;
+        }
+
+        const userMessage = {
+            id: Date.now(),
+            type: 'user',
+            content: inputValue
+        };
+
+        // Update UI immediately
+        onUpdateMessages([...messages, userMessage]);
+        setInputValue('');
+        setIsLoading(true);
+        setLoadingStatus('Sending...');
+
+        // Check if we are responding to a clarification (naive check: last message was a clarification)
+        // Or better, let the backend state handle it. The backend expects 'clarification_response' 
+        // if it's waiting, or 'query' if it's new. 
+        // BUT, the backend `socket_handlers.py` logic checks `current_state.get("pending_clarification")`.
+        // The Frontend doesn't strictly know the backend state unless we track it.
+        // However, the PROMPT said "when a clarification question is asked... the next msg should be clarification response"
+
+        // Let's determine the type based on the last message
+        const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+        const isClarificationResponse = lastMessage?.isClarification;
+
+        const payload = {
+            type: isClarificationResponse ? 'clarification_response' : 'query',
+            payload: inputValue
+        };
+
+        ws.current.send(JSON.stringify(payload));
     };
 
     const handleKeyPress = (e) => {
@@ -106,8 +203,10 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     };
 
     // Landing page view - when no messages and chat hasn't started
-    // We check messages.length directly
-    if (messages.length === 0) {
+    // We check messages.length directly. Ensure messages is an array.
+    const safeMessages = Array.isArray(messages) ? messages : [];
+
+    if (safeMessages.length === 0) {
         return (
             <div className="w-full max-w-4xl mx-auto px-4 pb-4 flex flex-col justify-center items-center h-full bg-legal-lightGray dark:bg-[#131416]">
                 {/* Greeting Section */}
@@ -161,8 +260,8 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto py-4 mb-6 flex flex-col items-center">
                 <div className="space-y-6 w-full max-w-2xl">
-                    {messages.map((message, index) => {
-                        const showExtraSpacing = index > 0 && messages[index - 1].type !== message.type;
+                    {safeMessages.map((message, index) => {
+                        const showExtraSpacing = index > 0 && safeMessages[index - 1].type !== message.type;
                         return (
                             <div
                                 key={message.id}
@@ -176,7 +275,10 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                         </span>
                                         {/* Loading Indicator */}
                                         {isLoading && messages[messages.length - 1]?.id === message.id && (
-                                            <LoadingIndicator loadingStage={loadingStage} />
+                                            <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                                <LoadingIndicator />
+                                                <span>{loadingStatus}</span>
+                                            </div>
                                         )}
                                     </>
                                 )}
@@ -190,9 +292,12 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                     <div className="flex flex-col gap-3 w-full">
                                         {message.content && (
                                             <>
-                                                <p className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800">
-                                                    {message.content}
-                                                </p>
+                                                <div className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800 markdown-content">
+                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                        {message.content}
+                                                    </ReactMarkdown>
+                                                </div>
+                                                {/* Document Generation - Currently Disabled
                                                 <div className="flex items-stretch gap-2 w-full">
                                                     <DocumentPreviewButton toggleDraft={toggleDraft} />
                                                     <button
@@ -202,6 +307,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                                         <span className="material-symbols-outlined text-gray-600 dark:text-gray-400 light:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white light:group-hover:text-gray-900" style={{ fontSize: '20px' }}>download</span>
                                                     </button>
                                                 </div>
+                                                */}
                                                 {/* Action Buttons */}
                                                 <div className="flex gap-2 pt-2 items-center">
                                                     <button
@@ -241,6 +347,17 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                             </div>
                         );
                     })}
+                    {isLoading && (
+                        <div className="flex flex-col items-start pt-4 w-full">
+                            <span className="text-[10px] tracking-widest text-gray-500 dark:text-gray-500 light:text-gray-500 font-semibold mb-1 uppercase">
+                                DIKE
+                            </span>
+                            <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                <LoadingIndicator />
+                                <span className="animate-pulse">{loadingStatus || 'Thinking...'}</span>
+                            </div>
+                        </div>
+                    )}
                     <div ref={messagesEndRef} />
                 </div>
             </div>

@@ -15,7 +15,7 @@ const blinkingStyle = `
 `;
 
 const LoadingIndicator = ({ loadingStage }) => (
-    <div className="mb-3 flex items-center gap-2">
+    <div className="flex items-center gap-2">
         <style>{blinkingStyle}</style>
         <span className="material-symbols-outlined text-gray-500 dark:text-gray-400 blink-animation" style={{ fontSize: '18px' }}>balance</span>
         {loadingStage === 1 && (

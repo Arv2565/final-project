@@ -223,22 +223,22 @@ class ChatService:
 
                     # Node name mapping for user-friendly messages
                     NODE_STATUS_MESSAGES = {
-                        "query_router": "🔍 Analyzing your query...",
-                        "orchestrator": "🎯 Understanding your legal needs...",
-                        "fact_structuring": "📋 Structuring the facts...",
-                        "statute_matching": "⚖️ Finding relevant laws...",
-                        "rule_matching": "📜 Matching legal rules...",
-                        "risk_assessment": "⚠️ Assessing legal implications...",
-                        "evidence_linking": "🔗 Linking evidence to law...",
-                        "response_generation": "✍️ Preparing your response...",
-                        "procedural_guidance_civil": "📑 Preparing civil procedure guidance...",
-                        "procedural_guidance_criminal": "⚖️ Preparing criminal procedure guidance...",
-                        "timeline_constraint": "📅 Identifying deadlines...",
-                        "checklist_generator": "✅ Creating document checklist...",
-                        "responsible_actor": "👥 Mapping responsible parties...",
-                        "estimated_effort": "💰 Estimating time and cost...",
-                        "procedural_response": "📝 Formatting procedural guidance...",
-                        "general_chat": "💬 Preparing response...",
+                        "query_router": "Analyzing your query...",
+                        "orchestrator": "Understanding your legal needs...",
+                        "fact_structuring": "Structuring the facts...",
+                        "statute_matching": "Finding relevant laws...",
+                        "rule_matching": "Matching legal rules...",
+                        "risk_assessment": "Assessing legal implications...",
+                        "evidence_linking": "Linking evidence to law...",
+                        "response_generation": "Preparing your response...",
+                        "procedural_guidance_civil": "Preparing civil procedure guidance...",
+                        "procedural_guidance_criminal": "Preparing criminal procedure guidance...",
+                        "timeline_constraint": "Identifying deadlines...",
+                        "checklist_generator": "Creating document checklist...",
+                        "responsible_actor": "Mapping responsible parties...",
+                        "estimated_effort": "Estimating time and cost...",
+                        "procedural_response": "Formatting procedural guidance...",
+                        "general_chat": "Preparing response...",
                     }
 
                     try:
