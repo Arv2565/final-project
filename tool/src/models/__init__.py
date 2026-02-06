@@ -4,6 +4,7 @@ from .graph_state import GraphState
 from .orchestrator import OrchestratorPlan, NextModule, AgentType
 from .procedural_guidance import ProceduralGuidanceState
 from .clarification import ClarificationRequest
+from .document_generation import TemplateInfo, PlaceholderInfo, DocumentGenerationState
 
 __all__ = [
     "QueryRouterOutput",
@@ -17,4 +18,7 @@ __all__ = [
     "AgentType",
     "ProceduralGuidanceState",
     "ClarificationRequest",
+    "TemplateInfo",
+    "PlaceholderInfo",
+    "DocumentGenerationState",
 ]

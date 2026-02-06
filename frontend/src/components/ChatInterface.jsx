@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import DocumentPreviewButton from './DocumentPreviewButton';
 import LoadingIndicator from './LoadingIndicator';
 
-const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMessages }) => {
+const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMessages, isDraftOpen }) => {
 
 
     // Use messages from props, fallback to empty array
@@ -104,6 +104,8 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 setLoadingStatus('');
 
                 let content = '';
+                let documentContent = data.payload.document_content || '';
+
                 if (data.payload.text) {
                     content = data.payload.text;
                 } else if (data.payload.data) {
@@ -123,7 +125,8 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                     id: Date.now(),
                     type: 'assistant',
                     content: content,
-                    payload: data.payload // Store full payload for custom rendering if needed
+                    payload: data.payload, // Store full payload for custom rendering if needed
+                    documentContent: documentContent  // Store document content
                 };
 
                 // Functional update: need to get previous messages.
@@ -134,6 +137,11 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 // Let's assume we need to pass the full array.
                 if (onUpdateMessages) {
                     onUpdateMessages([...currentMessages, resultMsg]);
+                }
+
+                // Auto-open canvas if document content exists
+                if (documentContent && documentContent.trim() !== '') {
+                    toggleDraft(documentContent);
                 }
                 break;
 
@@ -256,10 +264,10 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
 
     // Chat view - when messages exist
     return (
-        <div className="w-full max-w-4xl mx-auto px-4 pb-4 flex flex-col justify-end h-full bg-legal-lightGray dark:bg-[#131416]">
+        <div className={`w-full px-4 pb-4 flex flex-col justify-end h-full bg-legal-lightGray dark:bg-[#131416] ${isDraftOpen ? '' : 'max-w-4xl mx-auto'}`}>
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto py-4 mb-6 flex flex-col items-center">
-                <div className="space-y-6 w-full max-w-2xl">
+                <div className={`space-y-6 w-full ${isDraftOpen ? 'max-w-full' : 'max-w-2xl'}`}>
                     {safeMessages.map((message, index) => {
                         const showExtraSpacing = index > 0 && safeMessages[index - 1].type !== message.type;
                         return (
@@ -283,8 +291,8 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                     </>
                                 )}
                                 {message.type === 'user' ? (
-                                    <div className="bg-indigo-100 dark:bg-indigo-950/40 light:bg-indigo-100 text-indigo-900 dark:text-indigo-100 light:text-indigo-900 border border-indigo-300 dark:border-indigo-700/40 light:border-indigo-300 px-6 py-4 rounded-2xl">
-                                        <p className="text-sm leading-relaxed">
+                                    <div className="bg-indigo-100 dark:bg-indigo-950/40 light:bg-indigo-100 text-indigo-900 dark:text-indigo-100 light:text-indigo-900 border border-indigo-300 dark:border-indigo-700/40 light:border-indigo-300 px-6 py-4 rounded-2xl break-words whitespace-pre-wrap">
+                                        <p className="text-sm leading-relaxed text-left break-words">
                                             {message.content}
                                         </p>
                                     </div>
@@ -292,22 +300,36 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                     <div className="flex flex-col gap-3 w-full">
                                         {message.content && (
                                             <>
-                                                <div className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800 markdown-content">
+                                                <div className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800 markdown-content break-words overflow-x-hidden w-full">
                                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                         {message.content}
                                                     </ReactMarkdown>
                                                 </div>
-                                                {/* Document Generation - Currently Disabled
-                                                <div className="flex items-stretch gap-2 w-full">
-                                                    <DocumentPreviewButton toggleDraft={toggleDraft} />
-                                                    <button
-                                                        className="border border-gray-500 dark:border-gray-500 light:border-gray-500 hover:border-gray-700 dark:hover:border-gray-300 light:hover:border-gray-700 rounded-lg p-3 transition-all hover:bg-gray-200 dark:hover:bg-white/5 light:hover:bg-gray-200 group flex items-center justify-center h-full"
-                                                        title="Download"
-                                                    >
-                                                        <span className="material-symbols-outlined text-gray-600 dark:text-gray-400 light:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white light:group-hover:text-gray-900" style={{ fontSize: '20px' }}>download</span>
-                                                    </button>
-                                                </div>
-                                                */}
+                                                {/* Document Preview & Download Buttons */}
+                                                {message.documentContent && message.documentContent.trim() !== '' && (
+                                                    <div className="flex items-stretch gap-2 w-full mt-3">
+                                                        <DocumentPreviewButton
+                                                            toggleDraft={() => toggleDraft(message.documentContent)}
+                                                        />
+                                                        <button
+                                                            onClick={() => {
+                                                                const blob = new Blob([message.documentContent], { type: 'text/markdown' });
+                                                                const url = URL.createObjectURL(blob);
+                                                                const a = document.createElement('a');
+                                                                a.href = url;
+                                                                a.download = 'document.md';
+                                                                document.body.appendChild(a);
+                                                                a.click();
+                                                                document.body.removeChild(a);
+                                                                URL.revokeObjectURL(url);
+                                                            }}
+                                                            className="border border-gray-500 dark:border-gray-500 light:border-gray-500 hover:border-gray-700 dark:hover:border-gray-300 light:hover:border-gray-700 rounded-lg p-3 transition-all hover:bg-gray-200 dark:hover:bg-white/5 light:hover:bg-gray-200 group flex items-center justify-center h-full"
+                                                            title="Download"
+                                                        >
+                                                            <span className="material-symbols-outlined text-gray-600 dark:text-gray-400 light:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white light:group-hover:text-gray-900" style={{ fontSize: '20px' }}>download</span>
+                                                        </button>
+                                                    </div>
+                                                )}
                                                 {/* Action Buttons */}
                                                 <div className="flex gap-2 pt-2 items-center">
                                                     <button
@@ -363,7 +385,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             </div>
 
             {/* Input Bar - Modern ChatGPT style */}
-            <div className="relative w-full max-w-2xl mx-auto">
+            <div className={`relative w-full mx-auto ${isDraftOpen ? 'max-w-full' : 'max-w-2xl'}`}>
                 <input
                     type="text"
                     value={inputValue}

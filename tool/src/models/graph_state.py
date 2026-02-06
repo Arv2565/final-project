@@ -4,6 +4,7 @@ from src.models.query_router import QueryRouterOutput
 from src.models.intent_classifier import IntentClassifierOutput
 from src.models.activity_law import ActivityLawState
 from src.models.procedural_guidance import ProceduralGuidanceState
+from src.models.document_generation import DocumentGenerationState
 
 
 class GraphState(TypedDict, total=False):
@@ -59,3 +60,6 @@ class GraphState(TypedDict, total=False):
     
     # Internal State
     active_legal_domain: NotRequired[str]           # 'civil' or 'criminal' - Explicit override for subgraphs
+    
+    # Document Generation State
+    document_generation_state: NotRequired["DocumentGenerationState"]

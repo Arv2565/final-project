@@ -1,6 +1,8 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
-const DraftBuilder = ({ onClose }) => {
+const DraftBuilder = ({ onClose, content = '' }) => {
     return (
         <div className="bg-white dark:bg-[#0d0e10] rounded-3xl p-6 flex flex-col h-full shadow-2xl relative animate-in slide-in-from-right duration-300 border border-legal-borders dark:border-white/5">
             {/* Header */}
@@ -28,48 +30,24 @@ const DraftBuilder = ({ onClose }) => {
             </div>
 
             {/* Editable Content */}
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                <div
-                    className="prose prose-lg max-w-none focus:outline-none text-legal-darkNavy dark:text-gray-300"
-                    style={{ fontFamily: 'Times New Roman, serif' }}
-                    contentEditable
-                    suppressContentEditableWarning
-                >
-                    <h1 className="text-3xl font-bold text-legal-navy dark:text-legal-lightGold mb-4">Legal Analysis of Public Urination and Lying to Police in India</h1>
-                    <p className="mb-4 text-legal-gray dark:text-gray-400">
-                        This analysis addresses the potential legal consequences in India for urinating on a public road and subsequently lying to the police who witnessed the act.
-                    </p>
-
-                    <h3 className="text-xl font-bold text-legal-darkNavy dark:text-gray-100 mt-6 mb-2">Direct Answer:</h3>
-                    <p className="mb-4">
-                        You could face charges under multiple sections of the Indian Penal Code (IPC) for urinating in public and for lying to the police. The most relevant charges are likely under Section 294 (for obscene acts) and Section 182 (for giving false information).
-                    </p>
-
-                    <h3 className="text-xl font-bold text-legal-darkNavy dark:text-gray-100 mt-6 mb-2">Legal Provisions and Applicability:</h3>
-
-                    <h4 className="text-lg font-bold text-legal-navy dark:text-gray-200 mt-4 mb-2">Indian Penal Code Section 294 - Obscene Acts and Songs:</h4>
-                    <ul className="list-disc pl-5 mb-4 space-y-2">
-                        <li>
-                            <strong className="text-gray-100">Applicability:</strong> This section applies because urinating on a public road can be considered an "obscene act" performed in a public place. The police witnessing the act (Event E2) suggests that it could cause annoyance to others, fulfilling a key element of this offense.
-                        </li>
-                        <li>
-                            <strong className="text-gray-100">Evidence:</strong> The act of urinating on a public road (F1, E1) directly relates to this provision. Police observation (E2) supports the likelihood of annoyance.
-                        </li>
-                    </ul>
-
-                    <h4 className="text-lg font-bold text-gray-200 mt-4 mb-2">Indian Penal Code Section 182 - False Information:</h4>
-                    <ul className="list-disc pl-5 mb-4 space-y-2">
-                        <li>
-                            <strong className="text-gray-100">Applicability:</strong> This section is highly applicable as you "lied to the police" (F2, E3) after being witnessed urinating. This constitutes giving false information to a public servant.
-                        </li>
-                        <li>
-                            <strong className="text-gray-100">Evidence:</strong> The act of lying to the police (F2, E3), who are public servants (F5), directly supports this charge.
-                        </li>
-                    </ul>
-                    <p className="mt-8 text-gray-500 italic text-sm">
-                        Start typing here to edit this draft...
-                    </p>
-                </div>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar w-full">
+                {content && content.trim() !== '' ? (
+                    <div
+                        className="prose prose-lg max-w-none w-full break-words text-legal-darkNavy dark:text-gray-300"
+                        style={{ fontFamily: 'Times New Roman, serif' }}
+                    >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {content}
+                        </ReactMarkdown>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center h-full">
+                        <p className="text-gray-500 dark:text-gray-400 italic text-center">
+                            No document content available.<br />
+                            <span className="text-sm">Generate a document to see it here.</span>
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

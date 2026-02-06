@@ -18,11 +18,11 @@ from src.nodes.general_chat_node import general_chat_node
 from src.nodes.ambiguity_remover_node import ambiguity_remover_node, set_ambiguity_remover
 from src.agents.ambiguity_remover import AmbiguityRemover
 
-# from src.nodes.document_generation_node import document_generation_node
+from src.nodes.document_generation import document_generation_node
 from src.nodes.placeholder_node import placeholder_node
 
 
-def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance_civil", "procedural_guidance_criminal", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "general_chat", "__end__"]:
+def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance_civil", "procedural_guidance_criminal", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "document_generation", "general_chat", "__end__"]:
     """Route based on the next_module selected by the orchestrator.
     
     Agent mapping:
@@ -84,6 +84,10 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         4: "educational_layer",
         5: "case_retriever",
         6: "comparative_module",
+        4: "educational_layer",
+        5: "case_retriever",
+        6: "comparative_module",
+        7: "document_generation",
         0: "general_chat",
     }
     
@@ -163,6 +167,9 @@ def build_graph(llm_provider=None):
     workflow.add_node("educational_layer", placeholder_node)
     workflow.add_node("case_retriever", placeholder_node)
     workflow.add_node("comparative_module", placeholder_node)
+    
+    # Register Document Generation node
+    workflow.add_node("document_generation", document_generation_node)
 
     # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
@@ -176,10 +183,11 @@ def build_graph(llm_provider=None):
             "fact_structuring": "fact_structuring",
             "procedural_guidance_civil": "procedural_guidance_civil",
             "procedural_guidance_criminal": "procedural_guidance_criminal",
-            "draft_builder": END, # placeholders
+            "draft_builder": "document_generation", # Route to document generation
             "educational_layer": END,
             "case_retriever": END,
             "comparative_module": END,
+            "document_generation": "document_generation",
             "general_chat": "general_chat",
             END: END
         }
@@ -215,6 +223,8 @@ def build_graph(llm_provider=None):
     workflow.add_edge("response_generation", END)
     workflow.add_edge("procedural_guidance_civil", END)
     workflow.add_edge("procedural_guidance_criminal", END)
+    workflow.add_edge("procedural_guidance_criminal", END)
+    workflow.add_edge("document_generation", END)
     workflow.add_edge("general_chat", END)
 
     # Compile into an executable graph

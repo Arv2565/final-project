@@ -314,8 +314,19 @@ class ChatService:
                     )
                     
                     activity_state = final_state.get("activity_law_state")
+                    document_state = final_state.get("document_generation_state")
                     
                     result_payload = {}
+                    
+                    # Extract document generation content if available
+                    document_content = ""
+                    if document_state:
+                        if isinstance(document_state, dict):
+                            document_content = document_state.get("generated_document", "")
+                        else:
+                            # If it's a Pydantic model
+                            doc_dict = document_state.model_dump() if hasattr(document_state, 'model_dump') else document_state.dict()
+                            document_content = doc_dict.get("generated_document", "")
                     
                     if final_response:
                         result_payload["text"] = final_response
@@ -372,7 +383,9 @@ class ChatService:
                             result_data["events"] = fs.get("events", []) if isinstance(fs, dict) else []
                         
                         result_payload["data"] = result_data
-
+                    
+                    # Always include document_content in the payload (empty string if not available)
+                    result_payload["document_content"] = document_content
                     
                     await websocket.send_json({"type": "final_result", "payload": result_payload})
                     

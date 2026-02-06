@@ -1,0 +1,84 @@
+[
+    {
+        "id": "lease_deed",
+        "name": "Lease Deed / Rent Agreement",
+        "summary": "Used when immovable property is rented or leased for a fixed term with rent and conditions.",
+        "keywords": [
+            "rent",
+            "lease",
+            "tenant",
+            "landlord",
+            "property"
+        ]
+    },
+    {
+        "id": "family_trust",
+        "name": "Deed of Family Trust",
+        "summary": "Used to create a private trust for managing family property or assets.",
+        "keywords": [
+            "trust",
+            "family property",
+            "trustee"
+        ]
+    },
+    {
+        "id": "separation_agreement",
+        "name": "Separation Agreement (Husband & Wife)",
+        "summary": "Used when spouses decide to live separately without immediate divorce.",
+        "keywords": [
+            "separate",
+            "maintenance",
+            "custody"
+        ]
+    },
+    {
+        "id": "adoption_deed",
+        "name": "Deed of Adoption",
+        "summary": "Used to legally adopt a child and transfer parental rights.",
+        "keywords": [
+            "adopt",
+            "child",
+            "guardian"
+        ]
+    },
+    {
+        "id": "family_settlement",
+        "name": "Deed of Family Settlement",
+        "summary": "Used to amicably divide inherited family property among heirs.",
+        "keywords": [
+            "inheritance",
+            "partition",
+            "settlement"
+        ]
+    },
+    {
+        "id": "partition_notice",
+        "name": "Legal Notice for Property Partition",
+        "summary": "Used to formally demand partition of jointly owned property.",
+        "keywords": [
+            "notice",
+            "partition",
+            "joint property"
+        ]
+    },
+    {
+        "id": "builder_delay_letter",
+        "name": "Letter to Builder for Delay in Possession",
+        "summary": "Used by a buyer to demand possession or action due to construction delay.",
+        "keywords": [
+            "builder",
+            "delay",
+            "possession"
+        ]
+    },
+    {
+        "id": "nda",
+        "name": "Non-Disclosure Agreement (NDA)",
+        "summary": "Used to protect confidential business or technical information.",
+        "keywords": [
+            "confidential",
+            "nda",
+            "business"
+        ]
+    }
+]

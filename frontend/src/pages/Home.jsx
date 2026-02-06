@@ -7,14 +7,20 @@ import Settings from '../components/Settings';
 const Home = () => {
     const [isDraftOpen, setIsDraftOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [draftContent, setDraftContent] = useState('');
     const {
         setToggleSettingsCallback,
         currentSession,
         updateSessionMessages
     } = useOutletContext();
 
-    const toggleDraft = () => {
-        setIsDraftOpen(!isDraftOpen);
+    const toggleDraft = (content = '') => {
+        if (content) {
+            setDraftContent(content);
+            setIsDraftOpen(true);
+        } else {
+            setIsDraftOpen(!isDraftOpen);
+        }
     };
 
     const toggleSettings = () => {
@@ -39,24 +45,28 @@ const Home = () => {
 
             {/* Left Panel - Chat Interface */}
             {/* If Draft is open, Chat takes less width, otherwise full width */}
-            <div className={`transition-all duration-500 ease-in-out h-full relative ${isDraftOpen ? 'w-1/2' : 'w-full max-w-5xl mx-auto'}`}>
-                {/* Key forces remount when session changes, or handle internally in ChatInterface */}
-                <ChatInterface
-                    key={currentSession?.id}
-                    toggleDraft={toggleDraft}
-                    toggleSettings={toggleSettings}
-                    currentSession={currentSession}
-                    onUpdateMessages={(msgs) => updateSessionMessages(currentSession?.id, msgs)}
-                />
-            </div>
+            {/* Main Layout Grid */}
+            <div className={`h-full grid gap-4 overflow-hidden ${isDraftOpen ? 'grid-cols-2' : 'grid-cols-1'} w-full`}>
 
-            {/* Right Panel - Draft Builder */}
-            {/* Shows only when isDraftOpen is true */}
-            {isDraftOpen && (
-                <div className="w-1/2 h-full transition-all duration-500 ease-in-out animate-in fade-in slide-in-from-right-10">
-                    <DraftBuilder onClose={toggleDraft} />
+                {/* Left Panel - Chat Interface */}
+                <div className="h-full min-w-0 overflow-hidden">
+                    <ChatInterface
+                        key={currentSession?.id}
+                        isDraftOpen={isDraftOpen}
+                        toggleDraft={toggleDraft}
+                        toggleSettings={toggleSettings}
+                        currentSession={currentSession}
+                        onUpdateMessages={(msgs) => updateSessionMessages(currentSession?.id, msgs)}
+                    />
                 </div>
-            )}
+
+                {/* Right Panel - Draft Builder */}
+                {isDraftOpen && (
+                    <div className="h-full min-w-0 overflow-hidden">
+                        <DraftBuilder onClose={toggleDraft} content={draftContent} />
+                    </div>
+                )}
+            </div>
 
         </div>
     );
