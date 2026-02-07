@@ -15,12 +15,15 @@ const Home = () => {
     } = useOutletContext();
 
     const toggleDraft = (content = '') => {
-        if (content) {
+        // Only treat a string as content; React events can accidentally be passed here.
+        if (typeof content === 'string' && content.trim() !== '') {
             setDraftContent(content);
-            setIsDraftOpen(true);
-        } else {
-            setIsDraftOpen(!isDraftOpen);
         }
+        setIsDraftOpen(true);
+    };
+
+    const closeDraft = () => {
+        setIsDraftOpen(false);
     };
 
     const toggleSettings = () => {
@@ -63,7 +66,11 @@ const Home = () => {
                 {/* Right Panel - Draft Builder */}
                 {isDraftOpen && (
                     <div className="h-full min-w-0 overflow-hidden">
-                        <DraftBuilder onClose={toggleDraft} content={draftContent} />
+                        <DraftBuilder
+                            onClose={closeDraft}
+                            content={draftContent}
+                            onContentChange={setDraftContent}
+                        />
                     </div>
                 )}
             </div>
