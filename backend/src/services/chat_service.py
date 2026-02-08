@@ -223,22 +223,22 @@ class ChatService:
 
                     # Node name mapping for user-friendly messages
                     NODE_STATUS_MESSAGES = {
-                        "query_router": "Analyzing your query...",
-                        "orchestrator": "Understanding your legal needs...",
-                        "fact_structuring": "Structuring the facts...",
-                        "statute_matching": "Finding relevant laws...",
-                        "rule_matching": "Matching legal rules...",
-                        "risk_assessment": "Assessing legal implications...",
-                        "evidence_linking": "Linking evidence to law...",
-                        "response_generation": "Preparing your response...",
-                        "procedural_guidance_civil": "Preparing civil procedure guidance...",
-                        "procedural_guidance_criminal": "Preparing criminal procedure guidance...",
-                        "timeline_constraint": "Identifying deadlines...",
-                        "checklist_generator": "Creating document checklist...",
-                        "responsible_actor": "Mapping responsible parties...",
-                        "estimated_effort": "Estimating time and cost...",
-                        "procedural_response": "Formatting procedural guidance...",
-                        "general_chat": "Preparing response...",
+                        "query_router": "🔍 Analyzing your query...",
+                        "orchestrator": "🎯 Understanding your legal needs...",
+                        "fact_structuring": "📋 Structuring the facts...",
+                        "statute_matching": "⚖️ Finding relevant laws...",
+                        "rule_matching": "📜 Matching legal rules...",
+                        "risk_assessment": "⚠️ Assessing legal implications...",
+                        "evidence_linking": "🔗 Linking evidence to law...",
+                        "response_generation": "✍️ Preparing your response...",
+                        "procedural_guidance_civil": "📑 Preparing civil procedure guidance...",
+                        "procedural_guidance_criminal": "⚖️ Preparing criminal procedure guidance...",
+                        "timeline_constraint": "📅 Identifying deadlines...",
+                        "checklist_generator": "✅ Creating document checklist...",
+                        "responsible_actor": "👥 Mapping responsible parties...",
+                        "estimated_effort": "💰 Estimating time and cost...",
+                        "procedural_response": "📝 Formatting procedural guidance...",
+                        "general_chat": "💬 Preparing response...",
                     }
 
                     try:
@@ -314,19 +314,8 @@ class ChatService:
                     )
                     
                     activity_state = final_state.get("activity_law_state")
-                    document_state = final_state.get("document_generation_state")
                     
                     result_payload = {}
-                    
-                    # Extract document generation content if available
-                    document_content = ""
-                    if document_state:
-                        if isinstance(document_state, dict):
-                            document_content = document_state.get("generated_document", "")
-                        else:
-                            # If it's a Pydantic model
-                            doc_dict = document_state.model_dump() if hasattr(document_state, 'model_dump') else document_state.dict()
-                            document_content = doc_dict.get("generated_document", "")
                     
                     if final_response:
                         result_payload["text"] = final_response
@@ -383,9 +372,7 @@ class ChatService:
                             result_data["events"] = fs.get("events", []) if isinstance(fs, dict) else []
                         
                         result_payload["data"] = result_data
-                    
-                    # Always include document_content in the payload (empty string if not available)
-                    result_payload["document_content"] = document_content
+
                     
                     await websocket.send_json({"type": "final_result", "payload": result_payload})
                     

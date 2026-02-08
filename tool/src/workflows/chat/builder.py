@@ -18,11 +18,18 @@ from src.nodes.general_chat_node import general_chat_node
 from src.nodes.ambiguity_remover_node import ambiguity_remover_node, set_ambiguity_remover
 from src.agents.ambiguity_remover import AmbiguityRemover
 
-from src.nodes.document_generation import document_generation_node
+# Document Generation Nodes
+from src.nodes.doc_gen_template_selection import doc_gen_template_selection_node
+from src.nodes.doc_gen_placeholder_extraction import doc_gen_placeholder_extraction_node
+from src.nodes.doc_gen_clarification import doc_gen_clarification_node
+# Replaced doc_gen_generation with granular nodes
+from src.nodes.doc_gen_document_creation import doc_gen_document_creation_node
+from src.nodes.doc_gen_procedure_generation import doc_gen_procedure_generation_node
+
 from src.nodes.placeholder_node import placeholder_node
 
 
-def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance_civil", "procedural_guidance_criminal", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "document_generation", "general_chat", "__end__"]:
+def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance_civil", "procedural_guidance_criminal", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "doc_gen_template_selection", "general_chat", "__end__"]:
     """Route based on the next_module selected by the orchestrator.
     
     Agent mapping:
@@ -71,9 +78,6 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         elif legal_domain == "criminal":
             return "procedural_guidance_criminal"
         elif legal_domain == "both":
-            # Note: Parallel execution logic would be handled by LangGraph if we returned a list,
-            # but for now we might need to be careful. The return type hints valid nodes.
-            # Returning a list is valid in LangGraph for parallel branches actions.
             return ["procedural_guidance_civil", "procedural_guidance_criminal"]
         else:
             return "procedural_guidance_criminal" # Fallback
@@ -84,14 +88,17 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
         4: "educational_layer",
         5: "case_retriever",
         6: "comparative_module",
-        4: "educational_layer",
-        5: "case_retriever",
-        6: "comparative_module",
-        7: "document_generation",
+        7: "doc_gen_template_selection", # Explicit doc gen
         0: "general_chat",
     }
     
-    return agent_routing.get(agent_number, END)
+    target = agent_routing.get(agent_number, END)
+    
+    # Remap draft_builder/3 to doc_gen_template_selection if used
+    if target == "draft_builder" or target == "document_generation":
+         return "doc_gen_template_selection"
+         
+    return target
 
 
 def route_from_fact_structuring(state: GraphState) -> Literal["ambiguity_remover", "statute_matching", "__end__"]:
@@ -117,16 +124,26 @@ def route_from_ambiguity_remover(state: GraphState) -> Literal["statute_matching
     return "statute_matching"
 
 
+def route_from_doc_gen_clarification(state: GraphState) -> Literal["doc_gen_document_creation", "__end__"]:
+    """
+    Route from clarification check.
+    If pending clarification, STOP (return END) to wait for user input.
+    Else, proceed to document creation.
+    """
+    if state.get("pending_clarification"):
+        return END
+    return "doc_gen_document_creation"
+
+
 def build_graph(llm_provider=None):
     """Build and compile the LangGraph workflow for legal query processing.
 
     Flow:
         START → query_router → intent_classifier → orchestrator
-        orchestrator --(cond)--> fact_structuring → [ambiguity_remover] → statute_matching → ... → response_generation → refinement → document_generation → END
+        orchestrator --(cond)--> ...
         
     Args:
-        llm_provider: Optional LLM provider for AmbiguityRemover. If not provided, 
-                     AmbiguityRemover will be created with default LLM.
+        llm_provider: Optional LLM provider for AmbiguityRemover. 
     
     Returns:
         Compiled workflow graph
@@ -163,13 +180,17 @@ def build_graph(llm_provider=None):
     workflow.add_node("general_chat", general_chat_node)
 
     # Register Placeholder nodes for unimplemented agents
-    workflow.add_node("draft_builder", placeholder_node)
+    workflow.add_node("draft_builder", placeholder_node) # Can be removed if completely replaced, but kept for safety
     workflow.add_node("educational_layer", placeholder_node)
     workflow.add_node("case_retriever", placeholder_node)
     workflow.add_node("comparative_module", placeholder_node)
     
-    # Register Document Generation node
-    workflow.add_node("document_generation", document_generation_node)
+    # Register Document Generation nodes (Broken down)
+    workflow.add_node("doc_gen_template_selection", doc_gen_template_selection_node)
+    workflow.add_node("doc_gen_placeholder_extraction", doc_gen_placeholder_extraction_node)
+    workflow.add_node("doc_gen_clarification", doc_gen_clarification_node)
+    workflow.add_node("doc_gen_document_creation", doc_gen_document_creation_node)
+    workflow.add_node("doc_gen_procedure_generation", doc_gen_procedure_generation_node)
 
     # Wire edges: Main Pipeline
     workflow.add_edge(START, "query_router")
@@ -183,17 +204,17 @@ def build_graph(llm_provider=None):
             "fact_structuring": "fact_structuring",
             "procedural_guidance_civil": "procedural_guidance_civil",
             "procedural_guidance_criminal": "procedural_guidance_criminal",
-            "draft_builder": "document_generation", # Route to document generation
+            "draft_builder": "doc_gen_template_selection", # Mapped
             "educational_layer": END,
             "case_retriever": END,
             "comparative_module": END,
-            "document_generation": "document_generation",
+            "doc_gen_template_selection": "doc_gen_template_selection",
             "general_chat": "general_chat",
             END: END
         }
     )
     
-    # Wire edges: Activity to Law Pipeline (with AmbiguityRemover integration)
+    # Wire edges: Activity to Law Pipeline
     workflow.add_conditional_edges(
         "fact_structuring",
         route_from_fact_structuring,
@@ -219,13 +240,31 @@ def build_graph(llm_provider=None):
     workflow.add_edge("risk_assessment", "evidence_linking")
     workflow.add_edge("evidence_linking", "response_generation")
     
+    # Document Generation Sub-graph Wiring
+    workflow.add_edge("doc_gen_template_selection", "doc_gen_placeholder_extraction")
+    workflow.add_edge("doc_gen_placeholder_extraction", "doc_gen_clarification")
+    
+    workflow.add_conditional_edges(
+        "doc_gen_clarification",
+        route_from_doc_gen_clarification,
+        {
+            "doc_gen_document_creation": "doc_gen_document_creation",
+            END: END
+        }
+    )
+    workflow.add_edge("doc_gen_document_creation", "doc_gen_procedure_generation")
+    workflow.add_edge("doc_gen_procedure_generation", END)
+
     # Route all terminal nodes directly to END
     workflow.add_edge("response_generation", END)
     workflow.add_edge("procedural_guidance_civil", END)
     workflow.add_edge("procedural_guidance_criminal", END)
-    workflow.add_edge("procedural_guidance_criminal", END)
-    workflow.add_edge("document_generation", END)
     workflow.add_edge("general_chat", END)
+    # Draft builder is not used if we map to doc_gen_template_selection, but for graph completeness:
+    workflow.add_edge("draft_builder", END)
+    workflow.add_edge("educational_layer", END)
+    workflow.add_edge("case_retriever", END)
+    workflow.add_edge("comparative_module", END)
 
     # Compile into an executable graph
     return workflow.compile()
