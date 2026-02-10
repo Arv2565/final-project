@@ -305,6 +305,7 @@ class ChatService:
                     # If no clarification, we have a result!
                     router_output = final_state.get("router_output")
                     final_response = final_state.get("final_response")
+                    generated_document_content = final_state.get("generated_document_content")
                     
                     # Check for procedural guidance state - could be civil, criminal, or generic
                     procedural_state = (
@@ -316,6 +317,10 @@ class ChatService:
                     activity_state = final_state.get("activity_law_state")
                     
                     result_payload = {}
+                    
+                    # Include generated document content if available
+                    if generated_document_content:
+                        result_payload["document_content"] = generated_document_content
                     
                     if final_response:
                         result_payload["text"] = final_response

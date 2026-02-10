@@ -30,9 +30,17 @@ def doc_gen_procedure_generation_node(state: GraphState) -> Dict[str, Any]:
         "status": "completed"
     }
     
-    return {
+    # The procedure text is the main response to the user.
+    # The LLM now generates properly formatted markdown with all required sections.
+    final_response_text = generated_proc
+
+    # Preserve top-level generated_document_content if it exists so the WebSocket handler can send it.
+    result = {
         "document_generation_state": new_doc_state,
-        "final_response": f"I have generated the {template_info.name} for you.",
-        # generated_document_content is already set by previous node, or could be re-set here if needed
-        # but the state merging will handle it if we don't overwrite it with None.
+        "final_response": final_response_text,
     }
+
+    if state.get("generated_document_content"):
+        result["generated_document_content"] = state.get("generated_document_content")
+
+    return result

@@ -40,15 +40,26 @@ Generate clear, neutral procedural steps for executing a "{document_name}".
 Context provided (if any):
 {raw_content}
 
-Requirement:
-Produce a plain text guide with these sections:
-1. Purpose
-2. Parties involved
-3. Documents required
-4. Execution & registration steps
-5. General stamp duty note (state generic)
+Requirements:
+You MUST produce a well-formatted markdown guide with these EXACT sections:
 
-Do not add specific state laws unless provided in context."""
+## Purpose
+[Explain the purpose of this document]
+
+## Documents Needed
+[List all required documents]
+
+## Procedure
+[Step-by-step instructions for execution and registration]
+
+## Important Notes
+[Include stamp duty information and other critical notes]
+
+Rules:
+- Use proper markdown heading syntax (##) for each section
+- Keep language simple and neutral
+- Do not add specific state laws unless provided in context
+- Do not hallucinate legal requirements"""
 
 DOCUMENT_GENERATION_SYSTEM_PROMPT = """You are a precise legal document generation assistant.
 Your task is to generate a final legal document in Markdown format by extracting necessary details from the user's natural language response and filling in the provided placeholders in the template.
