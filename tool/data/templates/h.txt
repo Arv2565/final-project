@@ -1,0 +1,93 @@
+furnished by the disclosing party, not to disclose any Proprietary Material to third parties and
+limit circulation of the Proprietary Material to such employees and others under its control
+having a direct "need to know" in connection with the above mentioned Purpose.
+2. The receiving party additionally agrees to take reasonable care to safeguard the confidential
+nature of the foregoing Proprietary Material, and such reasonable care shall not be less than the
+degree of care used to prevent disclosure of its own proprietary material. However, the receiving
+party will not be liable for disclosure and use of such Proprietary Material: if the Proprietary
+Material is in, or becomes part of, the public domain other than through a breach of this
+Agreement by the receiving party; if the Proprietary Material is disclosed to the receiving party by
+a third party who is not known by the receiving party to be subject to any confidentiality
+obligation; if the Proprietary Material is disclosed by the receiving party with the disclosing
+party's prior written approval; or if disclosure of the Proprietary Material is required by any
+judicial order or decree or by any governmental law or regulation. Further, with respect to such
+Proprietary Material provided to the receiving party by the disclosing party, or rule of any stock
+exchange the receiving party shall not be liable for disclosure and use thereof if such Proprietary
+Material was of record in the files of the receiving party at the time of its disclosure to the
+receiving party by the disclosing party or if such Proprietary Material is developed by the
+receiving party completely independently of the disclosing party's Proprietary Material. Prior to
+disclosure to any third party of any Proprietary Material to which the receiving party determines
+the obligations of confidentiality, non-use and non-disclosure do not apply pursuant to this
+Agreement, the receiving party shall provide within....... days' prior written notice to disclosing
+party of the intent to disclose such Proprietary Material, stating the grounds upon which the
+exception is claimed and providing documentation in support thereof. The receiving party shall
+limit the scope of disclosure to only the portion of the Proprietary Material not protected.
+3. Proprietary Material identified and disclosed as provided in this Agreement shall be held in
+confidence for a period of ______years from the date of disclosure. During such period, such
+Proprietary Material shall be used only for the Purpose(s) stated above. Neither party acquires
+any intellectual property rights under this Agreement, except the limited rights to carry out the
+Purpose(s) above stated.
+4. Each party understands that the other is developing and acquiring technology for its own
+products, and that existing or planned technology independently developed or acquired by that
+party may contain ideas and concepts similar or identical to those contained in the disclosing
+party's proprietary information. The disclosing party agrees that entering this Agreement shall
+not preclude the receiving party from developing or acquiring technology similar to the
+disclosing party's, without obligation to the disclosing party, provided the receiving party does
+not use the disclosing party's proprietary information to develop such technology.
+5. All Proprietary Material received and identified in accordance with this Agreement shall
+remain the property of the disclosing party and shall be returned or destroyed upon request
+except that the receiving party may keep one copy of such proprietary material for its legal files
+which shall remain subject hereto. Nothing contained herein shall be construed as a right or
+license, express or implied, under any patent or copyright, or application therefore, of either
+party by or to the other party.
+6. Each disclosing party warrants that it has the right to make disclosures under this
+Agreement. NO OTHER WARRANTIES ARE MADE BY EITHER PARTY. ALL PROPRIETARY
+MATERIAL IS PROVIDED "AS IS".
+7. The receiving party agrees that no technical data furnished to it by the disclosing party shall
+be exported from the ________without first complying with all requirements of the concerned
+rules and regulations, including the requirement for obtaining any export license, if applicable.
+The receiving party shall first obtain the written consent of the disclosing party prior to
+submitting any request for authority to export any such technical data.
+8. This Agreement
+a. will be effective as of the date of the signature by the last party to execute this Agreement,
+and may be terminated at any time upon written notice by either party;
+b. shall automatically terminate _______years from its effective date unless terminated sooner
+pursuant to provision (a) above;
+c. does not obligate either party to deliver a purchase order for the performance of any service
+or for the supply of any article whatsoever;
+d. does not obligate either party to perform any service or to furnish any proposal or comments;
+e. does not obligate either party to disclose Proprietary Material to the other; and
+f. will be binding upon the parties hereto and their successors, assignees, or personal
+representatives as the case may be. Any termination of this agreement shall not relieve the
+receiving party of any obligations herein incurred prior to the date of such termination or to be
+performed subsequent to the date of such termination.
+9. The terms and conditions herein constitute the entire agreement and understanding of the
+parties and shall supersede all communications, negotiations, arrangements and agreements,
+either oral or written, with respect to the subject matter hereof. No amendments to or
+modifications of this Agreement shall be effective unless reduced to writing and executed by the
+parties hereto. The failure of either party to enforce any term hereof shall not be deemed a
+waiver of any rights contained herein.
+10.This Agreement shall apply to any Proprietary Material that may have been provided to either
+party prior to the effective date hereof.
+11.No rights or obligations other than those expressed and recited herein are to be implied from
+this Agreement. No other existing Agreement between the parties, if any, are modified or
+terminated by this Agreement. No warranty or representation is made by either party hereto that
+any information transmitted by it hereunder is patentable or copyrightable, or that any such
+information involves concepts or embodiments that are free of infringement of other rights.
+Neither party hereto shall be obligated to prosecute any such action or bring any suit against
+any person not a party hereto for infringement. Neither party shall indemnify the other party
+hereto for any liability resulting from infringement of patent, copyright or trademark of a third
+party caused by the use of any Proprietary Material transferred pursuant to the Agreement.
+Neither party hereto confers the right to the other to use in advertising, publicity, or otherwise
+any trademark or trade name of the other party, nor confers any authorization to the other party
+to act as an agent on its behalf for any purpose.
+12. This Agreement shall be governed and interpreted in accordance with the laws of the
+___________, without giving effect to its internal principles of conflict of law.
+IN WITNESS WHEREOF, the parties hereto have caused this Agreement to be executed in
+duplicate.
+ABC DEF
+By:_______________________ By:_____________________
+(Authorized Signature) (Authorized Signature)
+Name:______________________ Name:___________________
+Title:__________________ Title:___________________
+Date:

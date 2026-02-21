@@ -15,6 +15,37 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const [isLoading, setIsLoading] = useState(false);
     const [loadingStatus, setLoadingStatus] = useState(''); // Text status from server
     const messagesEndRef = useRef(null);
+    const textareaRef = useRef(null);
+    const scrollContainerRef = useRef(null);
+    const scrollTimeoutRef = useRef(null);
+
+    const adjustTextareaHeight = () => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+        }
+    };
+
+    useEffect(() => {
+        adjustTextareaHeight();
+    }, [inputValue]);
+
+    const handleScroll = () => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.classList.add('is-scrolling');
+
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+
+            scrollTimeoutRef.current = setTimeout(() => {
+                if (scrollContainerRef.current) {
+                    scrollContainerRef.current.classList.remove('is-scrolling');
+                }
+            }, 3000);
+        }
+    };
 
     // WebSocket Reference
     const ws = useRef(null);
@@ -207,6 +238,10 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
+            // Reset height after sending
+            if (textareaRef.current) {
+                textareaRef.current.style.height = 'auto';
+            }
         }
     };
 
@@ -266,7 +301,11 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     return (
         <div className={`w-full px-4 pb-4 flex flex-col justify-end h-full bg-legal-lightGray dark:bg-[#131416] ${isDraftOpen ? '' : 'max-w-4xl mx-auto'}`}>
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto py-4 mb-6 flex flex-col items-center">
+            <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto py-4 mb-6 flex flex-col items-center custom-scrollbar"
+            >
                 <div className={`space-y-6 w-full ${isDraftOpen ? 'max-w-full' : 'max-w-2xl'}`}>
                     {safeMessages.map((message, index) => {
                         const showExtraSpacing = index > 0 && safeMessages[index - 1].type !== message.type;
@@ -385,19 +424,25 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             </div>
 
             {/* Input Bar - Modern ChatGPT style */}
-            <div className={`relative w-full mx-auto ${isDraftOpen ? 'max-w-full' : 'max-w-2xl'}`}>
-                <input
-                    type="text"
+            <div className={`relative w-full mx-auto bg-legal-lightGray dark:bg-[#1e1f23] light:bg-legal-lightGray border border-legal-borders dark:border-white/10 light:border-legal-borders rounded-2xl shadow-lg hover:border-legal-borders dark:hover:border-white/20 light:hover:border-legal-borders transition-all duration-200 ${isDraftOpen ? 'max-w-full' : 'max-w-2xl'}`}>
+                <textarea
+                    ref={textareaRef}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="w-full bg-legal-lightGray dark:bg-[#1e1f23] light:bg-legal-lightGray border border-legal-borders dark:border-white/10 light:border-legal-borders text-gray-900 dark:text-gray-300 light:text-gray-900 text-sm rounded-full py-3 pl-6 pr-12 focus:outline-none focus:border-legal-borders dark:focus:border-white/30 light:focus:border-legal-borders focus:ring-1 focus:ring-blue-500/30 placeholder-gray-500 shadow-lg hover:border-legal-borders dark:hover:border-white/20 light:hover:border-legal-borders transition-all duration-200"
+                    onKeyDown={handleKeyPress}
+                    rows={1}
+                    className="w-full bg-transparent text-gray-900 dark:text-gray-300 light:text-gray-900 text-sm rounded-2xl py-3 pl-6 pr-12 focus:outline-none resize-none custom-scrollbar"
                     placeholder="Ask me anything about your projects"
+                    style={{ minHeight: '44px', maxHeight: '200px' }}
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <div className="absolute bottom-1 right-2 p-1">
                     <button
                         onClick={handleSendMessage}
-                        className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-gray-900 dark:hover:text-white light:hover:text-gray-900 transition-colors duration-200 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200"
+                        disabled={!inputValue.trim() || isLoading}
+                        className={`p-2 rounded-lg transition-colors duration-200 ${inputValue.trim()
+                            ? 'bg-legal-navy/10 text-legal-navy dark:bg-white/10 dark:text-white hover:bg-legal-navy/20 dark:hover:bg-white/20'
+                            : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                            }`}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="22" y1="2" x2="11" y2="13"></line>

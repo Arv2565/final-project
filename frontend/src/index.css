@@ -19,50 +19,86 @@
 }
 
 /* Markdown Content Styles */
-.markdown-content h1, 
-.markdown-content h2, 
-.markdown-content h3, 
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
 .markdown-content h4 {
-    @apply font-semibold mt-4 mb-2 text-legal-darkNavy dark:text-white;
+  @apply font-semibold mt-4 mb-2 text-legal-darkNavy dark:text-white;
 }
 
-.markdown-content h1 { @apply text-xl; }
-.markdown-content h2 { @apply text-lg; }
-.markdown-content h3 { @apply text-base; }
+.markdown-content h1 {
+  @apply text-xl;
+}
+
+.markdown-content h2 {
+  @apply text-lg;
+}
+
+.markdown-content h3 {
+  @apply text-base;
+}
 
 .markdown-content p {
-    @apply mb-3 leading-relaxed;
+  @apply mb-3 leading-relaxed;
 }
 
-.markdown-content ul, 
+.markdown-content ul,
 .markdown-content ol {
-    @apply pl-5 mb-3 space-y-1;
+  @apply pl-5 mb-3 space-y-1;
 }
 
-.markdown-content ul { @apply list-disc; }
-.markdown-content ol { @apply list-decimal; }
+.markdown-content ul {
+  @apply list-disc;
+}
+
+.markdown-content ol {
+  @apply list-decimal;
+}
 
 .markdown-content strong {
-    @apply font-semibold text-legal-navy dark:text-blue-200;
+  @apply font-semibold text-legal-navy dark:text-blue-200;
 }
 
 /* Table Styles */
 .markdown-content table {
-    @apply w-full border-collapse my-4 text-sm;
+  @apply w-full border-collapse my-4 text-sm;
 }
 
 .markdown-content th {
-    @apply bg-legal-lightGray dark:bg-white/10 p-2 text-left font-semibold border border-gray-300 dark:border-gray-600;
+  @apply bg-legal-lightGray dark:bg-white/10 p-2 text-left font-semibold border border-gray-300 dark:border-gray-600;
 }
 
 .markdown-content td {
-    @apply p-2 border border-gray-300 dark:border-gray-600 align-top;
+  @apply p-2 border border-gray-300 dark:border-gray-600 align-top;
 }
 
 .markdown-content pre {
-    @apply bg-gray-100 dark:bg-black/30 p-3 rounded-lg overflow-x-auto mb-3 font-mono text-xs;
+  @apply bg-gray-100 dark:bg-black/30 p-3 rounded-lg overflow-x-auto mb-3 font-mono text-xs;
 }
 
 .markdown-content blockquote {
-    @apply border-l-4 border-legal-navy dark:border-blue-400 pl-3 italic text-gray-600 dark:text-gray-300 my-3;
+  @apply border-l-4 border-legal-navy dark:border-blue-400 pl-3 italic text-gray-600 dark:text-gray-300 my-3;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-transparent rounded-full transition-colors duration-300;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb,
+.custom-scrollbar.is-scrolling::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
 }
