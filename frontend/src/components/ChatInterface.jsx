@@ -1,14 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DocumentPreviewButton from './DocumentPreviewButton';
 import LoadingIndicator from './LoadingIndicator';
+import { getCookie } from '../utils';
 
-const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMessages, isDraftOpen }) => {
+const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMessages, isDraftOpen, userId, persistChatToDatabase, createNewChat }) => {
 
 
     // Use messages from props, fallback to empty array
-    const messages = currentSession?.messages || [];
+    const [messages, setMessages] = useState(currentSession?.messages || []);
 
     // Internal state for input and UI controls
     const [inputValue, setInputValue] = useState('');
@@ -18,6 +20,12 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const textareaRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const scrollTimeoutRef = useRef(null);
+
+    // Use currentSession?.id directly instead of deriving chatId state
+    const chatId = currentSession?.id || null;
+
+    // Track pending message from landing page that should be sent after chat creation
+    const pendingMessageRef = useRef(null);
 
     const adjustTextareaHeight = () => {
         const textarea = textareaRef.current;
@@ -51,6 +59,10 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const ws = useRef(null);
     // Messages Reference to avoid stale closures in socket handlers
     const messagesRef = useRef(messages);
+    // Reconnect control
+    const reconnectAttemptsRef = useRef(0);
+    const reconnectTimerRef = useRef(null);
+    const intentionalCloseRef = useRef(false);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -62,19 +74,79 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
         scrollToBottom();
     }, [messages, loadingStatus]);
 
-    // WebSocket Connection Effect
+    // Sync messages with parent session
     useEffect(() => {
-        // Close existing connection if any
-        if (ws.current) {
-            ws.current.close();
-        }
+        setMessages(currentSession?.messages || []);
+    }, [currentSession]);
 
-        // Initialize WebSocket
-        const socket = new WebSocket('ws://localhost:8000/api/ws/chat');
+    // Auto-send pending message after chat is created
+    useEffect(() => {
+        if (chatId && pendingMessageRef.current) {
+            const message = pendingMessageRef.current;
+            pendingMessageRef.current = null;
+            console.log('Auto-sending pending message after chat creation', chatId);
+
+            const isTempChat = chatId.startsWith('temp_');
+            // Use ref to get current (unstale) message count
+            const isFirstMessage = messagesRef.current.length === 0;
+
+            if (isTempChat && isFirstMessage && persistChatToDatabase) {
+                // Need to persist temp chat first
+                (async () => {
+                    try {
+                        const realChatId = await persistChatToDatabase(chatId);
+                        // Wait for WebSocket to reconnect with real ID
+                        let attempts = 0;
+                        while (attempts < 30 && (!ws.current || ws.current.readyState !== WebSocket.OPEN)) {
+                            await new Promise(r => setTimeout(r, 100));
+                            attempts++;
+                        }
+
+                        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                            const userMessage = { id: Date.now(), type: 'user', content: message };
+                            const payload = { type: 'query', payload: message, session_id: realChatId };
+                            const updatedMessages = [...messagesRef.current, userMessage];
+                            setMessages(updatedMessages);
+                            if (onUpdateMessages) onUpdateMessages(updatedMessages);
+                            setIsLoading(true);
+                            setLoadingStatus('Sending...');
+                            ws.current.send(JSON.stringify(payload));
+                        } else {
+                            console.error('WebSocket failed to reconnect after chat persistence');
+                            setLoadingStatus('Failed to connect. Please try again.');
+                        }
+                    } catch (err) {
+                        console.error('Failed to auto-send message:', err);
+                    }
+                })();
+            } else if (chatId && ws.current && ws.current.readyState === WebSocket.OPEN) {
+                // Send directly with current chatId
+                const userMessage = { id: Date.now(), type: 'user', content: message };
+                const payload = { type: 'query', payload: message, session_id: chatId };
+                const updatedMessages = [...messagesRef.current, userMessage];
+                setMessages(updatedMessages);
+                if (onUpdateMessages) onUpdateMessages(updatedMessages);
+                setIsLoading(true);
+                setLoadingStatus('Sending...');
+                ws.current.send(JSON.stringify(payload));
+            }
+        }
+    }, [chatId]);
+
+    // WebSocket connect function — extracted so reconnect can call it too
+    const connectWebSocket = useCallback((sessionId) => {
+        const token = getCookie('auth');
+        if (!token || !sessionId || sessionId.startsWith('temp_')) return;
+
+        intentionalCloseRef.current = false;
+        const socket = new WebSocket(
+            `ws://localhost:8000/api/ws/chat?session_id=${sessionId}&token=${encodeURIComponent(token)}`
+        );
         ws.current = socket;
 
         socket.onopen = () => {
             console.log('WebSocket Connected');
+            reconnectAttemptsRef.current = 0; // reset on successful connect
         };
 
         socket.onmessage = (event) => {
@@ -86,120 +158,233 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             }
         };
 
-        socket.onclose = () => {
-            console.log('WebSocket Disconnected');
+        socket.onclose = (e) => {
+            console.log('WebSocket Disconnected', e.code, e.reason);
+            if (e.code === 4001) {
+                // Auth failure — do not retry
+                setIsLoading(false);
+                setLoadingStatus('Session expired. Please log in again.');
+                return;
+            }
+            if (!intentionalCloseRef.current && reconnectAttemptsRef.current < 3) {
+                const delay = Math.pow(2, reconnectAttemptsRef.current) * 1000;
+                reconnectAttemptsRef.current += 1;
+                console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current})...`);
+                reconnectTimerRef.current = setTimeout(() => connectWebSocket(sessionId), delay);
+            } else if (reconnectAttemptsRef.current >= 3) {
+                setIsLoading(false);
+                setLoadingStatus('Connection lost. Please refresh the page.');
+            }
         };
 
         socket.onerror = (error) => {
             console.error('WebSocket Error:', error);
             setIsLoading(false);
-            setLoadingStatus('');
         };
+    }, []); // stable — doesn't need deps since it uses refs & args
 
-        // Cleanup on unmount or session change
+    // WebSocket Connection Effect
+    useEffect(() => {
+        // Per-invocation cancel flag — immune to React StrictMode double-invocations.
+        // React StrictMode intentionally mounts→unmounts→mounts in dev to surface bugs;
+        // using a local 'cancelled' flag means the first invocation's cleanup only
+        // cancels ITS OWN pending connection, not the subsequent real one.
+        let cancelled = false;
+
+        // Close any existing socket from a previous session
+        intentionalCloseRef.current = true;
+        clearTimeout(reconnectTimerRef.current);
+        if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
+            ws.current.close();
+            ws.current = null;
+        }
+        reconnectAttemptsRef.current = 0;
+
+        // Only connect if chatId is NOT temporary (i.e., it's a real database ID)
+        const isTempChat = chatId && chatId.startsWith('temp_');
+        if (!chatId || isTempChat) {
+            console.log('Skipping WebSocket connection for temp chat:', chatId);
+            return;
+        }
+
+        // 50ms delay lets StrictMode's first effect fully clean up before the
+        // second (real) invocation opens the real socket
+        const connectTimer = setTimeout(() => {
+            if (!cancelled) {
+                intentionalCloseRef.current = false; // this invocation owns the socket
+                connectWebSocket(chatId);
+            }
+        }, 50);
+
         return () => {
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.close();
+            cancelled = true;
+            clearTimeout(connectTimer);
+            intentionalCloseRef.current = true;
+            clearTimeout(reconnectTimerRef.current);
+            if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
+                ws.current.close();
+                ws.current = null;
             }
         };
-    }, [currentSession?.id]); // Re-connect when session ID changes
+    }, [chatId, connectWebSocket]); // Re-connect when session changes
+
 
     const handleServerMessage = (data) => {
         // Use ref to get latest messages
         const currentMessages = Array.isArray(messagesRef.current) ? messagesRef.current : [];
-
+        let updatedMessages = [...currentMessages];
         switch (data.type) {
             case 'status':
                 setLoadingStatus(data.payload);
                 setIsLoading(true);
                 break;
-
-            case 'clarification_request':
+            case 'clarification_request': {
                 setIsLoading(false);
                 setLoadingStatus('');
-                // Add clarification question as an assistant message
                 const clarificationMsg = {
                     id: Date.now(),
                     type: 'assistant',
                     content: data.payload.question,
                     isClarification: true,
-                    payload: data.payload // Store full payload if needed
+                    payload: data.payload
                 };
-                if (onUpdateMessages) {
-                    onUpdateMessages([...currentMessages, clarificationMsg]);
-                }
+                updatedMessages = [...updatedMessages, clarificationMsg];
+                setMessages(updatedMessages);
+                if (onUpdateMessages) onUpdateMessages(updatedMessages);
                 break;
-
-            case 'final_result':
+            }
+            case 'final_result': {
                 setIsLoading(false);
                 setLoadingStatus('');
-
                 let content = '';
                 let documentContent = data.payload.document_content || '';
-
                 if (data.payload.text) {
                     content = data.payload.text;
                 } else if (data.payload.data) {
-                    // Format structured data/JSON as a string for now, or handled by a specific renderer
-                    // For the "final outputs payload should be displayed" requirement
                     content = JSON.stringify(data.payload.data, null, 2);
-
-                    // If it's a procedural workflow, we might want to format it nicely
-                    if (data.payload.workflow === 'procedural') {
-                        // Construct a friendly summary if possible, otherwise just dump the JSON
-                        // The user said "final outputs payload should be displayed"
-                        // We'll stick to text for the main bubble
-                    }
                 }
-
                 const resultMsg = {
                     id: Date.now(),
                     type: 'assistant',
                     content: content,
-                    payload: data.payload, // Store full payload for custom rendering if needed
-                    documentContent: documentContent  // Store document content
+                    payload: data.payload,
+                    documentContent: documentContent
                 };
-
-                // Functional update: need to get previous messages.
-                // Since we don't have direct access to setMessages (it's in parent), 
-                // we rely on 'messages' prop being fresh due to re-renders.
-                // However, onUpdateMessages expects the NEW VALUE, not a callback usually, 
-                // unless the parent handles it. Home.jsx calls updateSessionMessages(id, msgs).
-                // Let's assume we need to pass the full array.
-                if (onUpdateMessages) {
-                    onUpdateMessages([...currentMessages, resultMsg]);
-                }
-
-                // Auto-open canvas if document content exists
+                updatedMessages = [...updatedMessages, resultMsg];
+                setMessages(updatedMessages);
+                if (onUpdateMessages) onUpdateMessages(updatedMessages);
                 if (documentContent && documentContent.trim() !== '') {
                     toggleDraft(documentContent);
                 }
                 break;
-
-            case 'error':
+            }
+            case 'error': {
                 setIsLoading(false);
                 setLoadingStatus('');
                 const errorMsg = {
                     id: Date.now(),
-                    type: 'system', // or assistant
+                    type: 'system',
                     content: `Error: ${data.payload}`
                 };
-                if (onUpdateMessages) {
-                    onUpdateMessages([...currentMessages, errorMsg]);
-                }
+                updatedMessages = [...updatedMessages, errorMsg];
+                setMessages(updatedMessages);
+                if (onUpdateMessages) onUpdateMessages(updatedMessages);
                 break;
-
+            }
             default:
                 console.warn('Unknown message type:', data.type);
         }
     };
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (!inputValue.trim()) return;
 
+        // If chatId is null, we're on the landing page - create a new chat first
+        if (!chatId) {
+            if (createNewChat) {
+                console.log('Landing page message, creating new chat...');
+                setLoadingStatus('Creating new chat...');
+                // Save the message to send after chat is created
+                pendingMessageRef.current = inputValue;
+                setInputValue(''); // Clear input while we create chat
+                createNewChat();
+                // The parent will update chatId, and the useEffect will trigger auto-send
+                return;
+            }
+            console.log('No chat and no createNewChat function available');
+            return;
+        }
+
+        // For temporary chats, we need to persist first before sending
+        const isTempChat = chatId && chatId.startsWith('temp_');
+        const isFirstMessage = messages.length === 0;
+
+        if (isTempChat && isFirstMessage && persistChatToDatabase) {
+            console.log('First message on temp chat, persisting to database...');
+            setIsLoading(true);
+            setLoadingStatus('Creating chat...');
+
+            try {
+                // Persist the chat and get the real ID
+                const realChatId = await persistChatToDatabase(chatId);
+                console.log(`Chat persisted: ${chatId} -> ${realChatId}`);
+
+                // Wait for parent state update and WebSocket reconnection
+                // The parent will update currentSession -> chatId will update -> WebSocket will reconnect
+                let attempts = 0;
+                const maxAttempts = 20; // 2 seconds max
+
+                while (attempts < maxAttempts) {
+                    // Check if WebSocket is connected (it should auto-reconnect when chatId updates)
+                    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                        console.log('WebSocket ready for sending message');
+                        break;
+                    }
+
+                    // Wait 100ms and try again
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+
+                if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+                    console.error('WebSocket failed to reconnect after chat persistence');
+                    setIsLoading(false);
+                    setLoadingStatus('Failed to connect. Please try again.');
+                    return;
+                }
+
+                // Now send the message with the real chat ID
+                const userMessage = {
+                    id: Date.now(),
+                    type: 'user',
+                    content: inputValue
+                };
+
+                const payload = {
+                    type: 'query',
+                    payload: inputValue,
+                    session_id: realChatId,
+                };
+
+                const updatedMessages = [...messagesRef.current, userMessage];
+                setMessages(updatedMessages);
+                if (onUpdateMessages) onUpdateMessages(updatedMessages);
+                setInputValue('');
+                setIsLoading(true);
+                setLoadingStatus('Sending...');
+
+                ws.current.send(JSON.stringify(payload));
+            } catch (err) {
+                console.error('Failed to persist chat before sending message:', err);
+                setIsLoading(false);
+                setLoadingStatus('');
+            }
+            return;
+        }
+
+        // For existing chats, send the message normally
         if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
             console.error('WebSocket not connected');
-            // Optionally try to reconnect or alert user
             return;
         }
 
@@ -209,26 +394,22 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             content: inputValue
         };
 
-        // Update UI immediately
-        onUpdateMessages([...messages, userMessage]);
+        const updatedMessages = [...messages, userMessage];
+        setMessages(updatedMessages);
+        if (onUpdateMessages) onUpdateMessages(updatedMessages);
         setInputValue('');
         setIsLoading(true);
         setLoadingStatus('Sending...');
 
-        // Check if we are responding to a clarification (naive check: last message was a clarification)
-        // Or better, let the backend state handle it. The backend expects 'clarification_response' 
-        // if it's waiting, or 'query' if it's new. 
-        // BUT, the backend `socket_handlers.py` logic checks `current_state.get("pending_clarification")`.
-        // The Frontend doesn't strictly know the backend state unless we track it.
-        // However, the PROMPT said "when a clarification question is asked... the next msg should be clarification response"
-
-        // Let's determine the type based on the last message
-        const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+        // Fix #6: use ref to avoid stale closure over messages state
+        const currentMessages = messagesRef.current;
+        const lastMessage = currentMessages.length > 0 ? currentMessages[currentMessages.length - 1] : null;
         const isClarificationResponse = lastMessage?.isClarification;
 
         const payload = {
             type: isClarificationResponse ? 'clarification_response' : 'query',
-            payload: inputValue
+            payload: inputValue,
+            session_id: chatId,
         };
 
         ws.current.send(JSON.stringify(payload));

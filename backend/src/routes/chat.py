@@ -1,6 +1,6 @@
 """Chat endpoints for legal query processing."""
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import JSONResponse
 import logging
 
@@ -21,8 +21,10 @@ def get_chat_service() -> ChatService:
         _chat_service = ChatService()
     return _chat_service
 
+from ..middleware.auth import authenticate
+
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, current_user: dict = Depends(authenticate)):
     """
     Process a legal query using the AI tool.
     
@@ -54,26 +56,49 @@ async def chat(request: ChatRequest):
 async def websocket_chat(websocket: WebSocket):
     """
     WebSocket endpoint for real-time chat with streaming responses.
-    
-    Args:
-        websocket: WebSocket connection
+    Requires a valid JWT token passed as `token` query param.
     """
-    await websocket.accept()
-    logger.info("WebSocket connection established")
-    
+    import os
+    from jose import jwt, JWTError
+
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.accept()
+        await websocket.close(code=4001, reason="Missing authentication token")
+        return
+
+    access_key = os.getenv("ACCESS_KEY")
     try:
-        chat_service = get_chat_service()
-        
-        # Delegate entire handling logic to the service
-        # The service method now implements the full loop, streaming, and clarification logic
-        await chat_service.handle_websocket(websocket)
-            
-    except WebSocketDisconnect:
-        logger.info("WebSocket connection closed")
-    except Exception as e:
-        logger.error(f"WebSocket error: {str(e)}", exc_info=True)
-        # Try to close if still open
+        verified_user = jwt.decode(token, access_key, algorithms=["HS256"])
+    except JWTError as e:
+        await websocket.accept()
+        await websocket.close(code=4001, reason=f"Invalid token: {str(e)}")
+        return
+
+    try:
+        await websocket.accept()
+        logger.info(f"WebSocket connection established for user {verified_user.get('id')}")
+
         try:
-            await websocket.close(code=1011, reason=str(e))
-        except:
-            pass
+            chat_service = get_chat_service()
+            logger.info("ChatService initialized successfully")
+
+            # Delegate entire handling logic to the service
+            # Pass verified user from token (not from untrusted query params)
+            await chat_service.handle_websocket(websocket, verified_user=verified_user)
+
+        except WebSocketDisconnect:
+            logger.info("WebSocket connection closed by client")
+        except Exception as e:
+            logger.error(f"WebSocket error: {str(e)}", exc_info=True)
+            try:
+                await websocket.send_json({"type": "error", "payload": f"Server error: {str(e)}"})
+            except:
+                logger.warning("Could not send error message to client")
+            try:
+                await websocket.close(code=1011, reason=str(e))
+            except:
+                logger.warning("Could not close WebSocket connection")
+    except Exception as e:
+        logger.error(f"WebSocket accept or initialization failed: {str(e)}", exc_info=True)
+

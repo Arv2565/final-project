@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import ChatInterface from '../components/ChatInterface';
 import DraftBuilder from '../components/DraftBuilder';
 import Settings from '../components/Settings';
+import { AuthContext } from '../Auth/AuthContext';
 
 const Home = () => {
     const [isDraftOpen, setIsDraftOpen] = useState(false);
@@ -11,8 +12,12 @@ const Home = () => {
     const {
         setToggleSettingsCallback,
         currentSession,
-        updateSessionMessages
+        updateSessionMessages,
+        persistChatToDatabase,
+        createNewChat
     } = useOutletContext();
+    const { user } = useContext(AuthContext);
+    const userId = user?.id || null;
 
     const toggleDraft = (content = '') => {
         // Only treat a string as content; React events can accidentally be passed here.
@@ -45,25 +50,19 @@ const Home = () => {
 
     return (
         <div className="bg-legal-lightGray dark:bg-[#131416] text-legal-darkNavy dark:text-white font-sans h-[calc(100vh-2rem)] flex overflow-hidden p-4 gap-4 box-border">
-
-            {/* Left Panel - Chat Interface */}
-            {/* If Draft is open, Chat takes less width, otherwise full width */}
-            {/* Main Layout Grid */}
             <div className={`h-full grid gap-4 overflow-hidden ${isDraftOpen ? 'grid-cols-2' : 'grid-cols-1'} w-full`}>
-
-                {/* Left Panel - Chat Interface */}
                 <div className="h-full min-w-0 overflow-hidden">
                     <ChatInterface
-                        key={currentSession?.id}
                         isDraftOpen={isDraftOpen}
                         toggleDraft={toggleDraft}
                         toggleSettings={toggleSettings}
                         currentSession={currentSession}
                         onUpdateMessages={(msgs) => updateSessionMessages(currentSession?.id, msgs)}
+                        persistChatToDatabase={persistChatToDatabase}
+                        createNewChat={createNewChat}
+                        userId={userId}
                     />
                 </div>
-
-                {/* Right Panel - Draft Builder */}
                 {isDraftOpen && (
                     <div className="h-full min-w-0 overflow-hidden">
                         <DraftBuilder
@@ -74,7 +73,6 @@ const Home = () => {
                     </div>
                 )}
             </div>
-
         </div>
     );
 };
