@@ -11,7 +11,9 @@ from ..schemas.chat_history import (
     ChatHistoryUpdate,
     ChatHistoryResponse,
     ChatHistoryListResponse,
-    MessageSchema
+    MessageSchema,
+    ChatHistoryNameUpdate,
+    ChatHistoryNameResponse
 )
 
 router = APIRouter()
@@ -116,6 +118,34 @@ async def get_chat(
         "created_at": chat.created_at,
         "updated_at": chat.updated_at,
         "messages": messages_formated
+    }
+
+@router.put("/{chat_id}/name", response_model=ChatHistoryNameResponse)
+async def update_chat_name(
+    chat_id: str,
+    name_in: ChatHistoryNameUpdate,
+    current_user: dict = Depends(authenticate)
+) -> Any:
+    """Update the name/title of a chat history."""
+    try:
+        chat = await ChatHistory.get(PydanticObjectId(chat_id), fetch_links=True)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid chat ID format")
+        
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+        
+    if str(chat.user.id) != current_user.get("id"):
+        raise HTTPException(status_code=403, detail="Not authorized to access this chat")
+    
+    # Update the title
+    chat.title = name_in.name
+    chat.updated_at = datetime.utcnow()
+    await chat.save()
+    
+    return {
+        "id": str(chat.id),
+        "name": chat.title
     }
 
 @router.put("/{chat_id}", response_model=ChatHistoryResponse)

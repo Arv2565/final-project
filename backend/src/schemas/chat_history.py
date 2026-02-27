@@ -32,3 +32,10 @@ class ChatHistoryListResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     message_count: int
+
+class ChatHistoryNameUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=500, description="New name for the chat history")
+
+class ChatHistoryNameResponse(BaseModel):
+    id: str
+    name: str

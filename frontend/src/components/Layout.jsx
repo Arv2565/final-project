@@ -218,6 +218,17 @@ const Layout = () => {
 
     const currentSession = sessions.find(s => s.id === currentSessionId) || sessions[0] || null;
 
+    // Handler for renaming chat history
+    const handleRenameChat = (chatId, newName) => {
+        setSessions(prev => prev.map(s =>
+            s.id === chatId ? { ...s, title: newName } : s
+        ));
+        // Update in backend if persisted
+        if (!chatId.startsWith('temp_')) {
+            axiosJWT.put(`/chat-history/${chatId}`, { title: newName }).catch(() => {});
+        }
+    };
+
     return (
         <div className="flex min-h-screen bg-legal-lightGray dark:bg-[#131416]">
             {/* Sidebar */}
@@ -230,6 +241,7 @@ const Layout = () => {
                 onNewChat={createNewChat}
                 onSelectChat={setCurrentSessionId}
                 onDeleteChat={deleteSession}
+                onRenameChat={handleRenameChat}
             />
 
             {/* Main Content Area */}

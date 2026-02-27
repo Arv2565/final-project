@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ProfileMenu from './ProfileMenu';
+import EditHistoryName from './EditHistoryName';
 
 const Sidebar = ({
     isExpanded,
@@ -115,7 +116,17 @@ const Sidebar = ({
                                             ? 'text-legal-darkNavy dark:text-white font-medium'
                                             : 'text-legal-darkNavy dark:text-gray-300 group-hover:text-legal-darkNavy dark:group-hover:text-white'
                                         }`}>
-                                        {chat.title}
+                                        <EditHistoryName
+                                            historyId={chat.id}
+                                            currentName={chat.title}
+                                            onRename={(newName) => {
+                                                if (typeof newName === 'string') {
+                                                    if (typeof onRenameChat === 'function') {
+                                                        onRenameChat(chat.id, newName);
+                                                    }
+                                                }
+                                            }}
+                                        />
                                     </span>
 
                                     {/* Delete Button (visible on hover) */}
