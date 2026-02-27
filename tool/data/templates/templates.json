@@ -80,5 +80,101 @@
             "nda",
             "business"
         ]
+    },
+    {
+        "id": "office_services_agreement",
+        "name": "Office Services Agreement / Business Centre Agreement",
+        "summary": "Used when a business centre provides office facilities and services to clients on a contractual basis.",
+        "keywords": [
+            "office services",
+            "business centre",
+            "facilities",
+            "contract",
+            "client"
+        ]
+    },
+    {
+        "id": "loan_agreement_security",
+        "name": "Loan Agreement with Security",
+        "summary": "Used for inter-corporate deposits or loans secured by pledge of securities or assets.",
+        "keywords": [
+            "loan",
+            "inter-corporate deposit",
+            "security",
+            "pledge",
+            "borrower",
+            "lender"
+        ]
+    },
+    {
+        "id": "recovery_notice",
+        "name": "Legal Notice for Recovery of Outstanding Payment",
+        "summary": "Used to formally demand payment of outstanding dues from a debtor before filing suit.",
+        "keywords": [
+            "recovery",
+            "outstanding payment",
+            "debt",
+            "notice",
+            "payment"
+        ]
+    },
+    {
+        "id": "anticipatory_bail",
+        "name": "Anticipatory Bail Petition Application",
+        "summary": "Used to seek pre-arrest bail protection from Sessions Court or High Court in anticipation of arrest.",
+        "keywords": [
+            "anticipatory bail",
+            "bail",
+            "arrest",
+            "criminal",
+            "FIR"
+        ]
+    },
+    {
+        "id": "trademark_license",
+        "name": "Trademark License Agreement",
+        "summary": "Used when a trademark owner licenses a manufacturer to produce goods bearing their trademark.",
+        "keywords": [
+            "trademark",
+            "license",
+            "manufacturer",
+            "royalty",
+            "brand"
+        ]
+    },
+    {
+        "id": "copyright_license",
+        "name": "License to Use Copyright Agreement",
+        "summary": "Used to grant permission to use copyrighted material for a specific purpose and period.",
+        "keywords": [
+            "copyright",
+            "license",
+            "intellectual property",
+            "usage rights"
+        ]
+    },
+    {
+        "id": "defamation_notice",
+        "name": "Legal Notice for Defamation",
+        "summary": "Used to demand compensation for damage to reputation caused by false and defamatory statements.",
+        "keywords": [
+            "defamation",
+            "reputation",
+            "damages",
+            "libel",
+            "slander"
+        ]
+    },
+    {
+        "id": "poa_cancellation",
+        "name": "Legal Notice for Cancellation of Power of Attorney",
+        "summary": "Used to formally revoke a Power of Attorney and demand cessation of all actions under it.",
+        "keywords": [
+            "power of attorney",
+            "revocation",
+            "cancellation",
+            "PoA",
+            "authorization"
+        ]
     }
 ]
