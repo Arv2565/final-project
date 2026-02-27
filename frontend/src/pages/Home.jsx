@@ -14,7 +14,8 @@ const Home = () => {
         currentSession,
         updateSessionMessages,
         persistChatToDatabase,
-        createNewChat
+        createNewChat,
+        setCloseDraftCallback
     } = useOutletContext();
     const { user } = useContext(AuthContext);
     const userId = user?.id || null;
@@ -38,6 +39,12 @@ const Home = () => {
     useEffect(() => {
         setToggleSettingsCallback(() => toggleSettings);
     }, [setToggleSettingsCallback]);
+
+    useEffect(() => {
+        if (setCloseDraftCallback) {
+            setCloseDraftCallback(() => closeDraft);
+        }
+    }, [setCloseDraftCallback]);
 
     // Show Settings if open
     if (isSettingsOpen) {

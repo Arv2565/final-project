@@ -7,6 +7,7 @@ import { axiosJWT } from '../Auth/axios';
 const Layout = () => {
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
     const [toggleSettingsCallback, setToggleSettingsCallback] = useState(null);
+    const [closeDraftCallback, setCloseDraftCallback] = useState(null);
     const [sessions, setSessions] = useState([]);
     const [currentSessionId, setCurrentSessionId] = useState(null);
     const [loadedMessages, setLoadedMessages] = useState({}); // { chatId: messages[] }
@@ -95,6 +96,11 @@ const Layout = () => {
     };
 
     const createNewChat = () => {
+        // Close draft canvas if open
+        if (closeDraftCallback) {
+            closeDraftCallback();
+        }
+
         // Create chat locally with temporary ID - no DB persistence yet
         // Database persistence happens on first message
         const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -250,6 +256,7 @@ const Layout = () => {
             >
                 <Outlet context={{
                     setToggleSettingsCallback,
+                    setCloseDraftCallback,
                     currentSession,
                     updateSessionMessages,
                     persistChatToDatabase,

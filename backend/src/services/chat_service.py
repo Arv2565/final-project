@@ -483,7 +483,19 @@ class ChatService:
                         try:
                             from ..models.chat import Message
                             content = result_payload.get("text") or json.dumps(result_payload)
-                            assist_msg = Message(sender="assistant", content=content, created_at=datetime.utcnow(), metadata={"final_result": True})
+                            
+                            # Build document field if there's generated document content
+                            document_field = None
+                            if generated_document_content:
+                                document_field = {"content": generated_document_content}
+                            
+                            assist_msg = Message(
+                                sender="assistant", 
+                                content=content, 
+                                document=document_field,
+                                created_at=datetime.utcnow(), 
+                                metadata={"final_result": True}
+                            )
                             await assist_msg.insert()
                             chat_history.messages.append(assist_msg)
                             chat_history.updated_at = datetime.utcnow()
