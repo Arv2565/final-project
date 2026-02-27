@@ -1,8 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { AuthContext } from '../Auth/AuthContext';
 
 const ProfileMenu = ({ isExpanded, onSettingsClick }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
+    const { user } = useContext(AuthContext);
+
+    // Get first 2 letters of user's name
+    const getInitials = (name) => {
+        if (!name) return 'U';
+        return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+    };
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -46,10 +54,10 @@ const ProfileMenu = ({ isExpanded, onSettingsClick }) => {
                 className={`flex items-center gap-3 w-full ${isExpanded ? '' : 'justify-center'} px-3 py-2 rounded-lg hover:bg-legal-lightGray dark:hover:bg-white/10 transition-colors`}
             >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-legal-navy to-legal-gold flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    JD
+                    {getInitials(user?.name)}
                 </div>
                 <div className={`flex flex-col overflow-hidden transition-all duration-300 ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}>
-                    <span className="text-sm text-legal-darkNavy dark:text-white font-medium truncate">John Doe</span>
+                    <span className="text-sm text-legal-darkNavy dark:text-white font-medium truncate">{user?.name || 'User'}</span>
                 </div>
             </button>
 
@@ -58,7 +66,7 @@ const ProfileMenu = ({ isExpanded, onSettingsClick }) => {
                 <div className={`absolute bottom-full mb-2 bg-white dark:bg-[#1e1f23] border border-legal-borders dark:border-white/10 rounded-lg shadow-xl z-50 ${isExpanded ? 'left-0 right-0 w-56' : 'left-1/2 transform -translate-x-1/2 w-56'}`}>
                     {/* Email Header */}
                     <div className="px-4 py-3 border-b border-legal-borders dark:border-white/5">
-                        <p className="text-sm text-legal-gray dark:text-gray-400">johndoe@gmail.com</p>
+                        <p className="text-sm text-legal-gray dark:text-gray-400">{user?.email || 'user@example.com'}</p>
                     </div>
 
                     {/* Menu Items */}

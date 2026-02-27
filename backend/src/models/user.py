@@ -17,6 +17,7 @@ class User(Document):
     location: Optional[str] = None
     address: Optional[str] = None
     bio: Optional[str] = None
+    personal_preferences: Optional[str] = None
     
     # Unified profile picture field
     profile_picture_url: Optional[str] = None
