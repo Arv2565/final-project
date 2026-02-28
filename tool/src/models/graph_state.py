@@ -57,6 +57,11 @@ class GraphState(TypedDict, total=False):
     clarification_history: NotRequired[List[dict]]  # List of {question: str, answer: str}
     clarification_counts: NotRequired[dict]         # Count of questions per agent: {agent_name: count}
     pending_clarification: NotRequired[dict]        # Serialized ClarificationRequest
+    needs_clarification: NotRequired[bool]          # Internal flag to invoke ambiguity_remover node
+    ambiguity_remover_scope: NotRequired[str]       # Scope for ambiguity_remover prompt selection
+    ambiguity_remover_context: NotRequired[dict]    # Context payload for ambiguity_remover
+    current_agent: NotRequired[str]                 # Agent key for clarification counting
+    ambiguity_remover_next: NotRequired[str]        # Next node if no clarification generated
     
     # Internal State
     active_legal_domain: NotRequired[str]           # 'civil' or 'criminal' - Explicit override for subgraphs

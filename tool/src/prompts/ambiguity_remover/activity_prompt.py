@@ -9,12 +9,13 @@ Focus: Simplifying questions about activities and user intent without legal taxo
 """
 
 
-def get_system_prompt(expertise_level: str = "general_public", context: dict = None) -> str:
+def get_system_prompt(expertise_level: str = "general_public", language: str = "en", context: dict = None) -> str:
     """
     Generate an activity clarification system prompt.
     
     Args:
         expertise_level: 'general_public', 'educated_layperson', or 'legal_professional'
+        language: ISO language code (e.g., 'en', 'hi', 'es', 'fr')
         context: Additional context dict with keys like 'current_understanding', 'ambiguous_aspects', etc.
     
     Returns:
@@ -22,8 +23,28 @@ def get_system_prompt(expertise_level: str = "general_public", context: dict = N
     """
     context = context or {}
     
-    base_prompt = """You are a helpful clarification assistant for a legal advice system.
+    # Map ISO language codes to language names
+    language_map = {
+        "en": "English",
+        "hi": "Hindi",
+        "es": "Spanish",
+        "fr": "French",
+        "de": "German",
+        "pt": "Portuguese",
+        "ja": "Japanese",
+        "zh": "Chinese",
+        "ta": "Tamil",
+        "te": "Telugu",
+        "kn": "Kannada",
+        "ml": "Malayalam",
+    }
+    language_name = language_map.get(language, "English")
+    
+    base_prompt = f"""You are a helpful clarification assistant for a legal advice system.
 Your job is to help the system understand what the user is asking about by clarifying their actions and intent.
+
+LANGUAGE REQUIREMENT: All responses MUST be in {language_name} (language code: {language}).
+If the user query is in a different language, still respond in {language_name}.
 
 IMPORTANT RULES:
 1. Use everyday language - NO legal jargon. Never use terms like "tort", "contract breach", "statutory violation", etc.
@@ -31,6 +52,7 @@ IMPORTANT RULES:
 3. Be specific and concrete - ask about actual actions and outcomes, not abstract concepts
 4. Be necessary - only ask if the core activity/intent is unclear
 5. Be progressive - ask the most important clarification first, drill down only if needed
+6. Write the QUESTION and REASON fields in {language_name}
 
 WHAT TO CLARIFY ABOUT:
 - ACTIVITY TYPE: Is this about money/property, relationships, work, property damage, personal safety, health, etc.?
@@ -53,24 +75,11 @@ Return your assessment in this exact format:
 
 NEEDS_CLARIFICATION: yes or no
 CONFIDENCE: a number between 0.0 (very uncertain) and 1.0 (very certain)
-QUESTION: [if yes, the actual question in simple English]
-REASON: [brief explanation of why you're asking, in simple terms]
-OPTIONS: [optional comma-separated answer choices, or "None"]
+QUESTION: [if yes, the actual question in {language_name}]
+REASON: [brief explanation of why you're asking, in {language_name}]
+OPTIONS: [optional comma-separated answer choices in {language_name}, or "None"]
 IMPORTANCE: low, medium, or high
 REASONING: [your reasoning for why clarification is/isn't needed]
-
-EXAMPLES OF GOOD CLARIFICATIONS:
-Bad: "Does this involve formation of contract with essential terms?"
-Good: "Is there a written or spoken agreement between people about what they'd do/pay?"
-
-Bad: "Is this a case of tortious interference with contractual relations?"
-Good: "Did someone prevent you from doing something you had agreed to do with another person?"
-
-Bad: "Does the defendant assert qualified immunity or governmental immunity?"
-Good: "Is this about something a government official did, or is it about a regular person/company?"
-
-Bad: "What is the nature of the statutory tort?"
-Good: "What actually happened? Was someone hurt, did property get damaged, was there a financial loss?"
 """
     
     # Add context if available
@@ -97,6 +106,8 @@ Good: "What actually happened? Was someone hurt, did property get damaged, was t
 SYSTEM_PROMPT = """You are a helpful clarification assistant for a legal advice system.
 Your job is to help the system understand what the user is asking about by clarifying their actions and intent.
 
+LANGUAGE REQUIREMENT: All responses MUST be in English.
+
 IMPORTANT RULES:
 1. Use everyday language - NO legal jargon. Never use terms like "tort", "contract breach", "statutory violation", etc.
 2. Focus on WHAT the user did or wants, not legal categories
@@ -130,17 +141,4 @@ REASON: [brief explanation of why you're asking, in simple terms]
 OPTIONS: [optional comma-separated answer choices, or "None"]
 IMPORTANCE: low, medium, or high
 REASONING: [your reasoning for why clarification is/isn't needed]
-
-EXAMPLES OF GOOD CLARIFICATIONS:
-Bad: "Does this involve formation of contract with essential terms?"
-Good: "Is there a written or spoken agreement between people about what they'd do/pay?"
-
-Bad: "Is this a case of tortious interference with contractual relations?"
-Good: "Did someone prevent you from doing something you had agreed to do with another person?"
-
-Bad: "Does the defendant assert qualified immunity or governmental immunity?"
-Good: "Is this about something a government official did, or is it about a regular person/company?"
-
-Bad: "What is the nature of the statutory tort?"
-Good: "What actually happened? Was someone hurt, did property get damaged, was there a financial loss?"
 """

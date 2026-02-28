@@ -40,6 +40,23 @@ class OrchestratorAgent:
         cleaned_query = router_output.cleaned_query
         metadata = router_output.metadata
 
+        language_map = {
+            "en": "English",
+            "hi": "Hindi",
+            "es": "Spanish",
+            "fr": "French",
+            "de": "German",
+            "pt": "Portuguese",
+            "ja": "Japanese",
+            "zh": "Chinese",
+            "ta": "Tamil",
+            "te": "Telugu",
+            "kn": "Kannada",
+            "ml": "Malayalam",
+        }
+        original_language_code = (metadata.original_language or metadata.language or "en") if metadata else "en"
+        response_language_name = language_map.get(original_language_code, "English")
+
         print(f"\n📥 Input State:")
         import json
         # Safe printing of state (excluding large objects if any)
@@ -58,18 +75,22 @@ class OrchestratorAgent:
             user_prompt += f"(Originally in: {metadata.language})\n"
             
         if clarification_history:
-             user_prompt += "\nPrevious Clarifications:\n"
-             for item in clarification_history:
-                 user_prompt += f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}\n"
+            user_prompt += "\nPrevious Clarifications:\n"
+            for item in clarification_history:
+                user_prompt += f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}\n"
         
         user_prompt += """
         Determine the single best next module (agent number 0-6) to handle this query.
         """
         
         if current_count < MAX_CLARIFICATION:
-             user_prompt += "\nIf the query is too vague to select a single module, or missing critical info, you MAY request clarification. Set 'clarification' field and leave 'next_module' empty."
+            user_prompt += "\nIf the query is too vague to select a single module, or missing critical info, you MAY request clarification. Set 'clarification' field and leave 'next_module' empty."
+            user_prompt += (
+                f"\nIf clarification is needed, write the clarification question and reason in {response_language_name} "
+                f"(language code: {original_language_code})."
+            )
         else:
-             user_prompt += "\nYou have reached the limit for clarifications. You MUST make a best-guess selection."
+            user_prompt += "\nYou have reached the limit for clarifications. You MUST make a best-guess selection."
 
         try:
             plan = self.llm.invoke(
@@ -83,13 +104,20 @@ class OrchestratorAgent:
             print(f"\n✅ Orchestrator Output:")
             if plan.clarification:
                 print(f"   Requesting Clarification: {plan.clarification.question}")
-                # Increment counter
-                clarification_counts["orchestrator"] = current_count + 1
-                serialized_plan = plan.dict() # or model_dump
+                serialized_plan = plan.model_dump()
                 return {
                     "orchestrator_plan": serialized_plan,
-                    "pending_clarification": plan.clarification.dict(),
-                    "clarification_counts": clarification_counts
+                    "needs_clarification": True,
+                    "ambiguity_remover_scope": "factual",
+                    "ambiguity_remover_context": {
+                        "agent": "orchestrator",
+                        "router_metadata": metadata.model_dump() if hasattr(metadata, "model_dump") else str(metadata),
+                        "orchestrator_reasoning": plan.next_module.reasoning if plan.next_module else "",
+                        "agent_requested_question": plan.clarification.question,
+                        "agent_requested_reason": plan.clarification.reason,
+                    },
+                    "current_agent": "orchestrator",
+                    "ambiguity_remover_next": "orchestrator",
                 }
 
             if plan.next_module:

@@ -23,9 +23,10 @@ def test_orchestrator():
     router_output = QueryRouterOutput(
         cleaned_query="I want to draft a rental agreement for my shop.",
         metadata=QueryMetadata(
+            original_language="en",
             language="en",
-            source="user",
-            query_type="legal"
+            has_personal_data=False,
+            is_legal_question=True
         )
     )
     

@@ -83,6 +83,27 @@ class ProceduralResponseGenerationAgent:
             raise ValueError("Missing required state for response generation")
         
         cleaned_query = router_output.cleaned_query
+
+        language_map = {
+            "en": "English",
+            "hi": "Hindi",
+            "es": "Spanish",
+            "fr": "French",
+            "de": "German",
+            "pt": "Portuguese",
+            "ja": "Japanese",
+            "zh": "Chinese",
+            "ta": "Tamil",
+            "te": "Telugu",
+            "kn": "Kannada",
+            "ml": "Malayalam",
+        }
+        original_language_code = (
+            (router_output.metadata.original_language if router_output.metadata else None)
+            or (router_output.metadata.language if router_output.metadata else None)
+            or "en"
+        )
+        response_language_name = language_map.get(original_language_code, "English")
         
         # Build context from all procedural guidance components
         context = f"User Query: {cleaned_query}\n\n"
@@ -145,6 +166,12 @@ Make it actionable and easy to understand for someone navigating the legal syste
         
         active_domain = state.get("active_legal_domain", "criminal")
         system_prompt = CIVIL_PROCEDURAL_RESPONSE_PROMPT if active_domain == "civil" else PROCEDURAL_RESPONSE_PROMPT
+        system_prompt += (
+            f"\n\nLANGUAGE REQUIREMENT: The final response MUST be fully in {response_language_name} "
+            f"(code: {original_language_code})."
+            " Do not answer in English unless the target language is English."
+            " Keep legal references and section numbers intact."
+        )
 
         try:
             output = self.llm.invoke(

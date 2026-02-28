@@ -5,9 +5,13 @@ from typing import Optional
 class QueryMetadata(BaseModel):
     """Metadata extracted from user query by QueryRouterAgent."""
     
+    original_language: Optional[str] = Field(
+        None,
+        description="Original language detected in user query (ISO language code, e.g., 'en', 'hi', 'es', 'ml')"
+    )
     language: Optional[str] = Field(
         None,
-        description="ISO language code (e.g., 'en', 'hi', 'es')"
+        description="Language after translation: always 'en' (English) if originally in another language, or original language code if already English"
     )
     has_personal_data: bool = Field(
         False,

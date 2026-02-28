@@ -72,7 +72,7 @@ def main():
     
     router_output = QueryRouterOutput(
         cleaned_query=query,
-        metadata=QueryMetadata(language="en", has_personal_data=False, is_legal_question=True)
+        metadata=QueryMetadata(original_language="en", language="en", has_personal_data=False, is_legal_question=True)
     )
     
     classifier_output = IntentClassifierOutput(

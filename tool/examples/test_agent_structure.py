@@ -50,11 +50,13 @@ def test_model_structure():
     
     # Test QueryMetadata
     metadata = QueryMetadata(
+        original_language="en",
         language="en",
         has_personal_data=False,
         is_legal_question=True
     )
     assert metadata.language == "en"
+    assert metadata.original_language == "en"
     print("  ✓ QueryMetadata structure valid")
     
     # Test QueryRouterOutput
@@ -112,6 +114,7 @@ def test_graph_state():
     state["router_output"] = QueryRouterOutput(
         cleaned_query="How do I file for divorce in India?",
         metadata=QueryMetadata(
+            original_language="en",
             language="en",
             has_personal_data=False,
             is_legal_question=True
@@ -202,6 +205,7 @@ def test_json_structure():
     router_output = QueryRouterOutput(
         cleaned_query="How do I file for divorce in India?",
         metadata=QueryMetadata(
+            original_language="en",
             language="en",
             has_personal_data=False,
             is_legal_question=True

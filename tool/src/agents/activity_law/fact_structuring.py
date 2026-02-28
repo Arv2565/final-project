@@ -18,6 +18,25 @@ class FactStructuringAgent:
         print("="*80)
         
         query = state["router_output"].cleaned_query
+        router_output = state.get("router_output")
+        metadata = router_output.metadata if router_output else None
+
+        language_map = {
+            "en": "English",
+            "hi": "Hindi",
+            "es": "Spanish",
+            "fr": "French",
+            "de": "German",
+            "pt": "Portuguese",
+            "ja": "Japanese",
+            "zh": "Chinese",
+            "ta": "Tamil",
+            "te": "Telugu",
+            "kn": "Kannada",
+            "ml": "Malayalam",
+        }
+        original_language_code = (metadata.original_language or metadata.language or "en") if metadata else "en"
+        response_language_name = language_map.get(original_language_code, "English")
         print(f"\n📥 Input State:")
         import json
         print(json.dumps({k: str(v) for k, v in state.items()}, indent=2))
@@ -32,14 +51,18 @@ class FactStructuringAgent:
         prompt = FACT_STRUCTURING_PROMPT.format(query=query)
         
         if clarification_history:
-             prompt += "\n\nPrevious Clarifications:\n"
-             for item in clarification_history:
-                 prompt += f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}\n"
+            prompt += "\n\nPrevious Clarifications:\n"
+            for item in clarification_history:
+                prompt += f"Q: {item.get('question', '')}\nA: {item.get('answer', '')}\n"
         
         if current_count < MAX_CLARIFICATION:
-             prompt += "\nIf the incident description is missing critical details (e.g. Jurisdiction, specific actions), you MAY request clarification. Set 'clarification' field and leave factors/events empty."
+            prompt += "\nIf the incident description is missing critical details (e.g. Jurisdiction, specific actions), you MAY request clarification. Set 'clarification' field and leave factors/events empty."
+            prompt += (
+                f" Clarification question and reason must be in {response_language_name} "
+                f"(language code: {original_language_code})."
+            )
         else:
-             prompt += "\nYou have reached the limit for clarifications. You MUST make a best-guess extraction."
+            prompt += "\nYou have reached the limit for clarifications. You MUST make a best-guess extraction."
 
         try:
             result = self.llm.invoke(
@@ -50,11 +73,19 @@ class FactStructuringAgent:
             print(f"\n✅ Fact Structuring Output:")
             if result.clarification:
                 print(f"   Requesting Clarification: {result.clarification.question}")
-                clarification_counts["fact_structuring"] = current_count + 1
                 return {
                     "fact_structuring": result,
-                    "pending_clarification": result.clarification.dict(),
-                    "clarification_counts": clarification_counts
+                    "needs_clarification": True,
+                    "ambiguity_remover_scope": "activity",
+                    "ambiguity_remover_context": {
+                        "agent": "fact_structuring",
+                        "factors_extracted": len(result.factors or []),
+                        "events_extracted": len(result.events or []),
+                        "agent_requested_question": result.clarification.question,
+                        "agent_requested_reason": result.clarification.reason,
+                    },
+                    "current_agent": "fact_structuring",
+                    "ambiguity_remover_next": "statute_matching",
                 }
 
             if result and hasattr(result, 'factors'):

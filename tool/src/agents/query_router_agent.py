@@ -75,6 +75,7 @@ class QueryRouterAgent:
             fallback_output = QueryRouterOutput(
                 cleaned_query=user_query,
                 metadata=QueryMetadata(
+                    original_language="en",
                     language="en",
                     has_personal_data=False,
                     is_legal_question=True

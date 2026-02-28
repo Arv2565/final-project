@@ -9,11 +9,21 @@ from src.workflows.procedural.nodes import (
     estimated_effort_node,
     procedural_response_node
 )
+from src.nodes.ambiguity_remover_node import ambiguity_remover_runnable
 
 from typing import Literal
 
-def route_from_timeline(state: GraphState) -> Literal["checklist_generator", "__end__"]:
+def route_from_timeline(state: GraphState) -> Literal["ambiguity_remover", "checklist_generator", "__end__"]:
     """Route from timeline, checking for clarification."""
+    if state.get("ambiguity_remover_scope") and state.get("needs_clarification"):
+        return "ambiguity_remover"
+    if state.get("pending_clarification"):
+        return END
+    return "checklist_generator"
+
+
+def route_from_ambiguity(state: GraphState) -> Literal["checklist_generator", "__end__"]:
+    """Route from ambiguity node back to procedural flow or halt."""
     if state.get("pending_clarification"):
         return END
     return "checklist_generator"
@@ -29,6 +39,7 @@ def build_procedural_graph():
     
     # Register Nodes
     workflow.add_node("timeline_constraint", timeline_constraint_node)
+    workflow.add_node("ambiguity_remover", ambiguity_remover_runnable)
     workflow.add_node("checklist_generator", checklist_generator_node)
     workflow.add_node("responsible_actor", responsible_actor_node)
     workflow.add_node("estimated_effort", estimated_effort_node)
@@ -41,8 +52,18 @@ def build_procedural_graph():
         "timeline_constraint",
         route_from_timeline,
         {
+            "ambiguity_remover": "ambiguity_remover",
             "checklist_generator": "checklist_generator",
             END: END
+        }
+    )
+
+    workflow.add_conditional_edges(
+        "ambiguity_remover",
+        route_from_ambiguity,
+        {
+            "checklist_generator": "checklist_generator",
+            END: END,
         }
     )
     

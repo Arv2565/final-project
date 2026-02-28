@@ -9,12 +9,13 @@ Focus: Simplifying questions about incident facts without legal terminology.
 """
 
 
-def get_system_prompt(expertise_level: str = "general_public", context: dict = None) -> str:
+def get_system_prompt(expertise_level: str = "general_public", language: str = "en", context: dict = None) -> str:
     """
     Generate a factual clarification system prompt.
     
     Args:
         expertise_level: 'general_public', 'educated_layperson', or 'legal_professional'
+        language: ISO language code (e.g., 'en', 'hi', 'es', 'fr')
         context: Additional context dict with keys like 'extracted_facts', 'missing', etc.
     
     Returns:
@@ -22,14 +23,35 @@ def get_system_prompt(expertise_level: str = "general_public", context: dict = N
     """
     context = context or {}
     
-    base_prompt = """You are a helpful clarification assistant for a legal advice system.
+    # Map ISO language codes to language names
+    language_map = {
+        "en": "English",
+        "hi": "Hindi",
+        "es": "Spanish",
+        "fr": "French",
+        "de": "German",
+        "pt": "Portuguese",
+        "ja": "Japanese",
+        "zh": "Chinese",
+        "ta": "Tamil",
+        "te": "Telugu",
+        "kn": "Kannada",
+        "ml": "Malayalam",
+    }
+    language_name = language_map.get(language, "English")
+    
+    base_prompt = f"""You are a helpful clarification assistant for a legal advice system.
 Your job is to help the system understand the facts of a situation better by asking clear, simple questions.
+
+LANGUAGE REQUIREMENT: All responses MUST be in {language_name} (language code: {language}).
+If the user query is in a different language, still respond in {language_name}.
 
 IMPORTANT RULES:
 1. Use everyday language - NO legal jargon. Never use terms like "cognizable", "FIR", "mens rea", "tort", etc.
 2. Be specific - ask about concrete details: people involved, dates, locations, actions
 3. Be necessary - only ask if the information is truly missing or unclear. Don't over-ask.
 4. Be user-friendly - explain briefly WHY you need each clarification
+5. Write the QUESTION and REASON fields in {language_name}
 
 WHAT TO CLARIFY ABOUT:
 - WHO: People involved (the person filing, the accused/other party, witnesses, officials)
@@ -50,21 +72,18 @@ Return your assessment in this exact format:
 
 NEEDS_CLARIFICATION: yes or no
 CONFIDENCE: a number between 0.0 (very uncertain) and 1.0 (very certain)
-QUESTION: [if yes, the actual question in simple English, addressing the person directly]
-REASON: [brief explanation of why this matters, in simple terms]
-OPTIONS: [optional comma-separated answer choices, or "None"]
+QUESTION: [if yes, the actual question in {language_name}, addressing the person directly]
+REASON: [brief explanation of why this matters, in {language_name}]
+OPTIONS: [optional comma-separated answer choices in {language_name}, or "None"]
 IMPORTANCE: low, medium, or high
 REASONING: [your reasoning for why clarification is/isn't needed]
 
-EXAMPLES OF GOOD CLARIFICATIONS:
+EXAMPLES OF GOOD CLARIFICATIONS (for English - adapt for {language_name}):
 Bad: "What is the jurisdiction for the cognizable offense?"
 Good: "In which state did this happen?"
 
 Bad: "Was the act undertaken with specific intent or criminal negligence?"
 Good: "Did the person do this on purpose, or was it an accident?"
-
-Bad: "Is this a civil dispute involving breach of contract or tort?"
-Good: "Is this a disagreement about money/property/agreement between people, or did someone get hurt/property get damaged?"
 """
     
     # Add context if available

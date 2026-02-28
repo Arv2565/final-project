@@ -15,7 +15,7 @@ from src.nodes.procedural_guidance_node import (
     criminal_procedural_guidance_node
 )
 from src.nodes.general_chat_node import general_chat_node
-from src.nodes.ambiguity_remover_node import ambiguity_remover_node, set_ambiguity_remover
+from src.nodes.ambiguity_remover_node import ambiguity_remover_runnable, set_ambiguity_remover
 from src.agents.ambiguity_remover import AmbiguityRemover
 
 # Document Generation Nodes
@@ -29,7 +29,7 @@ from src.nodes.doc_gen_procedure_generation import doc_gen_procedure_generation_
 from src.nodes.placeholder_node import placeholder_node
 
 
-def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "procedural_guidance_civil", "procedural_guidance_criminal", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "doc_gen_template_selection", "general_chat", "__end__"]:
+def route_from_orchestrator(state: GraphState) -> Literal["ambiguity_remover", "fact_structuring", "procedural_guidance_civil", "procedural_guidance_criminal", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "doc_gen_template_selection", "general_chat", "__end__"]:
     """Route based on the next_module selected by the orchestrator.
     
     Agent mapping:
@@ -43,6 +43,9 @@ def route_from_orchestrator(state: GraphState) -> Literal["fact_structuring", "p
     """
     if state.get("pending_clarification"):
         return END
+
+    if state.get("ambiguity_remover_scope") and state.get("needs_clarification"):
+        return "ambiguity_remover"
 
     plan_data = state.get("orchestrator_plan")
     
@@ -114,13 +117,15 @@ def route_from_fact_structuring(state: GraphState) -> Literal["ambiguity_remover
     return "statute_matching"
 
 
-def route_from_ambiguity_remover(state: GraphState) -> Literal["statute_matching", "__end__"]:
+def route_from_ambiguity_remover(state: GraphState) -> Literal["orchestrator", "statute_matching", "__end__"]:
     """Route from ambiguity_remover back to pipeline or halt."""
     # If clarification was generated, halt for user input
     if state.get("pending_clarification"):
         return END
     
-    # Otherwise continue to next stage
+    next_node = state.get("ambiguity_remover_next", "statute_matching")
+    if next_node == "orchestrator":
+        return "orchestrator"
     return "statute_matching"
 
 
@@ -165,7 +170,7 @@ def build_graph(llm_provider=None):
     
     # Register Activity to Law nodes
     workflow.add_node("fact_structuring", fact_structuring_node)
-    workflow.add_node("ambiguity_remover", ambiguity_remover_node)
+    workflow.add_node("ambiguity_remover", ambiguity_remover_runnable)
     workflow.add_node("statute_matching", statute_matching_node)
     workflow.add_node("rule_matching", rule_matching_node)
     workflow.add_node("risk_assessment", risk_assessment_node)
@@ -201,6 +206,7 @@ def build_graph(llm_provider=None):
         "orchestrator",
         route_from_orchestrator,
         {
+            "ambiguity_remover": "ambiguity_remover",
             "fact_structuring": "fact_structuring",
             "procedural_guidance_civil": "procedural_guidance_civil",
             "procedural_guidance_criminal": "procedural_guidance_criminal",
@@ -230,6 +236,7 @@ def build_graph(llm_provider=None):
         "ambiguity_remover",
         route_from_ambiguity_remover,
         {
+            "orchestrator": "orchestrator",
             "statute_matching": "statute_matching",
             END: END
         }

@@ -35,6 +35,24 @@ class TimelineConstraintAgent:
             raise ValueError("Missing 'router_output' in state")
         
         cleaned_query = router_output.cleaned_query
+        metadata = router_output.metadata if router_output else None
+
+        language_map = {
+            "en": "English",
+            "hi": "Hindi",
+            "es": "Spanish",
+            "fr": "French",
+            "de": "German",
+            "pt": "Portuguese",
+            "ja": "Japanese",
+            "zh": "Chinese",
+            "ta": "Tamil",
+            "te": "Telugu",
+            "kn": "Kannada",
+            "ml": "Malayalam",
+        }
+        original_language_code = (metadata.original_language or metadata.language or "en") if metadata else "en"
+        response_language_name = language_map.get(original_language_code, "English")
         
         # Clarification Logic
         clarification_counts = state.get("clarification_counts", {})
@@ -72,6 +90,10 @@ CRITICAL INSTRUCTION FOR CLARIFICATION:
 - INSTEAD ask simple questions like: "Are you Hindu, Muslim, Christian, or married under a Special Marriage Act?" or "Where did the incident happen?"
 - Keep the question SIMPLE, DIRECT, and human-like.
 - Set 'clarification' field and leave 'constraints' empty."""
+             user_prompt += (
+                 f"\n- IMPORTANT: The clarification question and reason MUST be in {response_language_name} "
+                 f"(language code: {original_language_code})."
+             )
         else:
              user_prompt += "\n\nYou have reached the limit for clarifications. You MUST make best-guess assumptions based on general Indian criminal procedure."
         
@@ -90,11 +112,19 @@ CRITICAL INSTRUCTION FOR CLARIFICATION:
             
             if output.clarification:
                 print(f"   Requesting Clarification: {output.clarification.question}")
-                clarification_counts["procedural_guidance"] = current_count + 1
                 return {
                     "timeline_constraints": output,
-                    "pending_clarification": output.clarification.dict(),
-                    "clarification_counts": clarification_counts
+                    "needs_clarification": True,
+                    "ambiguity_remover_scope": "procedural",
+                    "ambiguity_remover_context": {
+                        "agent": "procedural_guidance",
+                        "legal_domain": active_domain,
+                        "constraints_extracted": len(output.constraints or []),
+                        "agent_requested_question": output.clarification.question,
+                        "agent_requested_reason": output.clarification.reason,
+                    },
+                    "current_agent": "procedural_guidance",
+                    "ambiguity_remover_next": "checklist_generator",
                 } # Node must handle the merge
             
             print(f"✅ Identified {len(output.constraints)} timeline constraints")

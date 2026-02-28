@@ -149,6 +149,7 @@ class AmbiguityRemover:
         self,
         scope: str,
         expertise_level: str = "general_public",
+        language: str = "en",
         context: Optional[Dict] = None,
     ) -> str:
         """
@@ -157,6 +158,7 @@ class AmbiguityRemover:
         Args:
             scope: Domain scope (e.g., 'factual', 'activity')
             expertise_level: User expertise ('general_public', 'educated_layperson', 'legal_professional')
+            language: ISO language code (e.g., 'en', 'hi', 'es', 'fr')
             context: Additional context dict
         
         Returns:
@@ -173,6 +175,7 @@ class AmbiguityRemover:
         if callable(prompt_or_callable):
             return prompt_or_callable(
                 expertise_level=expertise_level,
+                language=language,
                 context=context or {}
             )
         
@@ -185,6 +188,7 @@ class AmbiguityRemover:
         agent_context: Dict,
         scope: str,
         expertise_level: str = "general_public",
+        language: str = "en",
         clarification_count: int = 0,
         config: Optional[RunnableConfig] = None,
     ) -> ClarificationResult:
@@ -196,6 +200,7 @@ class AmbiguityRemover:
             agent_context: Context from calling agent (e.g., {'extracted_facts': {...}, 'missing': [...]})
             scope: Domain scope ('factual', 'activity', 'procedural', etc.)
             expertise_level: User expertise level for prompt tailoring
+            language: ISO language code (e.g., 'en', 'hi', 'es', 'fr')
             clarification_count: Current clarification count for this agent
             config: Runnable config
         
@@ -225,6 +230,7 @@ class AmbiguityRemover:
             system_prompt = self._get_system_prompt(
                 scope=scope,
                 expertise_level=expertise_level,
+                language=language,
                 context=agent_context,
             )
         except ValueError as e:
