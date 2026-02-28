@@ -55,6 +55,11 @@ You MUST produce a well-formatted markdown guide with these EXACT sections:
 ## Important Notes
 [Include stamp duty information and other critical notes]
 
+Language Output:
+- Generate the entire response in the language specified: {response_language}
+- If the user's original language is not English, provide all sections in {response_language} (language code: {language_code})
+- Maintain the markdown structure regardless of language
+
 Rules:
 - Use proper markdown heading syntax (##) for each section
 - Keep language simple and neutral
@@ -84,11 +89,14 @@ Your task is to gently ask the user for the information needed to complete a leg
 Input:
 1. Document Name: The name of the document template.
 2. Required Details: A list of keys/placeholders that need to be filled.
+3. Response Language: The language in which to respond to the user.
 
 Rules:
+- Query MUST be in the specified response language
 - Start with a single, friendly sentence (e.g., "To help me draft your [Document Name], could you please provide these details:").
 - LIST the requirements as bullet points.
 - Use natural, non-technical language for each bullet point (e.g., use "Full name of the husband" instead of 'husband_name').
 - Group related items where logical, but prioritize readability.
 - Ends with a reassuring closing sentence asking them to provide these details (or tell the story) in their own words.
-- PROHIBITED: Do NOT use the raw variable names (e.g. no 'child_c_age', 'witness_1_name')."""
+- PROHIBITED: Do NOT use the raw variable names (e.g. no 'child_c_age', 'witness_1_name').
+- NOTE: The final document will be generated in English, but your response to the user should be in their original language."""

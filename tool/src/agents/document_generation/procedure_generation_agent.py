@@ -19,9 +19,14 @@ class ProcedureGenerationAgent:
         )
         self.templates_dir = Path(__file__).parent.parent.parent.parent / "data" / "templates"
 
-    def __call__(self, procedure_filename: str, document_name: str) -> str:
+    def __call__(self, procedure_filename: str, document_name: str, language_code: str = "en") -> str:
         """
-        Generates/Refines procedural steps.
+        Generates/Refines procedural steps in the specified language.
+        
+        Args:
+            procedure_filename: The filename of the template procedure
+            document_name: Name of the document for context
+            language_code: ISO language code (e.g., 'en', 'hi', 'ml') for output language
         
         Even though we have a static procedure file (a.txt), the prompt asks to:
         "Instruct the Procedure Agent to: Generate procedural steps... Use simple, neutral legal language..."
@@ -58,8 +63,29 @@ class ProcedureGenerationAgent:
                     raw_content = f.read()
         except:
             pass # consistency with generating if missing
-            
-        system_prompt = PROCEDURE_GENERATION_SYSTEM_PROMPT.format(document_name=document_name, raw_content=raw_content)
+        
+        # Map language code to language name
+        language_map = {
+            "en": "English",
+            "hi": "Hindi",
+            "es": "Spanish",
+            "fr": "French",
+            "de": "German",
+            "ja": "Japanese",
+            "zh": "Chinese",
+            "ta": "Tamil",
+            "te": "Telugu",
+            "kn": "Kannada",
+            "ml": "Malayalam",
+        }
+        response_language = language_map.get(language_code, "English")
+        
+        system_prompt = PROCEDURE_GENERATION_SYSTEM_PROMPT.format(
+            document_name=document_name, 
+            raw_content=raw_content,
+            response_language=response_language,
+            language_code=language_code
+        )
         
         try:
             result = self.llm.invoke(
