@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
                 setUser(null);
                 setIsLoggedIn(false);
                 if (location.pathname !== '/' && location.pathname !== '/login' && location.pathname !== '/signup') {
-                    navigate('/', { replace: true });
+                    navigate('/login', { replace: true });
                 }
             } else {
                 // User authenticated
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
             setIsLoggedIn(false);
             // Only redirect if not already on public pages
             if (location.pathname !== '/' && location.pathname !== '/login' && location.pathname !== '/signup') {
-                navigate('/', { replace: true });
+                navigate('/login', { replace: true });
             }
         } finally {
             setIsLoading(false);
@@ -60,8 +60,8 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setIsLoggedIn(false);
         
-        // Redirect to home
-        navigate('/', { replace: true });
+        // Redirect to login page
+        navigate('/login', { replace: true });
     };
 
     const login = (userData) => {

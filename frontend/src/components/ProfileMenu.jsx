@@ -4,7 +4,7 @@ import { AuthContext } from '../Auth/AuthContext';
 const ProfileMenu = ({ isExpanded, onSettingsClick }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
-    const { user } = useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext);
 
     // Get first 2 letters of user's name
     const getInitials = (name) => {
@@ -40,6 +40,8 @@ const ProfileMenu = ({ isExpanded, onSettingsClick }) => {
     const handleMenuItemClick = (id) => {
         if (id === 'settings' && onSettingsClick) {
             onSettingsClick();
+        } else if (id === 'logout') {
+            logout();
         } else {
             console.log(`Clicked: ${id}`);
         }
