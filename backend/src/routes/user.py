@@ -24,8 +24,6 @@ async def get_current_user_info(current_user: dict = Depends(authenticate)) -> A
         "username": current_user.get("username"),
         "name": current_user.get("name"),
         "email": user.email,
-        "profilePicture": user.profile_picture_url,
-        "imageUrl": user.profile_picture_url,
         "bio": user.bio,
         "location": user.location
     }
@@ -35,8 +33,6 @@ async def get_profile(current_user: dict = Depends(authenticate)) -> Any:
     user = await User.get(PydanticObjectId(current_user.get("id")))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    # Here we simulate populating 'currentPosts postHistory previousPurchases'
-    # In Beanie, if these were set up as Links, we would use fetch_links=True.
     return user.dict(exclude={"password"})
 
 @router.put("/profile", response_model=None)
@@ -76,7 +72,6 @@ async def upload_profile_image(
     # Assume the URL to access it locally is /uploads/images/filename
     # Update the user profile
     image_url = f"/uploads/images/{filename}"
-    user.profile_picture_url = image_url
     await user.save()
     
     return {
@@ -106,23 +101,4 @@ async def update_user_by_id(id: str, update_data: dict) -> Any:
     await user.save()
     return user.dict(exclude={"password"})
 
-@router.get("/{id}/posts/current", response_model=List[Any])
-async def get_user_current_posts(id: str) -> Any:
-    user = await User.get(PydanticObjectId(id))
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return getattr(user, "currentPosts", [])
 
-@router.get("/{id}/posts/history", response_model=List[Any])
-async def get_user_post_history(id: str) -> Any:
-    user = await User.get(PydanticObjectId(id))
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return getattr(user, "postHistory", [])
-
-@router.get("/{id}/purchases", response_model=List[Any])
-async def get_user_purchases(id: str) -> Any:
-    user = await User.get(PydanticObjectId(id))
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return getattr(user, "previousPurchases", [])

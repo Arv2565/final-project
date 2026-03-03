@@ -19,19 +19,6 @@ class User(Document):
     bio: Optional[str] = None
     personal_preferences: Optional[str] = None
     
-    # Unified profile picture field
-    profile_picture_url: Optional[str] = None
-    
-    # Store list of allowed tags or interests
-    tags: List[str] = Field(default_factory=list)
-    
-    # References (using strings or arbitrary dicts until Book/ExchangeRequest models are defined)
-    previousPurchases: List[Any] = Field(default_factory=list)
-    currentPosts: List[Any] = Field(default_factory=list)
-    postHistory: List[Any] = Field(default_factory=list)
-    requestsSent: List[Any] = Field(default_factory=list)
-    requestsReceived: List[Any] = Field(default_factory=list)
-    
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

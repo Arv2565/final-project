@@ -43,8 +43,7 @@ async def signup(user_in: UserCreate) -> Any:
         phone=user_in.phone,
         location=user_in.location,
         address=user_in.address,
-        bio=user_in.bio,
-        tags=user_in.tags or []
+        bio=user_in.bio
     )
     
     await new_user.insert()

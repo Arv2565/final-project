@@ -11,7 +11,6 @@ class UserCreate(BaseModel):
     location: Optional[str] = ""
     address: Optional[str] = ""
     bio: Optional[str] = ""
-    tags: Optional[List[str]] = Field(default_factory=list)
 
 class UserLogin(BaseModel):
     username: str
@@ -33,6 +32,4 @@ class UserResponse(BaseModel):
     location: Optional[str] = None
     address: Optional[str] = None
     bio: Optional[str] = None
-    imageUrl: Optional[str] = None
-    tags: List[str] = []
     created_at: datetime

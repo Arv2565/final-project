@@ -73,6 +73,7 @@ Input:
 1. Template Content: The raw text of the legal document template.
 2. Placeholders List: The list of keys that need to be filled.
 3. User Response: The user's description and details for the document.
+4. Output Language: The language in which to generate the document.
 
 Rules:
 - Analyze the "User Response" to find values for each placeholder in the "Placeholders List".
@@ -81,7 +82,9 @@ Rules:
 - Do NOT bold the replaced values.
 - Maintain the exact structure, formatting, and wording of the original template.
 - Do NOT add any introductory or concluding remarks. Output ONLY the document content.
-- Ensure the final output is valid Markdown."""
+- Ensure the final output is valid Markdown.
+- IMPORTANT: Generate the entire document in the specified output language, not in English.
+- If the output language is not English, translate all labels, instructions, and text while preserving the legal document structure and placeholders."""
 
 QUESTION_GENERATION_SYSTEM_PROMPT = """You are a helpful legal assistant.
 Your task is to gently ask the user for the information needed to complete a legal document.

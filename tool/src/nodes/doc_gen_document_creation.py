@@ -8,6 +8,7 @@ document_generation_agent_instance = DocumentGenerationAgent()
 def doc_gen_document_creation_node(state: GraphState) -> Dict[str, Any]:
     """
     Step 4a: Generate the filled document using the DocumentGenerationAgent.
+    The document is generated in the user's original language.
     """
     print("---DOC GEN: DOCUMENT CREATION---")
     
@@ -16,7 +17,13 @@ def doc_gen_document_creation_node(state: GraphState) -> Dict[str, Any]:
     placeholders = doc_state.get("placeholders", [])
     user_response = doc_state.get("user_inputs", "")
     
-    print("Generating document content...")
+    # Extract original language from router output
+    router_output = state.get("router_output")
+    original_language_code = "en"  # Default
+    if router_output and hasattr(router_output, 'metadata') and router_output.metadata:
+        original_language_code = router_output.metadata.original_language or "en"
+    
+    print(f"Generating document content in original language (code: {original_language_code})...")
     
     # Ensure placeholders is a list of dicts for the agent
     placeholders_list = []
@@ -29,7 +36,8 @@ def doc_gen_document_creation_node(state: GraphState) -> Dict[str, Any]:
     generated_doc = document_generation_agent_instance.generate(
         template_info.template_file,
         placeholders_list,
-        user_response
+        user_response,
+        language_code=original_language_code
     )
     
     new_doc_state = {

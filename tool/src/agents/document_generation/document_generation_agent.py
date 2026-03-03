@@ -20,7 +20,7 @@ class DocumentGenerationAgent:
             output_schema=DocumentOutput
         )
 
-    def generate(self, template_filename: str, placeholders: List[dict], user_response: str) -> str:
+    def generate(self, template_filename: str, placeholders: List[dict], user_response: str, language_code: str = "en") -> str:
         """
         Generates the document by calling the LLM.
         
@@ -28,6 +28,7 @@ class DocumentGenerationAgent:
             template_filename: Name of the template file.
             placeholders: List of placeholder dicts (from extraction step).
             user_response: Free-text response from the user.
+            language_code: ISO language code (e.g., 'en', 'hi', 'ml') for document language.
         """
         file_path = self.templates_dir / template_filename
         try:
@@ -40,9 +41,27 @@ class DocumentGenerationAgent:
         # Prepare placeholders list for the prompt
         placeholders_list = [p['key'] for p in placeholders]
         
+        # Map language code to language name
+        language_map = {
+            "en": "English",
+            "hi": "Hindi",
+            "es": "Spanish",
+            "fr": "French",
+            "de": "German",
+            "ja": "Japanese",
+            "zh": "Chinese",
+            "ta": "Tamil",
+            "te": "Telugu",
+            "kn": "Kannada",
+            "ml": "Malayalam",
+        }
+        output_language = language_map.get(language_code, "English")
+        
         system_prompt = DOCUMENT_GENERATION_SYSTEM_PROMPT
         
-        user_prompt = f"""Template Content:
+        user_prompt = f"""Output Language: {output_language} (language code: {language_code})
+
+Template Content:
 {template_content}
 
 Placeholders List:
@@ -50,6 +69,8 @@ Placeholders List:
 
 User Response:
 "{user_response}"
+
+IMPORTANT: Generate the entire document in {output_language}, not in English.
 """
         
         try:
@@ -64,6 +85,6 @@ User Response:
             logging.error(f"Document generation failed: {e}")
             raise
 
-    def __call__(self, template_filename: str, placeholders: List[dict], user_response: str) -> str:
+    def __call__(self, template_filename: str, placeholders: List[dict], user_response: str, language_code: str = "en") -> str:
         """Wrapper for generate method."""
-        return self.generate(template_filename, placeholders, user_response)
+        return self.generate(template_filename, placeholders, user_response, language_code)
