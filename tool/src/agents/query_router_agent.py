@@ -45,12 +45,25 @@ class QueryRouterAgent:
         if not user_query:
             raise ValueError("GraphState missing 'user_query' for QueryRouterAgent")
 
+        previous_user_message = (state.get("previous_user_message") or "").strip()
+        previous_agent_message = (state.get("previous_agent_message") or "").strip()
+
+        if previous_user_message or previous_agent_message:
+            router_user_prompt = (
+                "Process this context and produce one polished, context-aware legal query.\n\n"
+                f"Previous user message:\n{previous_user_message or '[none]'}\n\n"
+                f"Previous assistant message:\n{previous_agent_message or '[none]'}\n\n"
+                f"Latest user message:\n{user_query}"
+            )
+        else:
+            router_user_prompt = f"Process this query:\n{user_query}"
+
         try:
             # LangChain handles structured output binding and validation
             router_output = self.llm.invoke(
                 [
                     {"role": "system", "content": QUERY_ROUTER_SYSTEM_PROMPT},
-                    {"role": "user", "content": f"Process this query:\n{user_query}"},
+                    {"role": "user", "content": router_user_prompt},
                 ],
                 config={"callbacks": callbacks}
             )

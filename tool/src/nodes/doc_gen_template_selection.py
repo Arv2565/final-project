@@ -23,7 +23,7 @@ def doc_gen_template_selection_node(state: GraphState) -> Dict[str, Any]:
             "generated_procedure": None
         }
     
-    query = state.get("user_query")
+    query = state.get("input_query") or state.get("user_query")
     print("Selecting template...")
     selected_template = template_selection_agent(query)
     

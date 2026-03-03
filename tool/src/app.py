@@ -34,6 +34,8 @@ def main() -> None:
 
     initial_state: GraphState = {
         "user_query": question,
+        "previous_user_message": "",
+        "previous_agent_message": "",
     }
 
     graph = build_graph()
@@ -120,22 +122,24 @@ def main() -> None:
                     actual_answer = clarification['options'][option_idx]
                 
             # Update state with history and remove pending flag
-            history = final_state.get("clarification_history", [])
-            history.append({
+            clarification_history = final_state.get("clarification_history", [])
+            clarification_history.append({
                 "question": clarification['question'],
                 "answer": actual_answer
             })
             
             # Prepare next state: keep essential state but clear orchestrator_plan to force re-execution
             current_state = {
-                "user_query": final_state.get("user_query"),
+                "user_query": actual_answer,
                 "router_output": final_state.get("router_output"),
-                "clarification_history": history,
+                "clarification_history": clarification_history,
                 "clarification_counts": final_state.get("clarification_counts", {}),
+                "previous_user_message": final_state.get("previous_user_message", ""),
+                "previous_agent_message": final_state.get("previous_agent_message", ""),
             }
             # Keep any other non-orchestrator state that might be needed
             for key in final_state:
-                if key not in ["pending_clarification", "orchestrator_plan", "user_query", "router_output", "clarification_history", "clarification_counts"]:
+                if key not in ["pending_clarification", "orchestrator_plan", "user_query", "router_output", "clarification_history", "clarification_counts", "previous_user_message", "previous_agent_message"]:
                     if key not in current_state:
                         current_state[key] = final_state[key]
             
@@ -151,6 +155,10 @@ def main() -> None:
             continue
         
         # If no clarification needed, break
+        final_text = final_state.get("final_response")
+        if final_text:
+            final_state["previous_user_message"] = current_state.get("user_query", "")
+            final_state["previous_agent_message"] = final_text
         break
     
     # Final flush to ensure all traces are sent

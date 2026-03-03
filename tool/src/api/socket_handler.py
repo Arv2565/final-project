@@ -46,7 +46,11 @@ async def handle_websocket_connection(websocket: WebSocket):
             
             if msg_type == "query":
                 # Initial query
-                current_state = {"user_query": payload}
+                current_state = {
+                    "user_query": str(payload).strip() if payload is not None else "",
+                    "previous_user_message": current_state.get("previous_user_message", ""),
+                    "previous_agent_message": current_state.get("previous_agent_message", ""),
+                }
                 clarification_count = 0
                 iteration = 0
                 await websocket.send_json({"type": "status", "payload": "Analyzing query..."})
@@ -73,15 +77,17 @@ async def handle_websocket_connection(websocket: WebSocket):
                     # Prepare state for next iteration
                     # Clear pending flag and orchestrator plan to force re-evaluation
                     new_state = {
-                        "user_query": current_state.get("user_query"),
+                        "user_query": str(user_answer).strip(),
                         "router_output": current_state.get("router_output"),
                         "clarification_history": history,
                         "clarification_counts": current_state.get("clarification_counts", {}),
+                        "previous_user_message": current_state.get("previous_user_message", ""),
+                        "previous_agent_message": current_state.get("previous_agent_message", ""),
                     }
                     
                     # Preserve other non-volatile state
                     for key in current_state:
-                        if key not in ["pending_clarification", "orchestrator_plan", "user_query", "router_output", "clarification_history", "clarification_counts"]:
+                        if key not in ["pending_clarification", "orchestrator_plan", "user_query", "router_output", "clarification_history", "clarification_counts", "previous_user_message", "previous_agent_message"]:
                             new_state[key] = current_state[key]
                             
                     current_state = new_state
@@ -207,6 +213,8 @@ async def handle_websocket_connection(websocket: WebSocket):
                 
                 if final_response:
                     result_payload["text"] = final_response
+                    final_state["previous_user_message"] = current_state.get("user_query", "")
+                    final_state["previous_agent_message"] = final_response
                     
                 elif procedural_state:
                     result_payload["workflow"] = "procedural"
@@ -263,6 +271,9 @@ async def handle_websocket_connection(websocket: WebSocket):
 
                 
                 await websocket.send_json({"type": "final_result", "payload": result_payload})
+
+                # Persist updated state for next user message in this session
+                current_state = final_state
                 
                 # Flush callbacks
                 if langfuse_client:

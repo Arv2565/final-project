@@ -140,6 +140,17 @@ def route_from_doc_gen_clarification(state: GraphState) -> Literal["doc_gen_docu
     return "doc_gen_document_creation"
 
 
+def route_from_general_chat(state: GraphState) -> Literal["orchestrator", "__end__"]:
+    """Route from general_chat.
+
+    By default we end the current graph run. If caller explicitly sets
+    loop_to_orchestrator=True, route back to orchestrator.
+    """
+    if state.get("loop_to_orchestrator"):
+        return "orchestrator"
+    return END
+
+
 def build_graph(llm_provider=None):
     """Build and compile the LangGraph workflow for legal query processing.
 
@@ -266,7 +277,14 @@ def build_graph(llm_provider=None):
     workflow.add_edge("response_generation", END)
     workflow.add_edge("procedural_guidance_civil", END)
     workflow.add_edge("procedural_guidance_criminal", END)
-    workflow.add_edge("general_chat", END)
+    workflow.add_conditional_edges(
+        "general_chat",
+        route_from_general_chat,
+        {
+            "orchestrator": "orchestrator",
+            END: END,
+        }
+    )
     # Draft builder is not used if we map to doc_gen_template_selection, but for graph completeness:
     workflow.add_edge("draft_builder", END)
     workflow.add_edge("educational_layer", END)

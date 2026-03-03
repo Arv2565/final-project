@@ -24,6 +24,9 @@ class GraphState(TypedDict, total=False):
     """
     
     user_query: str
+    input_query: NotRequired[str]                 # Contextualized query produced by QueryRouter
+    previous_user_message: NotRequired[str]       # Only the immediately previous user message
+    previous_agent_message: NotRequired[str]      # Only the immediately previous assistant message
     router_output: NotRequired[QueryRouterOutput]
     classifier_output: NotRequired[IntentClassifierOutput]
     
@@ -65,6 +68,7 @@ class GraphState(TypedDict, total=False):
     
     # Internal State
     active_legal_domain: NotRequired[str]           # 'civil' or 'criminal' - Explicit override for subgraphs
+    loop_to_orchestrator: NotRequired[bool]         # Optional control flag for general_chat routing
     
     # Document Generation State
     document_generation_state: NotRequired["DocumentGenerationState"]

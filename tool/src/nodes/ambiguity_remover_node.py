@@ -164,7 +164,7 @@ async def ambiguity_remover_node(state: GraphState, config: Optional[RunnableCon
     # Invoke AmbiguityRemover with callbacks
     try:
         result = await _ambiguity_remover.assess_and_clarify(
-            user_query=state.get("user_query", ""),
+            user_query=state.get("input_query") or state.get("user_query", ""),
             agent_context=agent_context,
             scope=scope,
             expertise_level=state.get("user_expertise_level", "general_public"),

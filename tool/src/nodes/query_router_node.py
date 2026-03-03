@@ -38,4 +38,12 @@ def query_router_node(state: GraphState, config: Optional[RunnableConfig] = None
         
     callbacks = config.get("callbacks", []) if config else []
     result = _query_router_agent(state, callbacks=callbacks)
-    return {**state, **result}
+
+    state_update: Dict[str, Any] = {**state, **result}
+    router_output = result.get("router_output")
+    if router_output is not None:
+        cleaned_query = getattr(router_output, "cleaned_query", None)
+        if cleaned_query:
+            state_update["input_query"] = cleaned_query
+
+    return state_update
