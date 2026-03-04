@@ -1,0 +1,1927 @@
+[{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Sanjay Kishan Kaul, J.",
+"R. Subhash Reddy, J."
+],
+"date": "2021-06-28",
+"citation": "[2021] 3 S.C.R. 576",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "reservation_in_promotion_for_pwd_under_1995_act",
+"natural_form": "Whether the Persons with Disabilities (Equal Opportunities, Protection of Rights and Full Participation) Act, 1995 mandates reservation in promotion for persons with disabilities?",
+"legal_domain": "general criminal law",
+"outcome": "clarified"
+},
+{
+"issue_id": "identification_of_posts_as_precondition_for_reservation",
+"natural_form": "Whether reservation under Section 33 of the 1995 Act is dependent upon prior identification of posts under Section 32?",
+"legal_domain": "general criminal law",
+"outcome": "clarified"
+},
+{
+"issue_id": "absence_of_rules_for_promotion_reservation",
+"natural_form": "Whether promotion to a person with disability can be denied in the absence of specific rules providing reservation in promotion?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+},
+{
+"issue_id": "promotion_for_pwd_not_appointed_under_pwd_quota",
+"natural_form": "Whether a person with disability, not appointed under the PwD quota, is entitled to claim reservation in promotion under the 1995 Act?",
+"legal_domain": "general criminal law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"text": "Sections 32, 33 and 47 of the 1995 Act must be read harmoniously to ensure equal opportunity in career progression, including promotion. Reservation for persons with disabilities (PwD) is not confined to initial recruitment but extends to promotions, and must be computed with reference to the total number of vacancies in the cadre strength, without distinction between direct recruitment and promotion.\n\nIdentification of posts under Section 32 is a prerequisite but cannot be used to frustrate the mandate of reservation under Section 33. The absence of specific rules providing for reservation in promotion does not defeat the statutory right, as the entitlement flows directly from the legislation. Once posts in the promotional cadre are identified as suitable for PwD, reservation must operate.\n\nThe mode of entry into service is irrelevant for determining entitlement to reservation in promotion. The Act does not distinguish between employees appointed under the disability quota, those who acquired disability during service, or those appointed on compassionate grounds. What is material is that the employee is a person with disability at the time of consideration for promotion.",
+"source_hint": {
+"approx_pages": "13-19",
+"section": "reasoning"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Persons with Disabilities (Equal Opportunities, Protection of Rights and Full Participation) Act, 1995",
+"section": "Section 32",
+"interpretation": "Mandates identification of posts suitable for persons with disabilities, including in promotional cadres, as a prerequisite to operationalising reservation."
+},
+{
+"statute_name": "Persons with Disabilities (Equal Opportunities, Protection of Rights and Full Participation) Act, 1995",
+"section": "Section 33",
+"interpretation": "Requires reservation of not less than three percent of vacancies in establishments for persons with disabilities, computed on total cadre strength, applicable to promotions as well as direct recruitment."
+},
+{
+"statute_name": "Persons with Disabilities (Equal Opportunities, Protection of Rights and Full Participation) Act, 1995",
+"section": "Section 47",
+"interpretation": "Prohibits denial of promotion merely on the ground of disability and reflects the legislative mandate of non-discrimination and equal career progression."
+}
+],
+"holding": {
+"decision": "appeal dismissed; reservation in promotion affirmed",
+"relief": "High Court judgment upheld; State of Kerala directed to implement reservation in promotion for PwD after identifying posts within three months."
+},
+"legal_concepts": [
+"reservation in promotion",
+"persons with disabilities rights",
+"equal opportunity in public employment",
+"non-discrimination in employment",
+"reasonable accommodation",
+"cadre strength based reservation",
+"harmonious statutory interpretation"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/CA-59-2021_Eng.pdf",
+"relevant_page_ranges": [
+"13-21"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"K.T. Thomas, J.",
+"D.P. Mohapatra, J.",
+"R.C. Lahoti, J."
+],
+"date": "2000-07-19",
+"citation": "(2000) 6 SCC 359; AIR 2000 SC 2587",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "merger_after_dismissal_of_slp",
+"natural_form": "Whether dismissal of a special leave petition under Article 136 of the Constitution results in merger of the impugned High Court order into the order of the Supreme Court?",
+"legal_domain": "general criminal law",
+"outcome": "clarified"
+},
+{
+"issue_id": "review_after_dismissal_of_slp",
+"natural_form": "Whether the High Court retains jurisdiction to review its judgment after dismissal of a special leave petition against that judgment?",
+"legal_domain": "general criminal law",
+"outcome": "allowed"
+},
+{
+"issue_id": "binding_effect_of_speaking_order_dismissing_slp",
+"natural_form": "What is the binding effect of a speaking order dismissing a special leave petition under Article 136?",
+"legal_domain": "general criminal law",
+"outcome": "clarified"
+}
+],
+"ratio": {
+"text": "The jurisdiction under Article 136 operates in two distinct stages: disposal of the prayer for special leave and, upon grant of leave, exercise of appellate jurisdiction. Dismissal of a special leave petition—whether by a speaking or non-speaking order—does not attract the doctrine of merger because the Supreme Court is not exercising appellate jurisdiction at that stage. The impugned order does not merge into the order refusing special leave.\n\nA non-speaking order dismissing a special leave petition merely indicates that the Court was not inclined to exercise its discretionary jurisdiction and does not constitute res judicata nor a declaration of law under Article 141. If the dismissal order contains reasons, the declaration of law therein binds under Article 141 and on principles of judicial discipline, but still does not result in merger.\n\nOnly upon grant of leave and exercise of appellate jurisdiction does the doctrine of merger apply. Consequently, where special leave is refused, the High Court retains jurisdiction to entertain a review, subject to statutory provisions and procedural limitations.",
+"source_hint": {
+"approx_pages": "10-18",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Constitution of India",
+"section": "Article 136",
+"interpretation": "Confers discretionary jurisdiction to grant special leave to appeal; dismissal at this stage does not amount to exercise of appellate jurisdiction and does not attract merger."
+},
+{
+"statute_name": "Constitution of India",
+"section": "Article 141",
+"interpretation": "Law declared in a speaking order dismissing special leave is binding; however, such dismissal does not result in merger of the impugned order."
+},
+{
+"statute_name": "Code of Civil Procedure, 1908",
+"section": "Order 47 Rule 1",
+"interpretation": "Permits review by the court passing the decree where no appeal has been preferred; review remains maintainable if special leave is refused."
+},
+{
+"statute_name": "Kerala Private Forests (Vesting and Assignment) Act, 1971",
+"section": "Section 8C(2)",
+"interpretation": "Statutorily empowers the High Court to review its appellate orders, including those against which special leave was sought but not admitted."
+}
+],
+"holding": {
+"decision": "appeal dismissed; review maintainable",
+"relief": "High Court order overruling preliminary objection and entertaining review upheld."
+},
+"legal_concepts": [
+"doctrine of merger",
+"special leave jurisdiction",
+"appellate jurisdiction",
+"review jurisdiction",
+"judicial discipline",
+"res judicata",
+"declaration of law under Article 141"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Kunhayammed_Ors_vs_State_Of_Kerala_Anr_on_19_July_2000 (1).PDF",
+"relevant_page_ranges": [
+"10-18"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Ahsanuddin Amanullah, J."
+],
+"date": "2025-03-20",
+"citation": "2025 INSC 629",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "challenge_to_caste_certificate_in_election_petition",
+"natural_form": "Whether the validity of a caste/community certificate can be adjudicated within an election petition?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+},
+{
+"issue_id": "burden_of_proof_in_election_petition",
+"natural_form": "Whether the burden of proof in an election petition lies on the election petitioner and requires proof beyond reasonable doubt?",
+"legal_domain": "general criminal law",
+"outcome": "clarified"
+},
+{
+"issue_id": "profession_of_religion_and_sc_status",
+"natural_form": "Whether mere participation in rituals of another religion amounts to loss of Scheduled Caste status without clear profession of that religion?",
+"legal_domain": "general criminal law",
+"outcome": "clarified"
+}
+],
+"ratio": {
+"text": "Election petitions are quasi-criminal in nature, and allegations challenging the eligibility or qualification of a returned candidate must be proved by the election petitioner beyond reasonable doubt. The burden does not shift merely on suspicion or inconclusive evidence.\n\nA caste or community certificate issued by a competent authority cannot be invalidated or collaterally challenged in an election petition. The statutory scheme governing issuance, verification, and cancellation of caste certificates requires such challenges to be adjudicated by designated scrutiny authorities, subject to judicial review, and not by the election court.\n\nFor loss of Scheduled Caste status on grounds of religious conversion, there must be clear, voluntary, and public profession of another religion. Mere participation in isolated rituals or unproven assertions of conversion do not suffice to establish abandonment of the original religion or caste.",
+"source_hint": {
+"approx_pages": "19-45",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Constitution of India",
+"section": "Article 341",
+"interpretation": "Scheduled Caste status is determined strictly by Presidential Orders and conditions specified therein, including caste identity and residence."
+},
+{
+"statute_name": "Representation of the People Act, 1951",
+"section": "Section 100(1)(a), Section 100(1)(d)(i)",
+"interpretation": "An election can be declared void only if disqualification or improper acceptance of nomination is strictly proved in accordance with law."
+},
+{
+"statute_name": "Kerala (Scheduled Castes and Scheduled Tribes) Regulation of Issue of Community Certificates Act, 1996",
+"section": "Section 10",
+"interpretation": "Burden of proof provisions apply only to proceedings under the Act and do not extend to election petitions."
+},
+{
+"statute_name": "Indian Evidence Act, 1872",
+"section": "Section 106",
+"interpretation": "Facts especially within personal knowledge may require explanation, but do not dilute the primary burden resting on the election petitioner."
+}
+],
+"holding": {
+"decision": "appeal allowed; election restored",
+"relief": "Impugned High Court judgment set aside and election of the appellant upheld."
+},
+"legal_concepts": [
+"quasi-criminal nature of election petitions",
+"burden of proof beyond reasonable doubt",
+"scheduled caste status",
+"profession of religion",
+"caste certificate verification",
+"statutory exclusivity of scrutiny mechanisms"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/A Raja.pdf",
+"relevant_page_ranges": [
+"19-45"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Dipak Misra, C.J.I.",
+"A.M. Khanwilkar, J.",
+"Dr. D.Y. Chandrachud, J."
+],
+"date": "2018-04-09",
+"citation": "AIR 2018 SC 1933; (2018) 16 SCC 368",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "annulment_of_marriage_in_habeas_corpus",
+"natural_form": "Whether a High Court, in exercise of habeas corpus jurisdiction under Article 226, can annul a marriage between consenting adults?",
+"legal_domain": "general criminal law",
+"outcome": "illegal"
+},
+{
+"issue_id": "parental_control_over_major_daughter_choice",
+"natural_form": "Whether the choice of a major woman regarding marriage and faith can be curtailed on the basis of parental concern or societal values?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+},
+{
+"issue_id": "scope_of_parens_patriae_over_major",
+"natural_form": "Whether the parens patriae jurisdiction can be invoked over a competent adult to control her marital or personal decisions?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"text": "The writ of habeas corpus is a procedural remedy to secure release from illegal detention. Once a major person appears before the Court and asserts that she is acting out of her own free will, the jurisdiction of the Court ends. The High Court exceeded its jurisdiction by annulling a marriage while exercising habeas corpus powers.\n\nA competent adult has the fundamental right under Articles 19 and 21 of the Constitution to choose her faith and life partner. Expression of choice is intrinsic to individual autonomy and dignity. Neither parental concern nor societal notions can curtail that constitutional freedom in the absence of a valid law.\n\nThe parens patriae doctrine can be invoked only in exceptional cases involving minors or persons lacking mental capacity. It cannot be applied to a major woman who is competent and has unequivocally expressed her voluntary decision.",
+"source_hint": {
+"approx_pages": "18-27",
+"section": "reasoning"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Constitution of India",
+"section": "Article 226",
+"interpretation": "Habeas corpus jurisdiction is limited to examining illegal detention and does not extend to annulling marriages between consenting adults."
+},
+{
+"statute_name": "Constitution of India",
+"section": "Article 21",
+"interpretation": "Protects personal liberty, autonomy, dignity, and the right of an adult to choose a life partner and faith."
+},
+{
+"statute_name": "Constitution of India",
+"section": "Article 19",
+"interpretation": "Guarantees freedom of expression and choice, including decisions integral to identity and personal life."
+}
+],
+"holding": {
+"decision": "appeal allowed; marriage upheld",
+"relief": "High Court judgment annulling the marriage set aside; Hadiya declared free to pursue her life in accordance with her choice; investigation, if any, to continue in accordance with law without affecting marital status."
+},
+"legal_concepts": [
+"habeas corpus",
+"personal liberty",
+"individual autonomy",
+"right to choose a life partner",
+"freedom of faith",
+"parens patriae limitation",
+"dignity",
+"judicial overreach"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/70.-Shafin_Jahan_vs_Asokan_KM_and_Ors_09042018__SCSC20181004181712234COM56571.pdf",
+"relevant_page_ranges": [
+"18-27"
+]
+}
+}
+,{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Dipak Misra, C.J.I.",
+"R.F. Nariman, J.",
+"A.M. Khanwilkar, J.",
+"Dr. D.Y. Chandrachud, J.",
+"Indu Malhotra, J."
+],
+"date": "2018-09-28",
+"citation": "AIRONLINE 2018 SC 243; (2019) 11 SCC 1",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "exclusion_of_women_from_temple_entry",
+"natural_form": "Whether exclusion of women aged 10 to 50 years from entry into a public Hindu temple violates Articles 14, 15, 17, 21 and 25 of the Constitution?",
+"legal_domain": "general criminal law",
+"outcome": "illegal"
+},
+{
+"issue_id": "essential_religious_practice_test",
+"natural_form": "Whether exclusion of women of a particular age group constitutes an essential religious practice protected under Articles 25 and 26?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+},
+{
+"issue_id": "denominational_status_of_temple",
+"natural_form": "Whether the Sabarimala Temple constitutes a separate religious denomination entitled to protection under Article 26?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+},
+{
+"issue_id": "validity_of_rule_3b_1965_rules",
+"natural_form": "Whether Rule 3(b) of the Kerala Hindu Places of Public Worship (Authorisation of Entry) Rules, 1965 is ultra vires the parent Act and unconstitutional?",
+"legal_domain": "general criminal law",
+"outcome": "illegal"
+}
+],
+"ratio": {
+"text": "The exclusion of women between the ages of 10 and 50 from entry into the Sabarimala temple is a form of discrimination founded on physiological factors and notions of purity and pollution. Such exclusion violates Articles 14 and 15 as it lacks a constitutionally valid basis and infringes substantive equality. It also impairs dignity and autonomy protected under Article 21 and obstructs the right of women devotees to freely practise religion under Article 25(1).\n\nThe devotees of Lord Ayyappa do not constitute a separate religious denomination, as the temple is a public temple administered by a statutory body. Even assuming denominational status, the right under Article 26 is subject to Article 25(2)(b) and constitutional morality. The exclusionary practice was not established as an essential religious practice integral to the religion.\n\nRule 3(b) of the 1965 Rules, by permitting exclusion of women based on custom or usage, defeats the object of the parent Act enacted to throw open Hindu places of public worship to all classes and sections of Hindus. It is therefore ultra vires the Act and violative of fundamental rights.",
+"source_hint": {
+"approx_pages": "100-160",
+"section": "reasoning"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Constitution of India",
+"section": "Articles 14, 15, 17, 21, 25 and 26",
+"interpretation": "Guarantee equality, prohibit discrimination, abolish untouchability in any form, protect dignity and personal liberty, and secure freedom of religion subject to constitutional morality and social reform."
+},
+{
+"statute_name": "Kerala Hindu Places of Public Worship (Authorisation of Entry) Act, 1965",
+"section": "Section 3",
+"interpretation": "Mandates that Hindu places of public worship of a public character be open to all classes and sections of Hindus."
+},
+{
+"statute_name": "Kerala Hindu Places of Public Worship (Authorisation of Entry) Rules, 1965",
+"section": "Rule 3(b)",
+"interpretation": "Provision permitting exclusion based on custom or usage held ultra vires the parent Act and unconstitutional."
+}
+],
+"holding": {
+"decision": "exclusion unconstitutional; rule struck down",
+"relief": "Women of all age groups permitted entry into Sabarimala Temple; Rule 3(b) declared ultra vires and unconstitutional."
+},
+"legal_concepts": [
+"constitutional morality",
+"substantive equality",
+"essential religious practices doctrine",
+"religious denomination",
+"freedom of religion",
+"gender justice",
+"dignity and autonomy",
+"abolition of untouchability"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Indian_Young_Lawyers_Association_vs_The_State_Of_Kerala_on_28_September_2018.PDF",
+"relevant_page_ranges": [
+"100-160"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Hrishikesh Roy, J.",
+"S.V.N. Bhatti, J."
+],
+"date": "2024-09-23",
+"citation": null,
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "adjudication_without_complete_record",
+"natural_form": "Whether a High Court can pass adverse judicial and disciplinary directions without receipt and consideration of the complete trial court record requisitioned by it?",
+"legal_domain": "general criminal law",
+"outcome": "illegal"
+},
+{
+"issue_id": "disciplinary_action_based_on_invalid_order",
+"natural_form": "Whether disciplinary proceedings initiated on the basis of a procedurally invalid judicial order can be sustained?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"text": "Where a High Court requisitions the complete trial court record for adjudication, it must consider such record before passing orders affecting the rights and service status of a judicial officer. Passing adverse orders prior to receipt and examination of the requisitioned record amounts to adjudication without relevant material and renders the order legally unsustainable.\n\nConsequently, disciplinary proceedings founded solely on such procedurally invalid orders cannot be allowed to stand. Judicial discipline and fairness require that decisions impacting service conditions of a judicial officer be based on proper consideration of the complete record.",
+"source_hint": {
+"approx_pages": "3-5",
+"section": "reasoning"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Code of Criminal Procedure, 1973",
+"section": "Section 340 read with Section 195(1)(b)",
+"interpretation": "Proceedings under these provisions must be initiated on proper judicial satisfaction based on relevant material; subsequent dropping of such proceedings noted."
+},
+{
+"statute_name": "Constitution of India",
+"section": "Article 227",
+"interpretation": "Supervisory jurisdiction must be exercised with procedural fairness and on the basis of complete record."
+}
+],
+"holding": {
+"decision": "high court orders set aside",
+"relief": "Orders dated 23.12.2022 and 21.06.2023 quashed; original petitions restored for fresh consideration; appeals allowed."
+},
+"legal_concepts": [
+"procedural fairness",
+"judicial discipline",
+"supervisory jurisdiction",
+"natural justice",
+"validity of disciplinary proceedings"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Lakshwadeep judicial.pdf",
+"relevant_page_ranges": [
+"3-5"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "High Court of Kerala at Ernakulam",
+"bench": [
+"P.V. Kunhikrishnan, J."
+],
+"date": "2025-07-25",
+"citation": "2025:KER:54510",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "cash_transaction_violation_269ss_legally_enforceable_debt",
+"natural_form": "Whether a debt arising from a cash transaction exceeding Rs.20,000 in violation of Section 269SS of the Income-tax Act, 1961 constitutes a legally enforceable debt under Section 138 of the Negotiable Instruments Act?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+},
+{
+"issue_id": "rebuttal_of_section_139_presumption",
+"natural_form": "Whether the accused rebutted the presumption under Section 139 of the Negotiable Instruments Act by raising a probable defence regarding absence of legally enforceable debt?",
+"legal_domain": "general criminal law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"text": "The presumption under Section 139 of the Negotiable Instruments Act includes the existence of a legally enforceable debt; however, it is rebuttable by the accused on the standard of preponderance of probabilities. A debt arising from a cash transaction exceeding Rs.20,000 in violation of Section 269SS of the Income-tax Act cannot be treated as legally enforceable unless a valid explanation under Section 273B of that Act is established.\n\nWhere the complainant admits payment of a large amount in cash in contravention of statutory mandate and fails to offer any lawful explanation, the accused can successfully rebut the statutory presumption. Criminal courts cannot validate transactions that defeat the object of Section 269SS, which aims to curb unaccounted cash transactions. In such circumstances, the alleged debt is not legally enforceable for the purposes of Section 138 of the Negotiable Instruments Act.",
+"source_hint": {
+"approx_pages": "12-18",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Negotiable Instruments Act, 1881",
+"section": "Sections 138 and 139",
+"interpretation": "Section 139 creates a rebuttable presumption including existence of legally enforceable debt; such presumption can be rebutted by probable defence on preponderance of probabilities."
+},
+{
+"statute_name": "Income-tax Act, 1961",
+"section": "Sections 269SS, 271D and 273B",
+"interpretation": "Cash loans above Rs.20,000 are prohibited; violation attracts penalty and unless a reasonable cause under Section 273B is shown, such transaction cannot be treated as giving rise to legally enforceable debt under Section 138 NI Act."
+}
+],
+"holding": {
+"decision": "conviction set aside; accused acquitted",
+"relief": "Judgments of trial court and appellate court set aside; revision allowed; accused acquitted; bail bond cancelled; amounts, if deposited, to be returned."
+},
+"legal_concepts": [
+"legally enforceable debt",
+"statutory presumption",
+"reverse onus",
+"preponderance of probabilities",
+"illegality of consideration",
+"cash transaction prohibition",
+"prospective application of judicial declaration"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/P_C_Hari_vs_Shine_Varghese_on_25_July_2025.PDF",
+"relevant_page_ranges": [
+"12-18"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"B.R. Gavai, C.J.I.",
+"K. Vinod Chandran, J.",
+"N.V. Anjaria, J."
+],
+"date": "2025-08-12",
+"citation": "2025 INSC 965",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "judicial_officer_eligibility_under_article_233_2",
+"natural_form": "Whether a judicial officer who has completed seven years of practice at the Bar prior to entering judicial service is eligible for appointment as District Judge against vacancies reserved for direct recruitment from the Bar under Article 233(2) of the Constitution?",
+"legal_domain": "general criminal law",
+"outcome": null
+},
+{
+"issue_id": "stage_for_determining_eligibility_article_233_2",
+"natural_form": "Whether eligibility under Article 233(2) of the Constitution is to be assessed at the time of application, at the time of appointment, or both?",
+"legal_domain": "general criminal law",
+"outcome": null
+},
+{
+"issue_id": "requirement_of_constitution_bench_under_article_145_3",
+"natural_form": "Whether questions involving substantial interpretation of Article 233(2) of the Constitution require adjudication by a Constitution Bench under Article 145(3)?",
+"legal_domain": "general criminal law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"text": "Article 145(3) mandates that any case involving a substantial question of law as to the interpretation of the Constitution must be heard by a Bench of not less than five Judges. Where the controversy directly concerns interpretation of Article 233(2), such issue constitutes a substantial constitutional question requiring adjudication by a Constitution Bench.\n\nSince the present batch of matters raises unresolved interpretative questions regarding eligibility under Article 233(2), the issues ought to be referred to and decided by a Constitution Bench in conformity with the constitutional mandate.",
+"source_hint": {
+"approx_pages": "5-8",
+"section": "reasoning"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Constitution of India",
+"section": "Article 233(2)",
+"interpretation": "Provides eligibility for appointment as District Judge from the Bar for persons not already in service of the Union or State, subject to seven years’ practice and recommendation of the High Court; interpretative scope requires Constitution Bench consideration."
+},
+{
+"statute_name": "Constitution of India",
+"section": "Article 145(3)",
+"interpretation": "Mandates a minimum Bench of five Judges for deciding cases involving substantial questions of constitutional interpretation."
+}
+],
+"holding": {
+"decision": "reference to constitution bench ordered",
+"relief": "Issues referred to a Constitution Bench of five Judges; Registry directed to place matter before the Chief Justice of India; batch to be heard after decision on reference."
+},
+"legal_concepts": [
+"constitution bench reference",
+"substantial question of constitutional interpretation",
+"eligibility for district judge appointment",
+"separation of judicial sources of recruitment",
+"judicial service definition"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Rejanish_K_V_vs_K_Deepa_on_12_August_2025.PDF",
+"relevant_page_ranges": [
+"5-8"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Ahsanuddin Amanullah, J.",
+"S.V.N. Bhatti, J."
+],
+"date": "2025-09-03",
+"citation": "2025 INSC 1071",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "framing_additional_substantial_question_without_pleadings",
+"natural_form": "Whether a High Court in second appeal under Section 100 CPC can frame and decide an additional substantial question of law without foundational pleadings, issues, evidence, and recorded reasons?",
+"legal_domain": "general criminal law",
+"outcome": "illegal"
+},
+{
+"issue_id": "application_of_section_67_succession_act_without_plea",
+"natural_form": "Whether Section 67 of the Indian Succession Act, 1925 can be invoked to void a bequest at the stage of second appeal in the absence of specific pleadings and opportunity to contest the factual foundation?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"text": "Under Section 100 CPC, the High Court may frame an additional substantial question of law only for recorded reasons and where such question arises from the pleadings, issues, and findings of the courts below. The power under the proviso to Section 100(5) is exceptional and cannot be exercised to introduce an entirely new factual and legal case not pleaded or contested at trial.\n\nInvoking Section 67 of the Indian Succession Act at the stage of second appeal, without foundational pleadings, issues, or cross-examination directed to that aspect, amounts to creating a new case and deprives the affected party of fair opportunity. A duly executed and proved will cannot be invalidated on a ground neither pleaded nor put in issue. The High Court’s approach exceeded its jurisdiction under Section 100 CPC.",
+"source_hint": {
+"approx_pages": "13-17",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Code of Civil Procedure, 1908",
+"section": "Section 100(5)",
+"interpretation": "High Court may frame additional substantial question of law only with recorded reasons and where arising from pleadings and findings; power is exceptional and cannot create a new case."
+},
+{
+"statute_name": "Indian Succession Act, 1925",
+"section": "Section 67",
+"interpretation": "Consequences of attestation by a beneficiary cannot be applied to void a bequest in absence of pleadings and factual foundation establishing statutory conditions."
+},
+{
+"statute_name": "Indian Evidence Act, 1872",
+"section": "Section 141",
+"interpretation": "Cross-examination must put material suggestions to witnesses; absence of such suggestion is relevant in assessing fairness and evidentiary consequences."
+},
+{
+"statute_name": "Constitution of India",
+"section": "Article 136",
+"interpretation": "Confers discretionary appellate jurisdiction to remedy grave injustice; not a regular right of appeal."
+}
+],
+"holding": {
+"decision": "high court judgment set aside; will upheld",
+"relief": "Impugned judgment reversed; testamentary succession restored; appellant directed to pay enhanced compensation to specified beneficiaries within three months, failing which interest at 6% per annum and charge on property to apply."
+},
+"legal_concepts": [
+"substantial question of law",
+"scope of second appeal",
+"pleadings and issues doctrine",
+"audi alteram partem",
+"testamentary succession",
+"proof of will",
+"judicial restraint under Article 136"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/12_State_of_Kerala_v_Leesamma_Joseph.pdf",
+"relevant_page_ranges": [
+"13-17"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"K.S. Radhakrishnan, J.",
+"Dipak Misra, J."
+],
+"date": "2013-02-06",
+"citation": "(2013) 2 SCC 705; AIR 2013 SC 1254",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "police_verification_of_students_in_aided_schools",
+"natural_form": "Whether the High Court was justified in directing police authorities to verify actual student strength in all aided schools for the purpose of staff fixation?",
+"legal_domain": "general criminal law",
+"outcome": "illegal"
+},
+{
+"issue_id": "validity_of_dpi_action_on_bogus_admissions",
+"natural_form": "Whether the Director of Public Instructions was justified in revising staff fixation and initiating recovery proceedings based on findings of bogus admissions?",
+"legal_domain": "general criminal law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"text": "Staff fixation in aided schools is governed by the Kerala Education Act and Rules, which prescribe the competent educational authorities and procedures for verification. The High Court exceeded its jurisdiction by directing statewide police intervention for verification of student strength, as such mechanism is not contemplated under the statutory framework and would adversely affect the academic environment.\n\nWhile bogus admissions and manipulation of attendance records warrant strict corrective action to protect the State exchequer, the appropriate course is administrative reform within the Education Department. The State may adopt scientific mechanisms such as Unique Identification (UID) systems to prevent irregularities. However, general police verification of student rolls in all aided schools is unwarranted.",
+"source_hint": {
+"approx_pages": "4-7",
+"section": "reasoning"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Kerala Education Rules",
+"section": "Chapter XXIII (Rule 12 and Rule 16)",
+"interpretation": "Prescribes procedure and authorities for staff fixation and verification of student strength; does not contemplate police involvement in routine verification."
+}
+],
+"holding": {
+"decision": "police direction set aside; administrative reform directed",
+"relief": "Direction for police verification in all aided schools quashed; State directed to implement UID-based verification mechanism; DPI’s action on irregular staff fixation left undisturbed; appeal allowed."
+},
+"legal_concepts": [
+"judicial overreach",
+"administrative discretion",
+"statutory procedure compliance",
+"protection of public exchequer",
+"natural justice in staff fixation",
+"education governance"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/State_Of_Kerala_Ors_vs_President_Parent_Teacher_on_6_February_2013.PDF",
+"relevant_page_ranges": [
+"4-7"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"N.V. Ramana, J.",
+"Surya Kant, J.",
+"Aniruddha Bose, J."
+],
+"date": "2021-02-01",
+"citation": "AIR 2021 SC 712",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "bail_under_uapa_despite_section_43d5",
+"natural_form": "Whether constitutional courts can grant bail in UAPA cases despite the embargo under Section 43-D(5) when the accused has undergone prolonged incarceration and trial is unlikely to conclude within a reasonable time?",
+"legal_domain": "general criminal law",
+"outcome": "allowed"
+},
+{
+"issue_id": "interference_with_high_court_bail_order",
+"natural_form": "Whether the Supreme Court should interfere with a High Court’s discretionary order granting bail in absence of exceptional circumstances?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"text": "Statutory restrictions such as Section 43-D(5) of the UAPA do not per se oust the constitutional jurisdiction of courts to grant bail where continued incarceration violates Article 21. Though courts must ordinarily respect the legislative policy against bail in serious offences, such rigours attenuate where there is no likelihood of trial being completed within a reasonable time and the accused has undergone substantial incarceration.\n\nThe right to speedy trial is integral to personal liberty under Part III of the Constitution. Where undertrial detention extends for years and the prosecution is unable to commence or conclude trial promptly, constitutional courts are empowered to grant bail notwithstanding statutory restrictions. Interference with a High Court’s bail order is unwarranted absent cogent and overwhelming circumstances.",
+"source_hint": {
+"approx_pages": "9-12",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Unlawful Activities (Prevention) Act, 1967",
+"section": "Section 43-D(5)",
+"interpretation": "Creates a restrictive ground for refusal of bail based on prima facie guilt, but does not override constitutional courts’ power to grant bail in cases of prolonged incarceration and delay in trial."
+},
+{
+"statute_name": "Constitution of India",
+"section": "Article 21",
+"interpretation": "Guarantees right to personal liberty and speedy trial; prolonged undertrial detention without likelihood of early trial justifies grant of bail."
+}
+],
+"holding": {
+"decision": "appeal dismissed; bail upheld",
+"relief": "High Court’s order granting bail affirmed; additional conditions imposed including weekly police reporting and restrictions on activities; liberty to cancel bail upon violation."
+},
+"legal_concepts": [
+"right to speedy trial",
+"personal liberty",
+"statutory bail embargo",
+"constitutional jurisdiction",
+"judicial discretion in bail",
+"prolonged pre-trial detention"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Union_Of_India_vs_K_A_Najeeb_on_1_February_2021.PDF",
+"relevant_page_ranges": [
+"9-12"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"N. L. Untwalia",
+"M. Hameedullah Beg",
+"Y. V. Chandrachud",
+"P. S. Kailasam",
+"V. D. Tulzapurkar"
+],
+"date": "1978-02-10",
+"citation": "1978 AIR 933; (1978) 2 SCC 386",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "nature_of_rule_22_pfa_rules",
+"natural_form": "Whether Rule 22 of the Prevention of Food Adulteration Rules, 1955 prescribing quantity of sample is mandatory or directory.",
+"legal_domain": "general_criminal_law",
+"outcome": "clarified"
+},
+{
+"issue_id": "effect_of_non_compliance_with_sample_quantity",
+"natural_form": "Whether non-compliance with the prescribed quantity of sample under Rule 22 vitiates the trial or conviction under Section 16(1)(a)(i) of the Prevention of Food Adulteration Act, 1954.",
+"legal_domain": "general_criminal_law",
+"outcome": "denied"
+},
+{
+"issue_id": "precedential_correctness_of_pamanani",
+"natural_form": "Whether the decision in Rajal Das Guru Namal Pamanani v. State of Maharashtra holding Rule 22 mandatory was correctly decided.",
+"legal_domain": "general_criminal_law",
+"outcome": "clarified"
+}
+],
+"ratio": {
+"summary": "Rule 22 of the Prevention of Food Adulteration Rules, 1955, prescribing the quantity of sample to be sent for analysis, is directory and not mandatory. The use of the word 'shall' is not conclusive; the legislative object and context must be considered. The purpose of Rule 22 and Section 11 is to secure a correct analysis of the sample to determine adulteration.\n\nIf the quantity sent, though less than prescribed, is sufficient to enable the Public Analyst to conduct a correct and reliable analysis, the report does not lose its evidentiary value and the trial is not vitiated. Only where the deficiency frustrates the object of accurate analysis or renders the report doubtful would the prosecution fail. The earlier view in Pamanani treating non-compliance as fatal was not a correct statement of law.",
+"source_hint": {
+"approx_pages": "9-14",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Prevention of Food Adulteration Act, 1954",
+"section": "Section 11(3)",
+"interpretation": "The requirement to send sample in accordance with prescribed rules must be substantially complied with; non-strict compliance does not automatically invalidate prosecution if the object of correct analysis is achieved."
+},
+{
+"statute_name": "Prevention of Food Adulteration Act, 1954",
+"section": "Section 13(5)",
+"interpretation": "Report of the Public Analyst is final and conclusive evidence of facts stated therein unless superseded, underscoring the importance of ensuring sufficient quantity for reliable analysis."
+},
+{
+"statute_name": "Prevention of Food Adulteration Act, 1954",
+"section": "Section 16(1)(a)(i)",
+"interpretation": "Conviction for selling adulterated food can be sustained on the basis of a valid Public Analyst’s report, provided procedural requirements are substantially complied with."
+},
+{
+"statute_name": "Prevention of Food Adulteration Rules, 1955",
+"section": "Rule 22",
+"interpretation": "The prescribed 'approximate quantity' of sample is directory; substantial compliance suffices if the sample enables correct analysis."
+}
+],
+"holding": {
+"decision": "rule_22_directory_non_compliance_not_fatal",
+"relief": "Correct legal position declared; prior view in Pamanani overruled on this point; acquittals in the present appeals not disturbed."
+},
+"legal_concepts": [
+"mandatory_vs_directory_provisions",
+"substantial_compliance",
+"evidentiary_value_of_expert_report",
+"public_health_regulation",
+"statutory_interpretation",
+"precedent_overruling"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/State_Of_Kerala_Etc_Etc_vs_Alaserry_Mohammed_Etc_Etc_on_10_February_1978.PDF",
+"relevant_page_ranges": [
+"9-14"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Vikram Nath",
+"Sanjay Karol",
+"Sandeep Mehta"
+],
+"date": "2025-04-22",
+"citation": "2025 INSC 538; Criminal Appeal Nos. 1179-1180 of 2023",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "proof_of_circumstantial_evidence_in_multiple_murder",
+"natural_form": "Whether the chain of circumstantial evidence was complete and sufficient to sustain conviction for multiple murders and rape.",
+"legal_domain": "general_criminal_law",
+"outcome": "allowed"
+},
+{
+"issue_id": "confirmation_of_death_sentence_under_rarest_of_rare",
+"natural_form": "Whether the case satisfied the rarest of rare doctrine warranting confirmation of death sentence.",
+"legal_domain": "general_criminal_law",
+"outcome": "denied"
+},
+{
+"issue_id": "consideration_of_post_conviction_mitigating_circumstances",
+"natural_form": "Whether post-conviction conduct and psychological assessment can justify commutation of death sentence.",
+"legal_domain": "general_criminal_law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"summary": "The chain of circumstantial evidence comprising motive, last seen evidence, false explanations, suspicious conduct, recovery of bodies, medical and scientific evidence including DNA analysis, was complete and pointed unerringly to the guilt of the accused. The conviction under Sections 302, 376 and 201 IPC was therefore affirmed.\n\nHowever, while the crime was brutal and involved multiple murders including sexual assault on a minor daughter, sentencing must account for both aggravating and mitigating factors. Considering absence of prior criminal antecedents, prolonged incarceration, consistent good conduct in prison, psychological distress, and reformation indicators as required by contemporary sentencing jurisprudence, the alternative option of life imprisonment was not foreclosed. Hence, the case did not warrant the death penalty.",
+"source_hint": {
+"approx_pages": "13-17",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Indian Penal Code, 1860",
+"section": "Section 302",
+"interpretation": "Conviction for multiple counts of murder can be sustained solely on a complete and consistent chain of circumstantial evidence supported by medical and scientific proof."
+},
+{
+"statute_name": "Indian Penal Code, 1860",
+"section": "Section 376",
+"interpretation": "DNA evidence conclusively linking the accused to semen detected in the victim’s body is sufficient to sustain conviction for rape."
+},
+{
+"statute_name": "Indian Penal Code, 1860",
+"section": "Section 201",
+"interpretation": "Concealment and disposal of dead bodies to screen oneself from punishment constitutes causing disappearance of evidence."
+},
+{
+"statute_name": "Code of Criminal Procedure, 1973",
+"section": "Section 366 and Section 368",
+"interpretation": "High Court confirmation of death sentence requires independent evaluation of guilt and sentencing proportionality."
+}
+],
+"holding": {
+"decision": "conviction_upheld_death_sentence_commuted",
+"relief": "Conviction under Sections 302, 376 and 201 IPC affirmed; death sentence commuted to imprisonment for life for the remainder of natural life."
+},
+"legal_concepts": [
+"circumstantial_evidence",
+"last_seen_theory",
+"motive",
+"forensic_dna_evidence",
+"rarest_of_rare_doctrine",
+"aggravating_and_mitigating_circumstances",
+"reformation_and_rehabilitation",
+"life_imprisonment_till_natural_life"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/REJI KUMAR ALIAS REJI_compressed.pdf",
+"relevant_page_ranges": [
+"10-17"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Dipankar Datta",
+"Manmohan"
+],
+"date": "2025-03-17",
+"citation": "SLP (C) No. 23740/2023",
+"language": "en"
+},
+"issues": [],
+"ratio": {
+"summary": "",
+"source_hint": {
+"approx_pages": null,
+"section": null
+}
+},
+"statutes_interpreted": [],
+"holding": {
+"decision": "interim_procedural_order",
+"relief": "Two weeks' time granted to file rejoinder affidavit; matter to be re-listed after four weeks."
+},
+"legal_concepts": [
+"special_leave_petition",
+"interim_procedural_order",
+"rejoinder_affidavit",
+"adjournment"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Radhakrishnan vs devaswom.pdf",
+"relevant_page_ranges": [
+"1"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Dipankar Datta",
+"Prashant Kumar Mishra"
+],
+"date": "2025-01-10",
+"citation": "2025 INSC 70; Civil Appeal Nos. 13422-13423 of 2024",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "requirement_of_post_pg_experience_for_promotion",
+"natural_form": "Whether five years physical teaching experience for promotion to Associate Professor must be gained after acquiring the postgraduate or super-speciality degree.",
+"legal_domain": "service_law",
+"outcome": "denied"
+},
+{
+"issue_id": "applicability_of_rule_10ab_ks_ssr_to_medical_education_service",
+"natural_form": "Whether Rule 10(ab) of Part II of the Kerala State and Subordinate Services Rules, 1958 applies to promotions governed by Government Order dated 07.04.2008.",
+"legal_domain": "service_law",
+"outcome": "denied"
+},
+{
+"issue_id": "interpretation_of_executive_recruitment_order",
+"natural_form": "Whether the High Court was justified in reading the requirement of post-qualification experience into Government Order dated 07.04.2008.",
+"legal_domain": "service_law",
+"outcome": "illegal"
+}
+],
+"ratio": {
+"summary": "In the absence of statutory recruitment rules framed under Article 309, recruitment and promotion can be governed by executive orders. Government Order dated 07.04.2008, issued in supersession of earlier rules, constitutes a special rule governing appointments in the Medical Education Service. A plain reading of the experience column for posts in the Teaching Cadre does not require that the stipulated years of physical teaching experience be gained after acquiring the postgraduate or super-speciality degree.\n\nRule 10(ab) of Part II of the Kerala State and Subordinate Services Rules, 1958, which applies 'unless otherwise specified,' has no application where the special executive order deliberately omits such a requirement. The express inclusion of the phrase 'after acquiring postgraduate degree' for posts in the Administrative Cadre and its exclusion for posts in the Teaching Cadre reflects conscious legislative intent (expressio unius est exclusio alterius). The High Court erred in reading into the executive order a condition that was not prescribed.",
+"source_hint": {
+"approx_pages": "9-14",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Constitution of India",
+"section": "Article 309",
+"interpretation": "In the absence of rules framed under Article 309, appointments may validly be regulated through executive orders."
+},
+{
+"statute_name": "Kerala State and Subordinate Services Rules, 1958",
+"section": "Rule 10(ab), Part II",
+"interpretation": "The requirement that experience be gained after acquiring the basic qualification applies only unless otherwise specified; it does not override a special executive recruitment order."
+},
+{
+"statute_name": "Kerala State and Subordinate Services Rules, 1958",
+"section": "Rule 28(b)(1A), Part II",
+"interpretation": "The provision applies only where no qualified candidate is available for promotion; it is inapplicable when an eligible candidate exists under the governing recruitment order."
+}
+],
+"holding": {
+"decision": "high_court_orders_set_aside",
+"relief": "Impugned judgments of the High Court set aside; orders of the Tribunal restored; original applications dismissed."
+},
+"legal_concepts": [
+"executive_recruitment_rules",
+"mandatory_vs_directory_requirements",
+"special_rule_vs_general_rule",
+"expressio_unius_est_exclusio_alterius",
+"post_qualification_experience",
+"promotion_eligibility"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Dr Sharmad.pdf",
+"relevant_page_ranges": [
+"9-17"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"K. G. Balakrishnan",
+"R. V. Raveendran",
+"Dalveer Bhandari"
+],
+"date": "2007-07-19",
+"citation": "Appeal (Civil) No. 3135 of 2007",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "validity_of_compromise_decree_in_case_of_fraud_by_statutory_authority",
+"natural_form": "Whether a compromise decree entered into by a statutory authority can be set aside in writ proceedings on allegations of fraud or collusion.",
+"legal_domain": "general_civil_procedure",
+"outcome": "clarified"
+},
+{
+"issue_id": "applicability_of_order_23_rule_3a_cpc_to_third_party_challenge",
+"natural_form": "Whether the bar under Order 23 Rule 3A CPC prevents the High Court from examining the validity of a compromise decree when fraud or collusion by a statutory authority is alleged by a non-party.",
+"legal_domain": "general_civil_procedure",
+"outcome": "clarified"
+},
+{
+"issue_id": "authority_to_alienate_temple_property_in_violation_of_court_direction",
+"natural_form": "Whether a statutory temple board can validly enter into a compromise transferring temple property contrary to prior court directions without obtaining court permission.",
+"legal_domain": "general_civil_law",
+"outcome": "illegal"
+}
+],
+"ratio": {
+"summary": "The bar under Order 23 Rule 3A CPC does not prevent the High Court from examining the validity of a compromise decree where allegations of fraud or collusion are made against a statutory authority. A compromise decree obtained through fraud or collusion, especially involving public or religious trust property, is open to judicial scrutiny even at the instance of an aggrieved devotee who was not a party to the suit.\n\nA statutory body managing temple properties holds such properties in trust and cannot compromise or alienate them in disregard of prior binding court directions without obtaining appropriate permission. Any settlement that effectively defeats earlier judicial orders or results in surrender of temple property without lawful justification is unsustainable and liable to be set aside.",
+"source_hint": {
+"approx_pages": "3-4",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Code of Civil Procedure, 1908",
+"section": "Order 23 Rule 3A",
+"interpretation": "The statutory bar on filing a separate suit to set aside a compromise decree does not preclude constitutional courts from examining the validity of such a decree when fraud or collusion by a statutory authority is alleged."
+}
+],
+"holding": {
+"decision": "compromise decree set aside",
+"relief": "Compromise dated 30.08.2000 and decree dated 18.09.2000 in O.S. No.399/1998 set aside; Board directed to take possession of Survey No.1042/2 as earlier ordered; respondents permitted to pursue the suit in accordance with law."
+},
+"legal_concepts": [
+"fraud_on_court",
+"collusion_by_statutory_authority",
+"judicial_review_of_compromise_decree",
+"protection_of_religious_trust_property",
+"fiduciary_duty_of_statutory_board",
+"finality_of_decrees_and_exceptions"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/AAGOPALAKRISHNAN vs COCHIN DEVASWOM BOARD.pdf",
+"relevant_page_ranges": [
+"3-4"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Sanjay Kishan Kaul",
+"R. Subhash Reddy"
+],
+"date": "2021-06-28",
+"citation": "Civil Appeal No. 59 of 2021",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "reservation_in_promotion_under_1995_act",
+"natural_form": "Whether Sections 32 and 33 of the Persons with Disabilities (Equal Opportunities, Protection of Rights and Full Participation) Act, 1995 mandate reservation in promotion for persons with disabilities.",
+"legal_domain": "service_law",
+"outcome": "allowed"
+},
+{
+"issue_id": "eligibility_for_promotion_when_initial_appointment_not_under_pwd_quota",
+"natural_form": "Whether an employee appointed on compassionate grounds, and not through disability quota, is entitled to claim reservation in promotion under the 1995 Act.",
+"legal_domain": "service_law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"summary": "Sections 32 and 33 of the 1995 Act must be read harmoniously with Section 47, which prohibits denial of promotion merely on the ground of disability. Reservation under the Act is not confined to initial appointment but extends to promotion, as otherwise persons with disabilities would face stagnation and the statutory objective of equal opportunity would be defeated. Judicial precedent has clarified that reservation is to be computed with reference to total cadre strength, including posts filled by promotion.\n\nThe benefit of reservation in promotion is not restricted to those initially appointed through disability quota. Once an employee falls within the statutory definition of a person with disability, the protective and beneficial provisions of the Act apply, irrespective of the mode of initial recruitment. Executive instructions cannot override the statutory mandate.",
+"source_hint": {
+"approx_pages": "6-12",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Persons with Disabilities (Equal Opportunities, Protection of Rights and Full Participation) Act, 1995",
+"section": "Sections 32, 33 and 47",
+"interpretation": "Reservation of not less than 3% extends to promotions and must be applied with reference to total cadre strength; promotion cannot be denied merely on the ground of disability."
+},
+{
+"statute_name": "Rights of Persons with Disabilities Act, 2016",
+"section": "Section 34",
+"interpretation": "Reservation in promotion is recognized, subject to governmental instructions, reflecting legislative continuity of promotional reservation."
+}
+],
+"holding": {
+"decision": "reservation_in_promotion_upheld",
+"relief": "Legal position affirmed that reservation in promotion applies under the 1995 Act; relief granted by the High Court not interfered with."
+},
+"legal_concepts": [
+"reservation_in_promotion",
+"equal_opportunity",
+"non_discrimination_in_employment",
+"beneficial_legislation",
+"cadre_strength_based_computation",
+"harmonious_construction"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/CA-59-2021_Eng.pdf",
+"relevant_page_ranges": [
+"6-12"
+]
+}
+}
+,
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Sanjay Kishan Kaul",
+"R. Subhash Reddy"
+],
+"date": "2021-06-28",
+"citation": "Civil Appeal No. 59 of 2021",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "reservation_in_promotion_under_1995_act",
+"natural_form": "Whether the Persons with Disabilities Act, 1995 mandates reservation in promotion.",
+"legal_domain": "service_law",
+"outcome": "allowed"
+},
+{
+"issue_id": "entitlement_irrespective_of_mode_of_initial_appointment",
+"natural_form": "Whether reservation in promotion applies even if the employee was not initially appointed under disability quota.",
+"legal_domain": "service_law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"summary": "Sections 32 and 33 of the 1995 Act must be read with Section 47 to effectuate equal opportunity. Reservation for persons with disabilities extends to promotion, as exclusion would defeat the statutory objective and lead to stagnation. The computation must be with reference to total cadre strength.\n\nThe statutory benefit is not confined to those appointed through disability quota. Once an employee qualifies as a person with disability under the Act, the protective provisions apply irrespective of the mode of initial recruitment.",
+"source_hint": {
+"approx_pages": "6-12",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Persons with Disabilities (Equal Opportunities, Protection of Rights and Full Participation) Act, 1995",
+"section": "Sections 32, 33 and 47",
+"interpretation": "Reservation of not less than 3% applies to promotion and must be computed on total cadre strength; denial of promotion solely on disability is impermissible."
+}
+],
+"holding": {
+"decision": "reservation_in_promotion_upheld",
+"relief": "Appeal dismissed; High Court judgment granting benefit sustained."
+},
+"legal_concepts": [
+"reservation_in_promotion",
+"equal_opportunity",
+"beneficial_legislation",
+"cadre_strength_principle",
+"non_discrimination"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/12_State_of_Kerala_v_Leesamma_Joseph.pdf",
+"relevant_page_ranges": [
+"6-12"
+]
+}
+}
+,
+
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"P.N. Shinghal",
+"O. Chinnappa Reddy"
+],
+"date": "1979-05-02",
+"citation": "1979 AIR 1573; 1979 SCR (3) 839",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "commencement_of_section_82_4",
+"natural_form": "Whether Section 82(4) of the Kerala Land Reforms Act operated from April 1, 1964 or January 1, 1970.",
+"legal_domain": "land_reforms",
+"outcome": "clarified"
+},
+{
+"issue_id": "binding_effect_of_purchase_certificate",
+"natural_form": "Whether a purchase certificate under Section 72K binds the Taluk Land Board in ceiling proceedings.",
+"legal_domain": "land_reforms",
+"outcome": "denied"
+},
+{
+"issue_id": "retrospective_operation_of_section_84_3",
+"natural_form": "Whether Section 84(3) applies retrospectively to transfers after September 15, 1963.",
+"legal_domain": "land_reforms",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"summary": "Section 82(4), referring to 'commencement of this Act', must be construed as commencing when that provision came into force, i.e., April 1, 1964. Amendments incorporating conversion into plantation relate back to that commencement.\n\nA purchase certificate under Section 72K is conclusive only as to assignment of right, title and interest; it does not bind the Taluk Land Board in determining ceiling surplus under Section 85.\n\nSection 84(3), though not expressly retrospective, clarifies that 'ceiling area' refers to the reduced ceiling under the 1969 amendment and operates retrospectively to invalidate transfers after September 15, 1963.",
+"source_hint": {
+"approx_pages": "3-6",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Kerala Land Reforms Act, 1963",
+"section": "Sections 81, 82(4), 84(3), 72K and 85",
+"interpretation": "Conversion restrictions apply from April 1, 1964; purchase certificate is conclusive only as to assignment; ceiling area for transfer invalidation refers to reduced ceiling and operates retrospectively."
+}
+],
+"holding": {
+"decision": "appeals_partly_allowed",
+"relief": "High Court view on commencement affirmed; retrospective operation of Section 84(3) upheld; Taluk Land Board not bound by purchase certificate beyond its statutory scope."
+},
+"legal_concepts": [
+"statutory_commencement",
+"retrospective_operation",
+"ceiling_on_landholdings",
+"conclusive_evidence",
+"land_reform_legislation"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Chettiam_Veettil_Ammad_And_Anr_vs_Taluk_Land_Board_And_Ors_on_2_May_1979.PDF",
+"relevant_page_ranges": [
+"2-7"
+]
+}
+}
+,
+
+
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"P.N. Shinghal",
+"Y.V. Chandrachud",
+"V.R. Krishna Iyer",
+"N.L. Untwalia",
+"A.D. Koshal"
+],
+"date": "1979-09-21",
+"citation": "1980 AIR 271; 1980 SCR (1) 804",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "legislative_competence_under_entry_49",
+"natural_form": "Whether the Kerala Building Tax Act, 1975 is within the competence of the State Legislature under Entry 49 List II.",
+"legal_domain": "taxation_law",
+"outcome": "allowed"
+},
+{
+"issue_id": "retrospective_taxation_validity",
+"natural_form": "Whether retrospective levy of building tax from April 1, 1973 is unconstitutional.",
+"legal_domain": "taxation_law",
+"outcome": "denied"
+},
+{
+"issue_id": "capital_value_determination_method",
+"natural_form": "Whether determination of capital value by multiplying annual value by sixteen is arbitrary or violative of Article 14.",
+"legal_domain": "taxation_law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"summary": "A tax directly imposed on buildings falls within Entry 49 of List II and is distinct from a tax on total assets under Entry 86 List I. The subject matter of tax and measure of tax are distinct; adoption of annual value multiplied by sixteen as capital value is a permissible measure.\n\nRetrospective levy from April 1, 1973 does not impair vested rights and is within legislative competence. The method of valuation based on annual value recorded by local authorities is neither arbitrary nor discriminatory.",
+"source_hint": {
+"approx_pages": "2-6",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Kerala Building Tax Act, 1975",
+"section": "Sections 2, 5, 6, 11 and 27",
+"interpretation": "Building tax as non-recurring tax on capital value based on annual value is constitutionally valid and within Entry 49 List II."
+}
+],
+"holding": {
+"decision": "act_upheld",
+"relief": "Appeals dismissed; constitutional validity of the Kerala Building Tax Act, 1975 upheld."
+},
+"legal_concepts": [
+"legislative_competence",
+"entry_49_list_II",
+"retrospective_taxation",
+"capital_value_taxation",
+"subject_vs_measure_of_tax",
+"article_14_challenge"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/D_C_Gouse_And_Co_Etc_vs_State_Of_Kerala_Anr_Etc_on_21_September_1979.PDF",
+"relevant_page_ranges": [
+"2-7"
+]
+}
+},
+{
+"metadata": {
+"court": "High Court of Kerala at Ernakulam",
+"bench": [
+"Sushrut Arvind Dharmadhikari",
+"Syam Kumar V.M."
+],
+"date": "2025-12-03",
+"citation": "2025:KER:93252; W.A. No. 1551 of 2025",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "cci_jurisdiction_vis_a_vis_trai",
+"natural_form": "Whether the Competition Commission of India has jurisdiction to order investigation under Section 26(1) of the Competition Act, 2002 despite the existence of the TRAI Act and sectoral regulations.",
+"legal_domain": "competition_law",
+"outcome": "allowed"
+},
+{
+"issue_id": "maintainability_of_writ_against_section_26_order",
+"natural_form": "Whether a writ petition is maintainable against a prima facie order directing investigation under Section 26(1) of the Competition Act, 2002.",
+"legal_domain": "competition_law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"summary": "The Competition Act, 2002 is an independent special statute addressing anti-competitive practices and abuse of dominant position. The jurisdiction of the Competition Commission of India to examine allegations under Section 4 is not ousted merely because the telecom sector is regulated by TRAI. Overlapping regulatory fields do not bar CCI from exercising its statutory mandate where anti-competitive conduct is alleged.\n\nAn order under Section 26(1) forming a prima facie opinion and directing investigation is administrative and does not determine rights or impose civil consequences. Judicial interference at this preliminary stage is unwarranted; jurisdictional objections may be raised before the CCI itself.",
+"source_hint": {
+"approx_pages": "3-10",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Competition Act, 2002",
+"section": "Sections 4, 19(1)(a) and 26(1)",
+"interpretation": "CCI may form a prima facie opinion of abuse of dominant position and direct investigation; such order is preliminary and does not decide rights."
+},
+{
+"statute_name": "Telecom Regulatory Authority of India Act, 1997",
+"section": "General scheme",
+"interpretation": "Sectoral regulation under TRAI does not exclude CCIs jurisdiction over anti-competitive conduct."
+}
+],
+"holding": {
+"decision": "writ_appeal_dismissed",
+"relief": "Order of Single Bench affirmed; liberty reserved to raise jurisdictional objections before CCI."
+},
+"legal_concepts": [
+"abuse_of_dominant_position",
+"sectoral_regulator_overlap",
+"prima_facie_opinion",
+"judicial_restraint",
+"competition_regulation"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Jiostar_India_Private_Limited_vs_CCI(rejected plea)_on_3_December_2025 (2).PDF",
+"relevant_page_ranges": [
+"3-10"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"S.M. Sikri",
+"A.N. Grover",
+"A.N. Ray",
+"D.G. Palekar",
+"H.R. Khanna",
+"J.M. Shelat",
+"K.K. Mathew",
+"K.S. Hegde",
+"M.H. Beg",
+"P. Jaganmohan Reddy",
+"S.N. Dwivedi",
+"Y.V. Chandrachud"
+],
+"date": "1973-04-24",
+"citation": "AIR 1973 SC 1461; (1973) 4 SCC 225",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "scope_of_amending_power_under_article_368",
+"natural_form": "Whether Parliaments power under Article 368 extends to altering or destroying the basic features of the Constitution.",
+"legal_domain": "constitutional_law",
+"outcome": "clarified"
+},
+{
+"issue_id": "validity_of_24th_25th_29th_amendments",
+"natural_form": "Whether the 24th, 25th and 29th Constitutional Amendments are valid under Article 368.",
+"legal_domain": "constitutional_law",
+"outcome": "partly_allowed"
+}
+],
+"ratio": {
+"summary": "Article 368 confers constituent power on Parliament to amend the Constitution, including fundamental rights. However, the power is not unlimited. Parliament cannot alter the basic structure or essential features of the Constitution. The Constitution derives its authority from the people, and its foundational principles—such as supremacy of the Constitution, republican and democratic form of government, secularism, separation of powers and federalism—are beyond the amending power.\n\nWhile the 24th Amendment validly affirms Parliament’s power to amend, the 25th Amendment is valid subject to limitations, and judicial review remains part of the basic structure. The 29th Amendment placing statutes in the Ninth Schedule is subject to scrutiny if it damages the basic structure.",
+"source_hint": {
+"approx_pages": "1-20; conclusions section",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Constitution of India",
+"section": "Article 368; Articles 13, 31C and related amendments",
+"interpretation": "Parliament has wide amending power but cannot destroy or abrogate the basic structure of the Constitution."
+}
+],
+"holding": {
+"decision": "basic_structure_doctrine_evolved",
+"relief": "24th Amendment upheld; 25th upheld in part; 29th subject to basic structure limitation."
+},
+"legal_concepts": [
+"basic_structure_doctrine",
+"constituent_power",
+"judicial_review",
+"supremacy_of_constitution",
+"limited_amending_power"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Kesavananda_Bharati_Sripadagalvaru_vs_State_Of_Kerala_And_Anr_on_24_April_1973.PDF",
+"relevant_page_ranges": [
+"1-20",
+"concluding_pages"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"K.T. Thomas",
+"D.P. Mohapatra",
+"R.C. Lahoti"
+],
+"date": "2000-07-19",
+"citation": "(2000) 6 SCC 359; AIR 2000 SC 2587",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "doctrine_of_merger_after_slp_dismissal",
+"natural_form": "Whether dismissal of a special leave petition under Article 136 results in merger of the High Court judgment into the Supreme Court order.",
+"legal_domain": "procedural_law",
+"outcome": "clarified"
+},
+{
+"issue_id": "maintainability_of_review_after_slp_dismissal",
+"natural_form": "Whether review before the High Court is maintainable after dismissal of an SLP by the Supreme Court.",
+"legal_domain": "procedural_law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"summary": "Dismissal of a special leave petition under Article 136 without granting leave does not attract the doctrine of merger. The order refusing special leave does not substitute or affirm the judgment impugned; it only signifies that the case is not fit for exercise of discretionary jurisdiction.\n\nIf leave is not granted, the High Court’s judgment does not merge into the Supreme Court’s order, and review before the High Court is maintainable, subject to statutory limitations.",
+"source_hint": {
+"approx_pages": "5-12",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Constitution of India",
+"section": "Article 136",
+"interpretation": "Refusal of special leave does not amount to affirmation on merits and does not result in merger."
+}
+],
+"holding": {
+"decision": "appeal_allowed",
+"relief": "High Court review held maintainable; doctrine of merger inapplicable to SLP dismissal without leave."
+},
+"legal_concepts": [
+"doctrine_of_merger",
+"special_leave_jurisdiction",
+"judicial_hierarchy",
+"review_jurisdiction",
+"discretionary_appeal"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Kunhayammed_Ors_vs_State_Of_Kerala_Anr_on_19_July_2000.PDF",
+"relevant_page_ranges": [
+"4-12"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Vikram Nath"
+],
+"date": "2024-12-06",
+"citation": "2024 INSC 937",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "distinction_between_murder_and_culpable_homicide",
+"natural_form": "Whether the act of the accused constituted murder under Section 302 IPC or culpable homicide not amounting to murder under Section 304 IPC.",
+"legal_domain": "criminal_law",
+"outcome": "clarified"
+}
+],
+"ratio": {
+"summary": "To determine whether culpable homicide amounts to murder, the court must examine intention, knowledge, nature of weapon used, number and location of injuries, and surrounding circumstances. Where the accused carried a deadly weapon and inflicted multiple injuries on vital parts of the body, intention to cause death can be inferred.\n\nIn the present case, the evidence of eyewitnesses, corroborated by medical evidence, established that the accused intentionally inflicted fatal injuries. The plea for conversion to Section 304 IPC was rejected.",
+"source_hint": {
+"approx_pages": "3-10",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Indian Penal Code, 1860",
+"section": "Sections 302, 304, 324 and 326",
+"interpretation": "Where intention to cause death or such bodily injury likely to cause death is established, conviction under Section 302 is justified."
+}
+],
+"holding": {
+"decision": "conviction_under_section_302_upheld",
+"relief": "Appeal dismissed; sentence of life imprisonment maintained."
+},
+"legal_concepts": [
+"culpable_homicide",
+"intention_vs_knowledge",
+"benefit_of_doubt",
+"eyewitness_testimony",
+"medical_corroboration"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Kunhimuhammed_Kunheethu_vs_The_State_Of_Kerala_on_6_December_2024.PDF",
+"relevant_page_ranges": [
+"3-10"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"Vikram Nath",
+"Ahsanuddin Amanullah"
+],
+"date": "2026-01-07",
+"citation": "2026 INSC 35; Civil Appeal Nos. 3894-3895 of 2022",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "limitation_for_specific_performance_under_article_54",
+"natural_form": "Whether the suit for specific performance was barred by limitation under Article 54 of the Limitation Act, 1963.",
+"legal_domain": "civil_law",
+"outcome": "clarified"
+},
+{
+"issue_id": "readiness_and_willingness_under_specific_relief_act",
+"natural_form": "Whether the plaintiff established continuous readiness and willingness to perform the contract as required under Section 16(c) of the Specific Relief Act, 1963.",
+"legal_domain": "civil_law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"summary": "For a decree of specific performance, the plaintiff must prove continuous readiness and willingness to perform the contract in terms of Section 16(c) of the Specific Relief Act, 1963. Payments or extensions obtained from a person lacking valid authority do not bind a co-owner who had executed a separate registered power of attorney, resulting in revocation of the earlier unregistered authority. Consequently, reliance on such extensions cannot establish readiness and willingness against that co-owner.\n\nUnder Article 54 of the Limitation Act, limitation runs from the date fixed for performance or when the plaintiff has notice of refusal. Where the contractual timeline lapsed and no enforceable extension binding on the concerned co-owner was proved, a suit instituted beyond three years is barred.",
+"source_hint": {
+"approx_pages": "8-10",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Specific Relief Act, 1963",
+"section": "Section 16(c)",
+"interpretation": "Plaintiff must prove continuous readiness and willingness; failure disentitles specific performance."
+},
+{
+"statute_name": "Limitation Act, 1963",
+"section": "Article 54",
+"interpretation": "Limitation for specific performance is three years from the date fixed for performance or from notice of refusal."
+}
+],
+"holding": {
+"decision": "appeal_dismissed",
+"relief": "High Court judgment dismissing suit for specific performance affirmed."
+},
+"legal_concepts": [
+"specific_performance",
+"readiness_and_willingness",
+"limitation_in_contract",
+"co_ownership",
+"revocation_of_power_of_attorney"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Muslimveetil_Chalakkal_Ahammed_Haji_vs_Sakeena_Beevi_on_7_January_2026.PDF",
+"relevant_page_ranges": [
+"8-10"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"R. Mahadevan"
+],
+"date": "2025-03-24",
+"citation": "2025 INSC 388; Civil Appeal No. 4312 of 2025",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "distinction_between_gift_and_will",
+"natural_form": "Whether the document executed in 1985 constituted a gift under Section 122 of the Transfer of Property Act, 1882 or a Will revocable at the pleasure of the executant.",
+"legal_domain": "civil_law",
+"outcome": "clarified"
+},
+{
+"issue_id": "validity_of_unilateral_cancellation_of_gift",
+"natural_form": "Whether a registered gift deed can be unilaterally cancelled by the donor without satisfying the requirements of Section 126 of the Transfer of Property Act, 1882.",
+"legal_domain": "civil_law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"summary": "The determining test to distinguish a gift from a Will is whether the disposition operates in praesenti and transfers ownership immediately, even if certain limited rights such as enjoyment of income are reserved. Where the donor divests ownership in praesenti and the deed is registered and accepted, the instrument constitutes a valid gift under Section 122 of the Transfer of Property Act.\n\nA validly executed and accepted gift cannot be unilaterally revoked except in accordance with Section 126 of the Act. A subsequent cancellation deed and sale deed executed without the consent of the donee are void and do not affect the donee’s title.",
+"source_hint": {
+"approx_pages": "8-15",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Transfer of Property Act, 1882",
+"section": "Sections 122 and 126",
+"interpretation": "A gift requires voluntary transfer without consideration and acceptance during donor’s lifetime; once validly executed and accepted, it cannot be unilaterally revoked except as permitted under Section 126."
+}
+],
+"holding": {
+"decision": "appeal_dismissed",
+"relief": "High Court decree declaring plaintiff’s title upheld; cancellation deed and subsequent sale deed held not binding."
+},
+"legal_concepts": [
+"gift_vs_will",
+"transfer_in_praesenti",
+"acceptance_of_gift",
+"revocation_of_gift",
+"concurrent_findings"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/N.P. SASEENDRAN VS N.P. PONNAMMA & ORS 2025 INSC 388 CASEGURU.pdf",
+"relevant_page_ranges": [
+"8-16"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"B.V. Nagarathna",
+"Ujjal Bhuyan"
+],
+"date": "2025-09-15",
+"citation": "Civil Appeal arising out of SLP (C) No. 22579 of 2025",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "judicial_interference_with_toll_collection",
+"natural_form": "Whether the High Court was justified in suspending toll collection on a BOT highway due to traffic congestion and poor maintenance.",
+"legal_domain": "public_law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"summary": "In exercise of jurisdiction under Article 226, the High Court may issue appropriate directions to ensure public safety and proper maintenance of public infrastructure. However, a blanket suspension of toll collection affects contractual rights and financial viability of maintenance under BOT contracts. Where inconvenience is localized and remedial measures are underway, proportional measures rather than complete suspension are appropriate.\n\nInterference with contractual toll rights must be calibrated to balance public interest with contractual obligations, and suspension should not extend beyond what is necessary to remedy the identified deficiencies.",
+"source_hint": {
+"approx_pages": "4-6",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Constitution of India",
+"section": "Article 226",
+"interpretation": "High Courts may intervene to protect public interest but must exercise restraint where contractual and policy matters are involved."
+}
+],
+"holding": {
+"decision": "interference_limited",
+"relief": "High Court order substantially upheld with clarification on proportionality of toll suspension."
+},
+"legal_concepts": [
+"build_operate_transfer",
+"toll_collection",
+"judicial_review",
+"proportionality",
+"public_interest"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/National-Highways-Authority-of-India-v-O.J.Janeesh_Supreme-Court-Judgement.pdf",
+"relevant_page_ranges": [
+"3-6"
+]
+}
+},
+{
+"metadata": {
+"court": "Supreme Court of India",
+"bench": [
+"J.K. Maheshwari",
+"Aravind Kumar"
+],
+"date": "2024-04-30",
+"citation": "Criminal Appeal Nos. 1122-1123 of 2018",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "confirmation_of_death_sentence_in_rape_murder_of_child",
+"natural_form": "Whether the death sentence awarded for rape and murder of a minor child satisfied the 'rarest of rare' doctrine warranting capital punishment.",
+"legal_domain": "general_criminal_law",
+"outcome": "denied"
+},
+{
+"issue_id": "evaluation_of_circumstantial_and_forensic_evidence",
+"natural_form": "Whether the circumstantial and forensic evidence, including DNA evidence, conclusively established the guilt of the accused beyond reasonable doubt.",
+"legal_domain": "general_criminal_law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"summary": "Where conviction rests on circumstantial evidence, the chain of circumstances must be complete and consistent only with the hypothesis of guilt. Scientific and DNA evidence, when duly proved and corroborated by medical and recovery evidence, can form a decisive link in the chain. In the present case, the forensic reports and medical findings conclusively connected the accused to the crime and excluded any reasonable alternative hypothesis.\n\nHowever, imposition of death penalty requires strict application of the 'rarest of rare' doctrine, balancing aggravating and mitigating circumstances. Even in heinous crimes involving rape and murder of a minor, capital punishment is not automatic. Considering the mitigating factors and the possibility of reformation, life imprisonment for the remainder of natural life was held to be the appropriate sentence.",
+"source_hint": {
+"approx_pages": "25-33",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Indian Penal Code, 1860",
+"section": "Sections 302, 376, 201",
+"interpretation": "Murder and rape established through circumstantial and forensic evidence; concealment of evidence inferred from conduct and recoveries."
+},
+{
+"statute_name": "Code of Criminal Procedure, 1973",
+"section": "Sections 366, 394(2)",
+"interpretation": "Death sentence requires High Court confirmation; appeal can continue after death of accused upon application by legal heirs."
+}
+],
+"holding": {
+"decision": "conviction_upheld_sentence_modified",
+"relief": "Conviction affirmed; death sentence commuted to life imprisonment for remainder of natural life."
+},
+"legal_concepts": [
+"rarest_of_rare_doctrine",
+"circumstantial_evidence",
+"dna_evidence",
+"death_sentence_confirmation",
+"life_imprisonment_till_natural_life"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/SCO.LR_Judgement_Abdul-Nassar-v-State-of-Kerala-.pdf",
+"relevant_page_ranges": [
+"25-33"
+]
+}
+},
+{
+"metadata": {
+"court": "High Court of Kerala at Ernakulam",
+"bench": [
+"K. Vinod Chandran",
+"V.G. Arun"
+],
+"date": "2020-01-23",
+"citation": "AIRONLINE 2020 KER 715; W.A. No. 979 of 2018 & connected cases",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "applicability_of_shops_and_establishments_act_to_it_companies",
+"natural_form": "Whether IT/ITeS companies operating in Kerala are covered by the Kerala Shops and Commercial Establishments Act and subject to inspection and compliance under labour laws.",
+"legal_domain": "general_criminal_law",
+"outcome": "allowed"
+},
+{
+"issue_id": "validity_of_inspection_by_labour_authorities",
+"natural_form": "Whether inspection and proceedings initiated by Assistant Labour Officers against such establishments were legally sustainable.",
+"legal_domain": "general_criminal_law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"summary": "The Kerala Shops and Commercial Establishments Act applies to establishments engaged in systematic commercial activity irrespective of their nature as IT or IT-enabled services entities. Exemptions must be expressly provided and cannot be inferred merely from the character of the industry.\n\nLabour authorities are empowered to conduct inspections and initiate proceedings for statutory compliance. Judicial interference is unwarranted where statutory authorities act within the bounds of the Act and the challenge is premised only on the nature of business carried on.",
+"source_hint": {
+"approx_pages": "120-139",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Kerala Shops and Commercial Establishments Act, 1960",
+"section": "General applicability provisions",
+"interpretation": "IT and allied service establishments fall within the definition of commercial establishments unless specifically exempted."
+}
+],
+"holding": {
+"decision": "appeals_dismissed",
+"relief": "Writ appeals dismissed; orders upholding statutory inspections sustained."
+},
+"legal_concepts": [
+"commercial_establishment",
+"labour_law_compliance",
+"statutory_inspection",
+"judicial_restraint",
+"regulatory_oversight"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Tata_Consultancy_Services_Limited_vs_State_Of_Kerala_on_23_January_2020.PDF",
+"relevant_page_ranges": [
+"120-139"
+]
+}
+}
+]

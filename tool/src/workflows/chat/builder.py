@@ -27,6 +27,7 @@ from src.nodes.doc_gen_document_creation import doc_gen_document_creation_node
 from src.nodes.doc_gen_procedure_generation import doc_gen_procedure_generation_node
 
 from src.nodes.placeholder_node import placeholder_node
+from src.nodes.case_retriever_node import case_retriever_node
 
 
 def route_from_orchestrator(state: GraphState) -> Literal["ambiguity_remover", "fact_structuring", "procedural_guidance_civil", "procedural_guidance_criminal", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "doc_gen_template_selection", "general_chat", "__end__"]:
@@ -198,7 +199,7 @@ def build_graph(llm_provider=None):
     # Register Placeholder nodes for unimplemented agents
     workflow.add_node("draft_builder", placeholder_node) # Can be removed if completely replaced, but kept for safety
     workflow.add_node("educational_layer", placeholder_node)
-    workflow.add_node("case_retriever", placeholder_node)
+    workflow.add_node("case_retriever", case_retriever_node)
     workflow.add_node("comparative_module", placeholder_node)
     
     # Register Document Generation nodes (Broken down)
