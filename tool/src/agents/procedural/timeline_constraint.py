@@ -60,6 +60,7 @@ class TimelineConstraintAgent:
         MAX_CLARIFICATION = 3
         
         clarification_history = state.get("clarification_history", [])
+        chat_context = (state.get("chat_context") or "").strip()
         
         # Build user prompt
         user_prompt = f"""Query: {cleaned_query}
@@ -72,6 +73,9 @@ Consider:
 - What are the consequences of missing these deadlines?
 
 Be precise with BNSS section references."""
+
+        if chat_context:
+            user_prompt += f"\n\nConversational Context:\n{chat_context}\n"
 
         if clarification_history:
              user_prompt += "\n\n### ADDITIONAL CONTEXT FROM CLARIFICATIONS (CRITICAL - DO NOT IGNORE):\n"

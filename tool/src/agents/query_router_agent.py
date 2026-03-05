@@ -45,14 +45,12 @@ class QueryRouterAgent:
         if not user_query:
             raise ValueError("GraphState missing 'user_query' for QueryRouterAgent")
 
-        previous_user_message = (state.get("previous_user_message") or "").strip()
-        previous_agent_message = (state.get("previous_agent_message") or "").strip()
+        chat_context = (state.get("chat_context") or "").strip()
 
-        if previous_user_message or previous_agent_message:
+        if chat_context:
             router_user_prompt = (
                 "Process this context and produce one polished, context-aware legal query.\n\n"
-                f"Previous user message:\n{previous_user_message or '[none]'}\n\n"
-                f"Previous assistant message:\n{previous_agent_message or '[none]'}\n\n"
+                f"{chat_context}\n\n"
                 f"Latest user message:\n{user_query}"
             )
         else:

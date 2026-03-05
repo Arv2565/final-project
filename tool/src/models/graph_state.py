@@ -25,8 +25,9 @@ class GraphState(TypedDict, total=False):
     
     user_query: str
     input_query: NotRequired[str]                 # Contextualized query produced by QueryRouter
-    previous_user_message: NotRequired[str]       # Only the immediately previous user message
-    previous_agent_message: NotRequired[str]      # Only the immediately previous assistant message
+    chat_context: NotRequired[str]                # Formatted string with last user+agent exchange
+    previous_user_message: NotRequired[str]       # Only the immediately previous user message (legacy)
+    previous_agent_message: NotRequired[str]      # Only the immediately previous assistant message (legacy)
     router_output: NotRequired[QueryRouterOutput]
     classifier_output: NotRequired[IntentClassifierOutput]
     

@@ -47,8 +47,12 @@ class FactStructuringAgent:
         MAX_CLARIFICATION = 3 
         
         clarification_history = state.get("clarification_history", [])
+        chat_context = (state.get("chat_context") or "").strip()
         
         prompt = FACT_STRUCTURING_PROMPT.format(query=query)
+        
+        if chat_context:
+            prompt += f"\n\nConversational Context:\n{chat_context}\n"
         
         if clarification_history:
             prompt += "\n\nPrevious Clarifications:\n"

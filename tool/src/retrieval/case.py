@@ -20,7 +20,7 @@ from src.database.qdrant.case_collection import QdrantCaseCollectionManager
 from src.database.neo4j.case_schema import CaseGraphSchema
 from src.database.embeddings import InLegalBERTEmbeddingService
 from src.utils.court_hierarchy import (
-    CourtLevel, get_court_level_filter, is_lower_court_case, is_upper_court_case
+    CourtLevel, get_court_hierarchy_filter, is_lower_court_case, is_upper_court_case
 )
 
 logger = logging.getLogger(__name__)
@@ -373,7 +373,4 @@ class CaseAppellateChainRetriever(CaseRetriever):
 
 
 # Helper function for creating case-specific filters
-def get_court_hierarchy_filter(court_levels: List[CourtLevel]) -> Dict[str, Any]:
-    """Create Qdrant filter for court levels."""
-    level_values = [level.value for level in court_levels]
-    return {"court_level": {"in": level_values}} if level_values else {}
+

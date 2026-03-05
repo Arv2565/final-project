@@ -11,6 +11,57 @@ import json
 
 logger = logging.getLogger(__name__)
 
+
+async def _extract_last_turn_context(chat_history) -> str:
+    """Extract last user and assistant messages from persisted chat history and format as chat_context.
+    
+    Returns:
+        Formatted chat_context string, or empty string if no context available.
+    """
+    if not chat_history or not getattr(chat_history, "messages", None):
+        return ""
+
+    previous_user_message = ""
+    previous_agent_message = ""
+
+    try:
+        for message in reversed(chat_history.messages):
+            resolved_message = message
+
+            if not hasattr(resolved_message, "sender") or not hasattr(resolved_message, "content"):
+                fetch_method = getattr(message, "fetch", None)
+                if callable(fetch_method):
+                    try:
+                        resolved_message = await fetch_method()
+                    except Exception:
+                        resolved_message = message
+
+            sender = (getattr(resolved_message, "sender", "") or "").lower()
+            content = (getattr(resolved_message, "content", "") or "").strip()
+            if not content:
+                continue
+
+            if not previous_agent_message and sender == "assistant":
+                previous_agent_message = content
+            elif not previous_user_message and sender == "user":
+                previous_user_message = content
+
+            if previous_user_message and previous_agent_message:
+                break
+    except Exception as e:
+        logger.warning(f"Failed to derive previous turn context from chat history: {e}")
+        return ""
+
+    # Format as single chat_context string
+    if previous_user_message and previous_agent_message:
+        return f"Previous exchange:\nUser: {previous_user_message}\nAssistant: {previous_agent_message}"
+    elif previous_user_message:
+        return f"Previous user message: {previous_user_message}"
+    elif previous_agent_message:
+        return f"Previous assistant message: {previous_agent_message}"
+    
+    return ""
+
 class ChatService:
     """Service for handling chat interactions with the AI legal assistant tool."""
     
@@ -248,7 +299,10 @@ class ChatService:
             pass
 
         graph = self.build_graph()
-        current_state = {}
+        chat_context = await _extract_last_turn_context(chat_history)
+        current_state = {
+            "chat_context": chat_context,
+        }
         clarification_count = 0
         MAX_CLARIFICATIONS = 5
         iteration = 0
@@ -276,14 +330,27 @@ class ChatService:
                     payload = message.get("query")
 
                 if msg_type == "query":
-                    current_state = {"user_query": payload}
+                    chat_context = (current_state.get("chat_context") or "").strip()
+
+                    if not chat_context and chat_history:
+                        chat_context = await _extract_last_turn_context(chat_history)
+
+                    current_state = {
+                        "user_query": payload,
+                        "chat_context": chat_context,
+                    }
                     clarification_count = 0
                     iteration = 0
                     await websocket.send_json({"type": "status", "payload": "Analyzing query..."})
                     # Persist user message
                     if chat_history:
                         try:
-                            user_msg = Message(sender="user", content=payload, created_at=datetime.utcnow())
+                            user_msg = Message(
+                                sender="user", 
+                                content=payload, 
+                                created_at=datetime.utcnow(),
+                                metadata={"chat_context": chat_context}
+                            )
                             await user_msg.insert()
                             chat_history.messages.append(user_msg)
                             chat_history.updated_at = datetime.utcnow()
@@ -299,20 +366,27 @@ class ChatService:
                         history = current_state.get("clarification_history", [])
                         history.append({"question": clarification['question'], "answer": user_answer})
                         new_state = {
-                            "user_query": current_state.get("user_query"),
+                            "user_query": user_answer,
                             "router_output": current_state.get("router_output"),
                             "clarification_history": history,
                             "clarification_counts": current_state.get("clarification_counts", {}),
+                            "chat_context": current_state.get("chat_context", ""),
                         }
                         for key in current_state:
-                            if key not in ["pending_clarification", "orchestrator_plan", "user_query", "router_output", "clarification_history", "clarification_counts"]:
+                            if key not in ["pending_clarification", "orchestrator_plan", "user_query", "router_output", "clarification_history", "clarification_counts", "chat_context"]:
                                 new_state[key] = current_state[key]
                         current_state = new_state
                         await websocket.send_json({"type": "status", "payload": "Processing clarification..."})
                         # Persist clarification response as user message
                         if chat_history:
                             try:
-                                clar_msg = Message(sender="user", content=user_answer, created_at=datetime.utcnow(), metadata={"clarification": True})
+                                chat_ctx = current_state.get("chat_context", "")
+                                clar_msg = Message(
+                                    sender="user", 
+                                    content=user_answer, 
+                                    created_at=datetime.utcnow(), 
+                                    metadata={"clarification": True, "chat_context": chat_ctx}
+                                )
                                 await clar_msg.insert()
                                 chat_history.messages.append(clar_msg)
                                 chat_history.updated_at = datetime.utcnow()
@@ -412,7 +486,13 @@ class ChatService:
                         if chat_history:
                             try:
                                 from ..models.chat import Message
-                                clar_msg = Message(sender="assistant", content=clarification['question'], created_at=datetime.utcnow(), metadata={"clarification": True})
+                                chat_ctx = current_state.get("chat_context", "")
+                                clar_msg = Message(
+                                    sender="assistant", 
+                                    content=clarification['question'], 
+                                    created_at=datetime.utcnow(), 
+                                    metadata={"clarification": True, "chat_context": chat_ctx}
+                                )
                                 await clar_msg.insert()
                                 chat_history.messages.append(clar_msg)
                                 chat_history.updated_at = datetime.utcnow()
@@ -477,6 +557,12 @@ class ChatService:
                             result_data["factors"] = fs.get("factors", []) if isinstance(fs, dict) else []
                             result_data["events"] = fs.get("events", []) if isinstance(fs, dict) else []
                         result_payload["data"] = result_data
+
+                    if final_response:
+                        # Build new chat_context from current turn
+                        new_chat_context = f"Previous exchange:\nUser: {(current_state.get('user_query') or '').strip()}\nAssistant: {final_response}"
+                        final_state["chat_context"] = new_chat_context
+
                     await websocket.send_json({"type": "final_result", "payload": result_payload})
                     # Persist assistant/system message
                     if chat_history:
@@ -489,12 +575,13 @@ class ChatService:
                             if generated_document_content:
                                 document_field = {"content": generated_document_content}
                             
+                            chat_ctx = final_state.get("chat_context", "")
                             assist_msg = Message(
                                 sender="assistant", 
                                 content=content, 
                                 document=document_field,
                                 created_at=datetime.utcnow(), 
-                                metadata={"final_result": True}
+                                metadata={"final_result": True, "chat_context": chat_ctx}
                             )
                             await assist_msg.insert()
                             chat_history.messages.append(assist_msg)

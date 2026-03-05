@@ -32,12 +32,18 @@ class GeneralChatAgent:
         print("="*80)
         
         user_query = state.get("user_query", "").strip()
+        chat_context = (state.get("chat_context") or "").strip()
+        
+        # Build prompt with context if available
+        user_prompt = user_query
+        if chat_context:
+            user_prompt = f"{chat_context}\n\nCurrent message: {user_query}"
         
         try:
             output = self.llm.invoke(
                 [
                     {"role": "system", "content": GENERAL_CHAT_SYSTEM_PROMPT},
-                    {"role": "user", "content": user_query},
+                    {"role": "user", "content": user_prompt},
                 ],
                 config={"callbacks": callbacks}
             )

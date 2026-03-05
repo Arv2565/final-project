@@ -5,7 +5,8 @@ from src.models import GraphState, QueryRouterOutput
 from src.models.query_router import QueryMetadata
 
 
-def test_query_router_uses_previous_user_and_agent_messages():
+def test_query_router_uses_chat_context():
+    """Test that QueryRouterAgent uses chat_context field for conversational continuity."""
     with patch("src.agents.query_router_agent.get_agent_llm") as mock_get_llm:
         mock_llm = MagicMock()
         mock_get_llm.return_value = mock_llm
@@ -23,8 +24,7 @@ def test_query_router_uses_previous_user_and_agent_messages():
         agent = QueryRouterAgent()
         state = GraphState(
             user_query="What are my options now?",
-            previous_user_message="I was terminated without notice.",
-            previous_agent_message="Which state are you in?",
+            chat_context="Previous exchange:\nUser: I was terminated without notice.\nAssistant: Which state are you in?",
         )
 
         result = agent(state)
@@ -36,9 +36,5 @@ def test_query_router_uses_previous_user_and_agent_messages():
         messages = call_args[0][0]
         user_prompt = messages[1]["content"]
 
-        assert "Previous user message:" in user_prompt
+        assert "Previous exchange:" in user_prompt
         assert "I was terminated without notice." in user_prompt
-        assert "Previous assistant message:" in user_prompt
-        assert "Which state are you in?" in user_prompt
-        assert "Latest user message:" in user_prompt
-        assert "What are my options now?" in user_prompt

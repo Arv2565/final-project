@@ -68,11 +68,15 @@ class OrchestratorAgent:
         MAX_CLARIFICATION = 3 
         
         clarification_history = state.get("clarification_history", [])
+        chat_context = (state.get("chat_context") or "").strip()
         
         # Build user prompt
         user_prompt = f"Query: {cleaned_query}\n\n"
         if metadata.language and metadata.language != "en":
             user_prompt += f"(Originally in: {metadata.language})\n"
+        
+        if chat_context:
+            user_prompt += f"\n{chat_context}\n"
             
         if clarification_history:
             user_prompt += "\nPrevious Clarifications:\n"
