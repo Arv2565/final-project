@@ -23,6 +23,11 @@ class CaseInfo(BaseModel):
     statutes_mentioned: List[str] = []
     content_preview: Optional[str] = None
     similarity_score: Optional[float] = None
+    pdf_path: Optional[str] = None
+    full_case_json: Optional[Dict[str, Any]] = Field(
+        default=None, 
+        description="Complete case JSON from casefiles.json (only present when retrieved via dual-RAG)"
+    )
 
 
 class LowerCourtCaseResult(BaseModel):
@@ -46,6 +51,7 @@ class PrecedentInfo(BaseModel):
     common_concepts: List[str] = Field(default_factory=list, description="Concepts shared with lower court cases")
     relevance_score: float = Field(description="Relevance to query (0.0-1.0)")
     relationship_type: Optional[str] = Field(default=None, description="cites, follows, distinguishes, etc.")
+    pdf_path: Optional[str] = None
 
 
 class AppellateChainLink(BaseModel):
@@ -70,26 +76,15 @@ class UpperCourtCaseResult(BaseModel):
     reversals_detected: int = Field(description="Number of reversal cases found")
 
 
-class CommonStatuteInfo(BaseModel):
-    """Information about a statute mentioned in cases."""
-    statute_name: str
-    section: str
-    frequency: int = Field(description="How many cases mention this statute")
-    interpretations: List[str] = Field(description="Different legal interpretations across cases")
-    case_citations: List[str] = Field(description="Cases mentioning this statute")
-
-
-class CaseAnalysisResult(BaseModel):
-    """Final output from CaseComparativeAnalyzer agent."""
-    summary: str = Field(description="Narrative analysis synthesizing both court levels")
-    lower_court_cases: List[CaseInfo] = Field(description="Lower court cases from finder")
-    precedents: List[PrecedentInfo] = Field(description="Precedents from upper court finder")
-    common_statutes: List[CommonStatuteInfo] = Field(description="Statutes appearing across cases")
-    appellate_chains: List[List[AppellateChainLink]] = Field(description="Full appellate chains")
-    reversals_identified: List[Dict[str, Any]] = Field(description="Cases where lower court decision was reversed")
-    legal_principles_derived: List[str] = Field(description="Key legal principles from analysis")
-    confidence_score: float = Field(description="Overall confidence in analysis (0.0-1.0)")
-    recommendations: str = Field(description="Recommendations for case strategy/next steps")
+class CaseSynthesisResult(BaseModel):
+    """Minimal LLM output for case retrieval response."""
+    analysis_markdown: str = Field(
+        description="Markdown summary with relevant case descriptions and final conclusion"
+    )
+    relevant_pdf_paths: List[str] = Field(
+        default_factory=list,
+        description="Relevant PDF paths selected from input cases"
+    )
 
 
 class CaseRetrieverState(BaseModel):
@@ -98,7 +93,7 @@ class CaseRetrieverState(BaseModel):
     case_retriever_state: Dict[str, Any] = Field(default_factory=dict, description="Complete retriever state")
     lower_court_result: Optional[LowerCourtCaseResult] = None
     upper_court_result: Optional[UpperCourtCaseResult] = None
-    analysis_result: Optional[CaseAnalysisResult] = None
+    analysis_result: Optional[CaseSynthesisResult] = None
     workflow_status: str = Field(default="initialized", description="Status: initialized, running, completed, failed")
     error_message: Optional[str] = None
 

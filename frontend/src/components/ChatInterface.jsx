@@ -238,6 +238,26 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 setLoadingStatus(data.payload);
                 setIsLoading(true);
                 break;
+            case 'case_pdfs': {
+                // Handle case PDF paths received from case retrieval
+                const pdfPaths = Array.isArray(data.payload) ? data.payload : [];
+                if (pdfPaths.length > 0) {
+                    console.log(`Received ${pdfPaths.length} case PDF paths`);
+                    
+                    // Create a message to display the case PDFs
+                    const pdfListContent = pdfPaths.map(path => `- ${path}`).join('\n');
+                    const casePdfMsg = {
+                        id: Date.now(),
+                        type: 'assistant',
+                        content: `**Retrieved Case PDFs:**\n${pdfListContent}`,
+                        payload: { type: 'case_pdfs', paths: pdfPaths }
+                    };
+                    updatedMessages = [...updatedMessages, casePdfMsg];
+                    setMessages(updatedMessages);
+                    if (onUpdateMessages) onUpdateMessages(updatedMessages);
+                }
+                break;
+            }
             case 'clarification_request': {
                 setIsLoading(false);
                 setLoadingStatus('');

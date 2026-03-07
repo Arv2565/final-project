@@ -17,8 +17,8 @@ def case_retriever_node(state: GraphState) -> Dict[str, Any]:
     """
     Node that executes the case retrieval workflow.
     
-    Retrieves relevant cases from lower and upper courts, and performs
-    comparative analysis to generate final recommendations.
+    Retrieves relevant cases from lower and upper courts, then generates
+    an LLM summary in markdown and relevant PDF paths.
     
     Args:
         state: GraphState from LangGraph
@@ -59,7 +59,11 @@ def case_retriever_node(state: GraphState) -> Dict[str, Any]:
         case_retriever_state = result.get("case_retriever_state", {})
         analysis_result = result.get("analysis_result")
         
-        logger.info(f"Case Retriever Node completed: {case_retriever_state.get('workflow_status')}")
+        # Extract markdown and PDF paths from synthesis result
+        analysis_markdown = _extract_markdown(analysis_result)
+        case_pdf_paths = _extract_pdf_paths(analysis_result)
+        
+        logger.info(f"Case Retriever Node completed: {case_retriever_state.get('workflow_status')} - Found {len(case_pdf_paths)} PDFs")
         
         # Generate response message
         response_message = _create_response_message(analysis_result, case_retriever_state)
@@ -68,6 +72,8 @@ def case_retriever_node(state: GraphState) -> Dict[str, Any]:
         return {
             "case_retriever_state": case_retriever_state,
             "analysis_result": analysis_result,
+            "case_retriever_markdown": analysis_markdown,
+            "case_pdf_paths": case_pdf_paths,
             "messages": state.get("messages", []) + [response_message] if response_message else state.get("messages", [])
         }
     
@@ -86,7 +92,7 @@ def _create_response_message(analysis_result: Any, case_retriever_state: Dict[st
     Create a response message from case retrieval results.
     
     Args:
-        analysis_result: CaseAnalysisResult from the analyzer
+        analysis_result: CaseSynthesisResult from the analyzer
         case_retriever_state: Full state from workflow
     
     Returns:
@@ -98,63 +104,64 @@ def _create_response_message(analysis_result: Any, case_retriever_state: Dict[st
             "content": "Case retrieval completed but no analysis was generated. Please check your query."
         }
     
-    # Build response from analysis
-    message_parts = []
-    
-    # Summary
-    if hasattr(analysis_result, "summary"):
-        message_parts.append(f"**Case Analysis Summary:**\n{analysis_result.summary}")
-    
-    # Lower court cases
-    if hasattr(analysis_result, "lower_court_cases"):
-        num_cases = len(analysis_result.lower_court_cases)
-        if num_cases > 0:
-            message_parts.append(f"\n**Lower Court Cases ({num_cases} found):**")
-            for case in analysis_result.lower_court_cases[:5]:  # Top 5
-                message_parts.append(f"- {case.citation}: {case.court}")
-    
-    # Precedents
-    if hasattr(analysis_result, "precedents"):
-        num_precedents = len(analysis_result.precedents)
-        if num_precedents > 0:
-            message_parts.append(f"\n**Relevant Precedents ({num_precedents} found):**")
-            for precedent in analysis_result.precedents[:5]:  # Top 5
-                reversal_info = f" [REVERSED]" if precedent.reversal_status == "REVERSED" else ""
-                message_parts.append(f"- {precedent.citation} ({precedent.court}){reversal_info}")
-    
-    # Reversals
-    if hasattr(analysis_result, "reversals_identified"):
-        num_reversals = len(analysis_result.reversals_identified)
-        if num_reversals > 0:
-            message_parts.append(f"\n**⚠️  Cases with Reversals ({num_reversals}):**")
-            for reversal in analysis_result.reversals_identified[:3]:
-                if reversal.get("lower_case"):
-                    message_parts.append(f"- {reversal['lower_case']['citation']} was reversed at appellate level")
-    
-    # Legal principles
-    if hasattr(analysis_result, "legal_principles_derived"):
-        principles = analysis_result.legal_principles_derived
-        if principles:
-            message_parts.append(f"\n**Key Legal Principles:**")
-            for principle in principles[:3]:
-                message_parts.append(f"- {principle}")
-    
-    # Recommendations
-    if hasattr(analysis_result, "recommendations"):
-        message_parts.append(f"\n**Recommendations:**\n{analysis_result.recommendations}")
-    
-    # Confidence
-    if hasattr(analysis_result, "confidence_score"):
-        message_parts.append(f"\n**Analysis Confidence:** {analysis_result.confidence_score:.0%}")
-    
-    # Fallback
-    if not message_parts:
+    markdown = _extract_markdown(analysis_result)
+    if not markdown:
         return {
             "role": "assistant",
-            "content": "Case retrieval workflow completed. Please review the results in case_retriever_state."
+            "content": "Case retrieval workflow completed but no markdown analysis was generated."
         }
-    
+
     return {
         "role": "assistant",
-        "content": "\n".join(message_parts)
+        "content": markdown
     }
+
+
+def _extract_markdown(analysis_result: Any) -> str:
+    """Extract markdown summary from synthesis result."""
+    if not analysis_result:
+        logger.warning("Analysis result is None")
+        return ""
+    try:
+        if hasattr(analysis_result, "analysis_markdown"):
+            md = analysis_result.analysis_markdown
+            if md and isinstance(md, str):
+                logger.info(f"Extracted markdown: {len(md)} chars")
+                return md
+        logger.warning("Analysis result missing or empty analysis_markdown field")
+        return ""
+    except Exception as e:
+        logger.error(f"Error extracting markdown: {e}")
+        return ""
+
+
+def _extract_pdf_paths(analysis_result: Any) -> list:
+    """
+    Extract unique PDF paths from CaseSynthesisResult.
+    
+    Args:
+        analysis_result: CaseSynthesisResult object from the analyzer
+    
+    Returns:
+        List of unique PDF paths
+    """
+    pdf_paths = set()
+    
+    if not analysis_result:
+        logger.warning("Analysis result is None for PDF extraction")
+        return []
+    
+    try:
+        if hasattr(analysis_result, "relevant_pdf_paths"):
+            paths = analysis_result.relevant_pdf_paths
+            if paths and isinstance(paths, list):
+                for path in paths:
+                    if path and isinstance(path, str):
+                        pdf_paths.add(path)
+                logger.info(f"Extracted {len(pdf_paths)} unique PDF paths")
+        else:
+            logger.warning("Analysis result missing relevant_pdf_paths field")
+    except Exception as e:
+        logger.error(f"Error extracting PDF paths: {e}")
+    
+    return sorted(list(pdf_paths))

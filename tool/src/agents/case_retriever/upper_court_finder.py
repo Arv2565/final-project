@@ -1,8 +1,8 @@
 """
 Upper Court Case Finder Agent for Case Retrieval Module.
 
-This agent searches for relevant precedents in Supreme Court and High Courts,
-and detects appellate relationships.
+This agent searches for relevant precedents in Supreme Court and High Courts.
+Uses parallel naive RAG + graph RAG retrieval for comprehensive coverage.
 """
 
 import logging
@@ -12,7 +12,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
-from src.retrieval.case import UpperCourtCaseRetriever, CaseAppellateChainRetriever
+from src.retrieval.dual_rag_retriever import DualRAGRetriever
 from src.agents.case_retriever.models import (
     UpperCourtCaseResult, PrecedentInfo, AppellateChainLink, CaseInfo
 )
@@ -22,12 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 class UpperCourtCaseFinderAgent:
-    """Find precedents and appellate relationships in upper courts."""
+    """Find precedents in upper courts using dual RAG precedent discovery."""
     
     def __init__(self):
-        """Initialize the agent."""
-        self.retriever = UpperCourtCaseRetriever()
-        self.chain_retriever = CaseAppellateChainRetriever()
+        """Initialize the agent with dual-RAG retriever."""
+        self.dual_retriever = DualRAGRetriever()
     
     def __call__(
         self,
@@ -36,7 +35,7 @@ class UpperCourtCaseFinderAgent:
         callbacks: Optional[List] = None
     ) -> Dict[str, Any]:
         """
-        Execute case finding for upper courts and precedent discovery.
+        Execute case finding for upper courts using dual RAG (naive + graph).
         
         Args:
             lower_result: Result from LowerCourtCaseFinderAgent (optional)
@@ -49,7 +48,9 @@ class UpperCourtCaseFinderAgent:
         try:
             # Determine search strategy based on lower_result
             if lower_result:
-                user_query = lower_result.get("query", "")
+                user_query = lower_result.get("search_query", "")
+                if not user_query and state:
+                    user_query = state.get("user_query", "")
                 legal_concepts = lower_result.get("query_concepts", [])
                 logger.info(f"UpperCourtCaseFinder: Finding precedents for {len(legal_concepts)} concepts")
             else:
@@ -61,74 +62,59 @@ class UpperCourtCaseFinderAgent:
                 logger.warning("No query for upper court search")
                 return {"upper_court_result": None}
             
-            # Call retriever
-            retrieval_result = self.retriever.retrieve(
+            # Call dual-RAG retriever (runs naive + graph RAG in parallel)
+            enriched_results = self.dual_retriever.retrieve_upper_court_with_json(
                 query=user_query,
-                top_k=15,
-                find_precedents=True
+                top_k=4  # Get 2 naive + 2 graph = 4 total
             )
             
-            # Extract precedents from results
+            # Extract precedents from enriched results
             precedents = []
-            chain_results = []
             reversals_count = 0
             
-            for result in retrieval_result.results:
-                if result.get("result_type") == "direct":
-                    # Direct match in upper court
+            for result in enriched_results:
+                try:
+                    full_case_json = result.get("full_case_json", {})
+                    
+                    # Determine reversal status from decision
+                    reversal_status = self._detect_reversal_from_decision(
+                        full_case_json.get("holding", {}).get("decision") if full_case_json else result.get("decision")
+                    )
+                    
                     precedent = PrecedentInfo(
                         citation=result.get("citation", ""),
                         court=result.get("court", ""),
                         court_level=result.get("court_level", 1),
                         date=result.get("date", ""),
-                        decision=result.get("metadata", {}).get("decision"),
-                        reversal_status=self._detect_reversal(result),
-                        common_concepts=self._find_common_concepts(result, legal_concepts),
+                        decision=full_case_json.get("holding", {}).get("decision") if full_case_json else result.get("decision"),
+                        reversal_status=reversal_status,
+                        common_concepts=full_case_json.get("legal_concepts", []) if full_case_json else result.get("legal_concepts", []),
                         relevance_score=result.get("similarity_score", 0.0),
-                        relationship_type="primary_precedent"
+                        relationship_type="primary_precedent",
+                        pdf_path=full_case_json.get("evidence", {}).get("pdf_path") if full_case_json else result.get("pdf_path")
                     )
                     precedents.append(precedent)
                     
-                    # Track reversals
-                    if self._detect_reversal(result):
+                    if reversal_status == "REVERSED":
                         reversals_count += 1
                 
-                elif result.get("precedent_type") == "discovered":
-                    # Graph-discovered precedent
-                    precedent = PrecedentInfo(
-                        citation=result.get("citation", ""),
-                        court=result.get("court", ""),
-                        court_level=1,  # Likely Supreme Court
-                        date=result.get("date", ""),
-                        reversal_status=result.get("status"),
-                        relevance_score=result.get("distance", 3) / 3.0,  # Invert depth to score
-                        relationship_type="cited_precedent"
-                    )
-                    precedents.append(precedent)
-            
-            # Attempt to recover appellate chains if we have lower court cases
-            if lower_result:
-                for lower_case in lower_result.get("cases", []):
-                    try:
-                        chain = self._build_appellate_chain(lower_case)
-                        if chain:
-                            chain_results.append(chain)
-                    except Exception as e:
-                        logger.debug(f"Failed to build chain for {lower_case.get('citation')}: {e}")
+                except Exception as e:
+                    logger.error(f"Error processing precedent result: {e}")
+                    continue
             
             upper_court_result = UpperCourtCaseResult(
                 precedents=precedents,
-                appellate_chains=chain_results,
+                appellate_chains=[],  # Appellate chains discovery via dual RAG precedent matching
                 query_concepts=legal_concepts,
                 search_query=user_query,
-                retrieval_confidence=0.80,  # Could be computed
+                retrieval_confidence=0.80,
                 total_precedents_available=len(precedents),
                 reversals_detected=reversals_count
             )
             
             logger.info(
-                f"UpperCourtCaseFinder: Found {len(precedents)} precedents, "
-                f"{reversals_count} with reversals, {len(chain_results)} chains"
+                f"UpperCourtCaseFinder: Retrieved {len(precedents)} upper court cases"
+                f" using dual RAG, {reversals_count} with reversals"
             )
             
             return {"upper_court_result": upper_court_result}
@@ -140,14 +126,22 @@ class UpperCourtCaseFinderAgent:
     def _detect_reversal(self, result: Dict[str, Any]) -> Optional[str]:
         """Detect if result indicates a reversal."""
         decision = result.get("metadata", {}).get("decision", "").lower()
+        return self._detect_reversal_from_decision(decision)
+    
+    def _detect_reversal_from_decision(self, decision: Optional[str]) -> Optional[str]:
+        """Detect reversal status from decision text."""
+        if not decision:
+            return None
         
-        if any(word in decision for word in ["reversed", "set aside", "quashed", "overturned"]):
+        decision_lower = decision.lower()
+        
+        if any(word in decision_lower for word in ["reversed", "set aside", "quashed", "overturned"]):
             return "REVERSED"
-        elif any(word in decision for word in ["upheld", "affirmed", "confirmed"]):
+        elif any(word in decision_lower for word in ["upheld", "affirmed", "confirmed"]):
             return "UPHELD"
-        elif any(word in decision for word in ["modified", "reduced", "enhanced"]):
+        elif any(word in decision_lower for word in ["modified", "reduced", "enhanced"]):
             return "MODIFIED"
-        elif any(word in decision for word in ["remanded", "remitted", "sent back"]):
+        elif any(word in decision_lower for word in ["remanded", "remitted", "sent back"]):
             return "REMANDED"
         
         return None

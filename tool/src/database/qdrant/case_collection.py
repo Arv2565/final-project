@@ -24,7 +24,7 @@ try:
     from qdrant_client import QdrantClient
     from qdrant_client.models import (
         VectorParams, Distance, PointStruct, PayloadSchemaType, 
-        CreateFieldIndex, FieldCondition, Filter, MatchValue
+        CreateFieldIndex, FieldCondition, Filter, MatchValue, MatchAny
     )
 except ImportError:
     raise ImportError("qdrant-client is required. Install with: pip install qdrant-client")
@@ -70,7 +70,7 @@ class CaseVector:
         }
         
         return PointStruct(
-            id=int(self.point_id.replace("-", "")[:16]),  # Convert UUID to numeric ID
+            id=int(self.point_id.replace("-", "")[:16], 16),  # Convert UUID hex to numeric ID (base 16)
             vector=self.embedding,
             payload=payload
         )
@@ -94,6 +94,49 @@ class QdrantCaseCollectionManager:
         self.settings = get_settings()
         self.client = self._create_client()
         self._ensure_collection_exists()
+    
+    def _build_filter_conditions(self, filters: Dict[str, Any]) -> Optional[Filter]:
+        """
+        Convert custom filter dict to Qdrant Filter object.
+        
+        Handles:
+        - Simple equality: {"field": "value"} 
+        - In clause: {"field": {"in": [val1, val2]}}
+        - Range queries: {"field": {"gte": val, "lte": val}}
+        
+        Args:
+            filters: Custom filter dictionary
+            
+        Returns:
+            Qdrant Filter object or None if no filters
+        """
+        if not filters:
+            return None
+        
+        conditions = []
+        
+        for key, value in filters.items():
+            if isinstance(value, dict):
+                # Handle special operators
+                if "in" in value:
+                    # Match any of the values in the list
+                    conditions.append(
+                        FieldCondition(key=key, match=MatchAny(any=value["in"]))
+                    )
+                elif "gte" in value or "lte" in value:
+                    # Range query - skip for now, requires Range model
+                    logger.warning(f"Range queries not yet supported for field: {key}")
+                    continue
+            else:
+                # Simple equality match
+                conditions.append(
+                    FieldCondition(key=key, match=MatchValue(value=value))
+                )
+        
+        if not conditions:
+            return None
+        
+        return Filter(must=conditions)
     
     def _create_client(self) -> QdrantClient:
         """Create Qdrant client connection."""
@@ -278,10 +321,13 @@ class QdrantCaseCollectionManager:
             List of matching cases with metadata and scores
         """
         try:
+            # Convert custom filters to Qdrant Filter object
+            filter_conditions = self._build_filter_conditions(filters)
+            
             search_results = self.client.search(
                 collection_name=self.COLLECTION_NAME,
                 query_vector=query_embedding,
-                query_filter=filters,
+                query_filter=filter_conditions,
                 limit=top_k,
                 score_threshold=score_threshold
             )

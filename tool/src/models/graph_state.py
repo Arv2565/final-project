@@ -37,6 +37,8 @@ class GraphState(TypedDict, total=False):
     orchestrator_plan: NotRequired[List[dict]]
     
     # Specialized Agent outputs
+    case_retriever_markdown: NotRequired[str] # Markdown output from case retriever LLM synthesis
+    case_pdf_paths: NotRequired[List[str]] # List of PDF paths from case retrieval
     legal_laws: NotRequired[List[str]] # ActivityToLawAgent
     procedural_advice: NotRequired[str] # ProceduralGuidanceAgent (legacy field)
     draft_document: NotRequired[str] # DraftBuilderAgent

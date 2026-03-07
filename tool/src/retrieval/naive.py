@@ -50,8 +50,8 @@ class QdrantVectorRetriever(VectorRetriever):
         if not self._embedding_service:
             raise RuntimeError("Embedding service not initialized")
         
-        embeddings = self._embedding_service.embed_documents([text])
-        return embeddings[0].tolist() if embeddings is not None else []
+        embeddings = self._embedding_service.embed_single_text(text)
+        return embeddings.tolist() if embeddings is not None else []
     
     def retrieve(
         self,

@@ -8,15 +8,15 @@ Agents:
 
 Workflow:
 - Executes lower and upper court finders in parallel
-- Synthesizes results into comprehensive case analysis
-- Detects reversals, appellate chains, and legal principles
+- Synthesizes results into a concise markdown legal analysis
+- Returns relevant PDF paths selected from the retrieved cases
 """
 
 from .models import (
     CaseInfo,
     LowerCourtCaseResult,
     UpperCourtCaseResult,
-    CaseAnalysisResult,
+    CaseSynthesisResult,
     CaseRetrieverState,
     QueryContext,
     PrecedentInfo,
@@ -32,7 +32,7 @@ __all__ = [
     "CaseInfo",
     "LowerCourtCaseResult",
     "UpperCourtCaseResult",
-    "CaseAnalysisResult",
+    "CaseSynthesisResult",
     "CaseRetrieverState",
     "QueryContext",
     "PrecedentInfo",

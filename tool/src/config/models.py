@@ -93,8 +93,8 @@ class EmbeddingModelConfig:
     vector_model_dimension: int = int(os.getenv("VECTOR_EMBEDDING_DIM", "768"))
     
     # Entity embeddings for Neo4j GraphRAG indexing
-    entity_embedding_model: str = os.getenv("ENTITY_EMBEDDING_MODEL", "text-embedding-3-large")
-    entity_embedding_dimension: int = int(os.getenv("ENTITY_EMBEDDING_DIM", "3072"))
+    entity_embedding_model: str = os.getenv("ENTITY_EMBEDDING_MODEL", "nlpaueb/legal-bert-base-uncased")
+    entity_embedding_dimension: int = int(os.getenv("ENTITY_EMBEDDING_DIM", "768"))
 
 
 # Singletons for configuration and client instances

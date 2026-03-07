@@ -72,6 +72,24 @@ class ProcessingConfig:
         )
 
 @dataclass
+class Neo4jConfig:
+    """Neo4j graph database configuration."""
+    uri: str
+    user: str
+    password: str
+    database: str = "neo4j"
+    
+    @classmethod
+    def from_env(cls) -> "Neo4jConfig":
+        """Load configuration from environment variables."""
+        return cls(
+            uri=os.getenv("NEO4J_URI", "bolt://localhost:7687"),
+            user=os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER", "neo4j"),
+            password=os.getenv("NEO4J_PASSWORD", "password"),
+            database=os.getenv("NEO4J_DATABASE", "neo4j")
+        )
+
+@dataclass
 class SecurityConfig:
     """Security and compliance configuration."""
     log_sensitive_data: bool = False
@@ -95,6 +113,7 @@ class Settings:
         self.embedding = EmbeddingConfig.from_env()
         self.processing = ProcessingConfig.from_env()
         self.security = SecurityConfig.from_env()
+        self.neo4j = Neo4jConfig.from_env()
         
         # Metadata field mapping for legal documents
         self.metadata_fields = {

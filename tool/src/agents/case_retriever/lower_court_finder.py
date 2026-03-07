@@ -2,6 +2,7 @@
 Lower Court Case Finder Agent for Case Retrieval Module.
 
 This agent searches for relevant cases in district/lower courts tier.
+Uses parallel naive RAG + graph RAG retrieval for comprehensive coverage.
 """
 
 import logging
@@ -11,7 +12,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
-from src.retrieval.case import LowerCourtCaseRetriever
+from src.retrieval.dual_rag_retriever import DualRAGRetriever
 from src.agents.case_retriever.models import LowerCourtCaseResult, CaseInfo, QueryContext
 from src.utils.court_hierarchy import is_lower_court_case, CourtLevel
 
@@ -19,15 +20,15 @@ logger = logging.getLogger(__name__)
 
 
 class LowerCourtCaseFinderAgent:
-    """Find relevant cases from lower/district courts."""
+    """Find relevant cases from lower/district courts using dual RAG."""
     
     def __init__(self):
-        """Initialize the agent."""
-        self.retriever = LowerCourtCaseRetriever()
+        """Initialize the agent with dual-RAG retriever."""
+        self.dual_retriever = DualRAGRetriever()
     
     def __call__(self, state: Dict[str, Any], callbacks: Optional[List] = None) -> Dict[str, Any]:
         """
-        Execute case finding for lower courts.
+        Execute case finding for lower courts using dual RAG (naive + graph).
         
         Args:
             state: GraphState containing user_query and other context
@@ -45,46 +46,56 @@ class LowerCourtCaseFinderAgent:
             
             logger.info(f"LowerCourtCaseFinder: Processing query: {user_query[:100]}...")
             
-            # Extract context from query (simplified - in production use LLM)
+            # Extract context from query
             query_context = self._extract_query_context(user_query)
             
-            # Call retriever
-            retrieval_result = self.retriever.retrieve(
+            # Call dual-RAG retriever (runs naive + graph RAG in parallel)
+            enriched_results = self.dual_retriever.retrieve_lower_court_with_json(
                 query=user_query,
-                top_k=10,
+                top_k=4,  # Get 2 naive + 2 graph = 4 total
                 legal_domain=query_context.legal_domains[0] if query_context.legal_domains else None,
                 date_range=query_context.date_constraints
             )
             
-            # Convert to LowerCourtCaseResult
+            # Convert enriched results to LowerCourtCaseResult
             cases = []
-            for result in retrieval_result.results:
-                cases.append(CaseInfo(
-                    case_id=result.get("case_id", ""),
-                    citation=result.get("citation", ""),
-                    court=result.get("court", ""),
-                    court_level=result.get("court_level", 3),
-                    date=result.get("date", ""),
-                    decision=result.get("metadata", {}).get("decision"),
-                    legal_concepts=result.get("legal_concepts", []),
-                    statutes_mentioned=result.get("metadata", {}).get("statutes_mentioned", []),
-                    content_preview=result.get("chunk_text", "")[:200] if result.get("chunk_text") else None,
-                    similarity_score=result.get("similarity_score")
-                ))
+            for result in enriched_results:
+                try:
+                    full_case_json = result.get("full_case_json", {})
+                    
+                    case_info = CaseInfo(
+                        case_id=result.get("case_id", ""),
+                        citation=result.get("citation", ""),
+                        court=result.get("court", ""),
+                        court_level=result.get("court_level", 3),
+                        date=result.get("date", ""),
+                        decision=full_case_json.get("holding", {}).get("decision") if full_case_json else result.get("decision"),
+                        legal_concepts=full_case_json.get("legal_concepts", []) if full_case_json else result.get("legal_concepts", []),
+                        statutes_mentioned=result.get("statutes_mentioned", []),
+                        content_preview=result.get("chunk_text", "")[:200] if result.get("chunk_text") else None,
+                        similarity_score=result.get("similarity_score"),
+                        pdf_path=full_case_json.get("evidence", {}).get("pdf_path") if full_case_json else result.get("pdf_path"),
+                        full_case_json=full_case_json if result.get("case_lookup_status") == "found" else None
+                    )
+                    cases.append(case_info)
+                except Exception as e:
+                    logger.error(f"Error converting result to CaseInfo: {e}")
+                    continue
             
             lower_court_result = LowerCourtCaseResult(
                 cases=cases,
                 query_concepts=query_context.legal_concepts,
                 search_query=user_query,
-                retrieval_confidence=0.85,  # Could be computed from scores
+                retrieval_confidence=0.85,
                 total_cases_available=len(cases),
                 filters_applied={
                     "court_levels": [2, 3],  # HC and Lower courts
-                    "legal_domain": query_context.legal_domains[0] if query_context.legal_domains else None
+                    "legal_domain": query_context.legal_domains[0] if query_context.legal_domains else None,
+                    "retrieval_method": "dual_rag"  # Indicates 2 naive + 2 graph RAG
                 }
             )
             
-            logger.info(f"LowerCourtCaseFinder: Found {len(cases)} cases")
+            logger.info(f"LowerCourtCaseFinder: Retrieved {len(cases)} lower court cases using dual RAG")
             
             return {"lower_court_result": lower_court_result}
         
@@ -108,8 +119,6 @@ class LowerCourtCaseFinderAgent:
             legal_domains.append("constitutional_law")
         elif any(word in query.lower() for word in ["service", "employment", "promotion", "dismissal"]):
             legal_domains.append("service_law")
-        else:
-            legal_domains.append("general_law")
         
         # Extract concepts
         concepts = []

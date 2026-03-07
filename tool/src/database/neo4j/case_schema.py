@@ -35,6 +35,9 @@ class CaseGraphSchema:
     
     Defines node types, relationships, constraints, and indexes specifically
     for the case retrieval module's graph database.
+    
+    Supports canonical case identity with citation aliases to handle
+    multi-citation real-world cases.
     """
     
     # Node labels
@@ -55,7 +58,23 @@ class CaseGraphSchema:
         """Initialize Neo4j connection and ensure schema exists."""
         self.settings = get_settings()
         self.driver = self._create_driver()
+        self._relationship_types_cache: Optional[set[str]] = None
         self._ensure_schema_exists()
+
+    def _get_relationship_types(self) -> set[str]:
+        """Fetch and cache available relationship types in the current database."""
+        if self._relationship_types_cache is not None:
+            return self._relationship_types_cache
+
+        try:
+            with self.driver.session() as session:
+                result = session.run("CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType")
+                self._relationship_types_cache = {record["relationshipType"] for record in result}
+        except Exception as e:
+            logger.warning(f"Could not read Neo4j relationship types: {e}")
+            self._relationship_types_cache = set()
+
+        return self._relationship_types_cache
     
     def _create_driver(self):
         """Create Neo4j driver connection."""
@@ -99,17 +118,20 @@ class CaseGraphSchema:
     def _create_constraints(self, session: Session):
         """Create uniqueness constraints for case nodes."""
         constraints = [
-            # Case uniqueness
+            # Case uniqueness (canonical case_id only)
             f"CREATE CONSTRAINT case_id_unique IF NOT EXISTS "
             f"FOR (c:{self.CASE_LABEL}) REQUIRE c.case_id IS UNIQUE",
             
-            f"CREATE CONSTRAINT case_citation_unique IF NOT EXISTS "
-            f"FOR (c:{self.CASE_LABEL}) REQUIRE c.citation IS UNIQUE",
+            # Note: Citation is indexed but not unique to allow citation aliases
+            # for cases with multiple valid citations
             
-            # Issue uniqueness within case contexts (optional, may skip)
             # Judge uniqueness
             f"CREATE CONSTRAINT judge_name_unique IF NOT EXISTS "
             f"FOR (j:{self.JUDGE_LABEL}) REQUIRE j.name IS UNIQUE",
+            
+            # Issue uniqueness
+            f"CREATE CONSTRAINT issue_id_unique IF NOT EXISTS "
+            f"FOR (i:{self.ISSUE_LABEL}) REQUIRE i.issue_id IS UNIQUE",
         ]
         
         for constraint_query in constraints:
@@ -126,19 +148,23 @@ class CaseGraphSchema:
         """Create indexes for efficient querying."""
         indexes = [
             # Case indexes
+            f"CREATE INDEX case_citation IF NOT EXISTS FOR (c:{self.CASE_LABEL}) ON (c.citation)",
+            f"CREATE INDEX case_citation_normalized IF NOT EXISTS FOR (c:{self.CASE_LABEL}) ON (c.citation_normalized)",
             f"CREATE INDEX case_date IF NOT EXISTS FOR (c:{self.CASE_LABEL}) ON (c.date)",
             f"CREATE INDEX case_court IF NOT EXISTS FOR (c:{self.CASE_LABEL}) ON (c.court)",
             f"CREATE INDEX case_court_level IF NOT EXISTS FOR (c:{self.CASE_LABEL}) ON (c.court_level)",
             f"CREATE INDEX case_year IF NOT EXISTS FOR (c:{self.CASE_LABEL}) ON (c.year)",
             f"CREATE INDEX case_type IF NOT EXISTS FOR (c:{self.CASE_LABEL}) ON (c.case_type)",
+            f"CREATE INDEX case_decision IF NOT EXISTS FOR (c:{self.CASE_LABEL}) ON (c.decision)",
+            f"CREATE INDEX case_has_reversal IF NOT EXISTS FOR (c:{self.CASE_LABEL}) ON (c.has_reversal)",
             
             # Issue indexes
             f"CREATE INDEX issue_legal_domain IF NOT EXISTS FOR (i:{self.ISSUE_LABEL}) ON (i.legal_domain)",
             f"CREATE INDEX issue_outcome IF NOT EXISTS FOR (i:{self.ISSUE_LABEL}) ON (i.outcome)",
             
-            # Statute indexes
+            # Statute indexes (composite for statute+section lookup)
             f"CREATE INDEX statute_name IF NOT EXISTS FOR (s:{self.STATUTE_LABEL}) ON (s.statute_name)",
-            f"CREATE INDEX statute_section IF NOT EXISTS FOR (s:{self.STATUTE_LABEL}) ON (s.section)",
+            f"CREATE INDEX statute_name_section IF NOT EXISTS FOR (s:{self.STATUTE_LABEL}) ON (s.statute_name, s.section)",
         ]
         
         for index_query in indexes:
@@ -163,14 +189,15 @@ class CaseGraphSchema:
         parties_respondent: Optional[str] = None,
         decision: Optional[str] = None,
         relief: Optional[str] = None,
-        has_reversal: bool = False
+        has_reversal: bool = False,
+        citation_aliases: Optional[List[str]] = None
     ) -> bool:
         """
-        Create a Case node in the graph.
+        Create a Case node in the graph with support for citation aliases.
         
         Args:
-            case_id: Unique case identifier
-            citation: Standard case citation (e.g., "(2000) 6 SCC 359")
+            case_id: Unique case identifier (canonical)
+            citation: Primary case citation (e.g., "(2000) 6 SCC 359")
             date: Judgment date (ISO format: YYYY-MM-DD)
             court: Court name
             court_level: 1=Supreme, 2=High, 3=Lower
@@ -180,16 +207,22 @@ class CaseGraphSchema:
             decision: Decision outcome
             relief: Relief granted
             has_reversal: Whether decision involves reversal
+            citation_aliases: Alternative citations for same case (optional)
         
         Returns:
             True if created/updated successfully
         """
         try:
             with self.driver.session() as session:
+                # Normalize citation for indexed lookups
+                citation_normalized = self._normalize_citation(citation) if citation else ""
+                
                 query = f"""
                 MERGE (c:{self.CASE_LABEL} {{case_id: $case_id}})
                 SET 
                     c.citation = $citation,
+                    c.citation_normalized = $citation_normalized,
+                    c.citation_aliases = $citation_aliases,
                     c.date = $date,
                     c.court = $court,
                     c.court_level = $court_level,
@@ -205,11 +238,14 @@ class CaseGraphSchema:
                 """
                 
                 year = int(date.split("-")[0]) if date else None
+                aliases_normalized = [self._normalize_citation(c) for c in (citation_aliases or [])] if citation_aliases else []
                 
                 result = session.run(
                     query,
                     case_id=case_id,
                     citation=citation,
+                    citation_normalized=citation_normalized,
+                    citation_aliases=aliases_normalized,
                     date=date,
                     court=court,
                     court_level=court_level,
@@ -360,7 +396,8 @@ class CaseGraphSchema:
         relationship_type: str,
         to_node_id: str,
         to_node_label: str,
-        properties: Optional[Dict[str, Any]] = None
+        properties: Optional[Dict[str, Any]] = None,
+        to_section: Optional[str] = None
     ) -> bool:
         """
         Create a relationship between nodes.
@@ -370,7 +407,8 @@ class CaseGraphSchema:
             relationship_type: Type of relationship (RAISES, INTERPRETS, CITES, etc.)
             to_node_id: Target node ID
             to_node_label: Target node label (ISSUE_LABEL, STATUTE_LABEL, etc.)
-            properties: Additional relationship properties
+            properties: Additional relationship properties with confidence/method
+            to_section: Section (for statute relationships) to ensure correct linking
         
         Returns:
             True if created successfully
@@ -379,14 +417,28 @@ class CaseGraphSchema:
             properties = properties or {}
             
             with self.driver.session() as session:
+                # Build dynamic match clause based on label and relationship type
+                if to_node_label == self.CASE_LABEL:
+                    # For CITES/APPEALS_FROM: match by case_id
+                    target_match = f"(t:{to_node_label} {{case_id: $to_node_id}})"
+                elif to_node_label == self.JUDGE_LABEL:
+                    target_match = f"(t:{to_node_label} {{name: $to_node_id}})"
+                elif to_node_label == self.ISSUE_LABEL:
+                    target_match = f"(t:{to_node_label} {{issue_id: $to_node_id}})"
+                elif to_node_label == self.STATUTE_LABEL:
+                    # For INTERPRETS: match by statute_name AND section to avoid over-linking
+                    if to_section:
+                        target_match = f"(t:{to_node_label} {{statute_name: $to_node_id, section: $to_section}})"
+                    else:
+                        target_match = f"(t:{to_node_label} {{statute_name: $to_node_id}})"
+                else:
+                    target_match = f"(t:{to_node_label} {{name: $to_node_id}})"
+                
                 query = f"""
                 MATCH (c:{self.CASE_LABEL} {{case_id: $from_case_id}})
-                MATCH (t:{to_node_label} {{{'case_id' if to_node_label == self.CASE_LABEL else 'name' 
-                                          if to_node_label == self.JUDGE_LABEL 
-                                          else 'issue_id' if to_node_label == self.ISSUE_LABEL
-                                          else 'statute_name'}: $to_node_id}})
+                MATCH {target_match}
                 MERGE (c)-[r:{relationship_type}]->(t)
-                SET r += $properties, r.created_at = datetime()
+                SET r += $properties, r.created_at = coalesce(r.created_at, datetime())
                 RETURN TYPE(r) as rel_type
                 """
                 
@@ -394,6 +446,7 @@ class CaseGraphSchema:
                     query,
                     from_case_id=from_case_id,
                     to_node_id=to_node_id,
+                    to_section=to_section,
                     properties=properties
                 )
                 
@@ -418,21 +471,27 @@ class CaseGraphSchema:
         Query precedent chain for a given case.
         
         Traverses CITES relationships to find precedents.
+        Returns relationship confidence for edge filtering.
         
         Args:
             case_id: Starting case ID
             depth: Maximum depth to traverse
         
         Returns:
-            List of precedent cases
+            List of precedent cases with confidence metadata
         """
         try:
+            if self.CITES_REL not in self._get_relationship_types():
+                logger.debug(f"Skipping precedent traversal: relationship type '{self.CITES_REL}' not present")
+                return []
+
             with self.driver.session() as session:
                 query = f"""
                 MATCH (c1:{self.CASE_LABEL} {{case_id: $case_id}})
-                MATCH path = (c1)-[:{self.CITES_REL}*1..{depth}]->(c2:{self.CASE_LABEL})
-                RETURN c2.citation as citation, c2.date as date, c2.court as court, 
-                       length(path) as distance
+                MATCH path = (c1)-[r:{self.CITES_REL}*1..{depth}]->(c2:{self.CASE_LABEL})
+                WITH c2, path, [rel IN relationships(path) | coalesce(properties(rel)['confidence'], 1.0)] as confidences
+                RETURN c2.citation as citation, c2.case_id as case_id, c2.date as date, c2.court as court, 
+                       length(path) as distance, confidences[0] as confidence, 'graph_traversal' as extraction_method
                 ORDER BY distance ASC, c2.date DESC
                 LIMIT 20
                 """
@@ -451,22 +510,32 @@ class CaseGraphSchema:
         """
         Query full appellate chain for a case.
         
-        Traverses APPEALS_FROM relationships.
+        Traverses APPEALS_FROM relationships with confidence filtering.
+        Returns edge metadata (confidence, reversal_status, extraction_method).
         
         Args:
             case_id: Case to find appellate chain for
         
         Returns:
-            List of cases in appellate chain (bottom to top)
+            List of cases in appellate chain (bottom to top) with edge metadata
         """
         try:
+            if self.APPEALS_FROM_REL not in self._get_relationship_types():
+                logger.debug(f"Skipping appellate traversal: relationship type '{self.APPEALS_FROM_REL}' not present")
+                return []
+
             with self.driver.session() as session:
                 query = f"""
-                MATCH path = (lower:{self.CASE_LABEL})-[:{self.APPEALS_FROM_REL}*0..3]->(upper:{self.CASE_LABEL} {{case_id: $case_id}})
-                WITH lower, relationships(path) as rels
-                RETURN lower.citation as citation, lower.court as court, lower.date as date,
-                       CASE WHEN size(rels) > 0 THEN rels[-1].reversal_status ELSE 'CURRENT' END as status
-                ORDER BY length(path) ASC
+                MATCH path = (lower:{self.CASE_LABEL})-[r:{self.APPEALS_FROM_REL}*0..3]->(upper:{self.CASE_LABEL} {{case_id: $case_id}})
+                WITH lower, path, relationships(path) as rels,
+                     CASE WHEN size(relationships(path)) > 0 THEN properties(last(relationships(path))) ELSE {{}} END as last_rel_props
+                RETURN lower.citation as citation, lower.case_id as case_id, lower.court as court, 
+                       lower.date as date,
+                       CASE WHEN size(rels) > 0 THEN coalesce(last_rel_props['reversal_status'], 'CURRENT') ELSE 'CURRENT' END as reversal_status,
+                       CASE WHEN size(rels) > 0 THEN coalesce(last_rel_props['confidence'], 1.0) ELSE 1.0 END as confidence,
+                       CASE WHEN size(rels) > 0 THEN coalesce(last_rel_props['extraction_method'], 'primary_record') ELSE 'primary_record' END as extraction_method,
+                       length(path) as distance
+                ORDER BY distance ASC
                 """
                 
                 result = session.run(query, case_id=case_id)
@@ -511,6 +580,24 @@ class CaseGraphSchema:
         except Exception as e:
             logger.error(f"Failed to query cases by statute: {e}")
             return []
+    
+    @staticmethod
+    def _normalize_citation(citation: str) -> str:
+        """
+        Normalize case citation for index-based lookups.
+        
+        Removes extra spaces, standardizes common patterns.
+        
+        Args:
+            citation: Raw citation string
+        
+        Returns:
+            Normalized citation
+        """
+        if not citation:
+            return ""
+        # Remove extra whitespace and convert to lowercase for matching
+        return " ".join(citation.split()).lower()
     
     def close(self):
         """Close Neo4j driver connection."""

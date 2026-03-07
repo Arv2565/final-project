@@ -28,12 +28,25 @@ logger = logging.getLogger(__name__)
 
 class CaseRetriever(Retriever):
     """Base class for case-specific retrievers."""
+
+    _shared_qdrant_manager = None
+    _shared_neo4j_schema = None
+    _shared_embedding_service = None
     
     def __init__(self):
         """Initialize case retriever."""
-        self.qdrant_manager = QdrantCaseCollectionManager()
-        self.neo4j_schema = CaseGraphSchema()
-        self.embedding_service = InLegalBERTEmbeddingService()
+        if CaseRetriever._shared_qdrant_manager is None:
+            CaseRetriever._shared_qdrant_manager = QdrantCaseCollectionManager()
+
+        if CaseRetriever._shared_neo4j_schema is None:
+            CaseRetriever._shared_neo4j_schema = CaseGraphSchema()
+
+        if CaseRetriever._shared_embedding_service is None:
+            CaseRetriever._shared_embedding_service = InLegalBERTEmbeddingService()
+
+        self.qdrant_manager = CaseRetriever._shared_qdrant_manager
+        self.neo4j_schema = CaseRetriever._shared_neo4j_schema
+        self.embedding_service = CaseRetriever._shared_embedding_service
     
     def is_available(self) -> bool:
         """Check if both Qdrant and Neo4j are available."""
@@ -91,7 +104,7 @@ class LowerCourtCaseRetriever(CaseRetriever, VectorRetriever):
             top_k: Number of results to return
             filters: Optional additional filters
             date_range: Tuple of (start_date, end_date) in ISO format
-            legal_domain: Optional legal domain filter
+            legal_domain: Optional legal domain filter (will be normalized to match Neo4j values)
         
         Returns:
             RetrievalResult with lower court cases
@@ -110,9 +123,12 @@ class LowerCourtCaseRetriever(CaseRetriever, VectorRetriever):
             if date_range:
                 case_filters["date_range"] = date_range
             
-            # Add legal domain filter if provided
+            # Add legal domain filter if provided (normalize to match schema)
             if legal_domain:
-                case_filters["legal_domain"] = legal_domain
+                # Normalize: spaces/hyphens to underscores, lowercase
+                normalized_domain = legal_domain.lower().replace(" ", "_").replace("-", "_")
+                case_filters["legal_domain"] = normalized_domain
+                logger.debug(f"Normalized legal_domain '{legal_domain}' -> '{normalized_domain}'")
             
             # Search Qdrant
             search_results = self.qdrant_manager.search_cases(
@@ -143,7 +159,7 @@ class LowerCourtCaseRetriever(CaseRetriever, VectorRetriever):
     
     def get_embedding(self, text: str) -> List[float]:
         """Get embedding for text."""
-        return self.embedding_service.embed_text(text)
+        return self.embedding_service.embed_single_text(text).tolist()
     
     def _format_search_results(self, search_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Format Qdrant search results into standard format."""
@@ -153,13 +169,16 @@ class LowerCourtCaseRetriever(CaseRetriever, VectorRetriever):
             formatted.append({
                 "case_id": result.get("case_id"),
                 "citation": result.get("citation"),
+                "citation_normalized": result.get("citation_normalized"),
                 "court": result.get("court"),
                 "court_level": result.get("court_level"),
+                "legal_domain": result.get("legal_domain"),  # Now include normalized domain
                 "date": result.get("metadata", {}).get("date"),
                 "chunk_text": result.get("chunk_text"),
                 "content_type": result.get("content_type"),
                 "legal_concepts": result.get("legal_concepts", []),
                 "similarity_score": result.get("similarity_score"),
+                "pdf_path": result.get("metadata", {}).get("pdf_path") or result.get("pdf_path"),
             })
         
         return formatted
@@ -219,22 +238,35 @@ class UpperCourtCaseRetriever(CaseRetriever, VectorRetriever):
             if find_precedents and vector_results:
                 precedent_results = self._discover_precedents(vector_results[:5])  # Top 5 for precedent search
             
-            # Combine results
+            # Combine results with ranking
             all_results = self._format_search_results(vector_results)
             
-            # Add precedent info
+            # Track seen citations to avoid duplicates
+            seen_citations = {r.get("citation") for r in all_results}
+            
+            # Add precedent info with enhanced metadata (now includes relationship type and confidence)
+            precedent_count = 0
             for precedent in precedent_results:
-                all_results.append({
-                    "citation": precedent.get("citation"),
-                    "court": precedent.get("court"),
-                    "date": precedent.get("date"),
-                    "precedent_type": "discovered",
-                    "distance": precedent.get("distance"),
-                })
+                cite = precedent.get("citation")
+                # Only add if not already in direct results
+                if cite and cite not in seen_citations:
+                    result_entry = {
+                        "citation": cite,
+                        "court": precedent.get("court"),
+                        "date": precedent.get("date"),
+                        "precedent_type": "discovered",
+                        "relationship_type": precedent.get("relationship_type", "precedent"),  # Now tracks if precedent or appellate
+                        "confidence": precedent.get("confidence", 0.7),  # Inferred relationship confidence
+                        "distance": precedent.get("distance"),
+                        "extraction_method": precedent.get("extraction_method", "graph_traversal")  # How relationship was found
+                    }
+                    all_results.append(result_entry)
+                    precedent_count += 1
+                    seen_citations.add(cite)
             
             retrieval_time = (time.time() - start_time) * 1000
             
-            logger.info(f"Upper court retrieval: {len(vector_results)} direct results, {len(precedent_results)} precedents in {retrieval_time:.2f}ms")
+            logger.info(f"Upper court retrieval: {len(vector_results)} direct results, {precedent_count} precedents + appellate in {retrieval_time:.2f}ms")
             
             return RetrievalResult(
                 query=query,
@@ -254,19 +286,23 @@ class UpperCourtCaseRetriever(CaseRetriever, VectorRetriever):
     
     def get_embedding(self, text: str) -> List[float]:
         """Get embedding for text."""
-        return self.embedding_service.embed_text(text)
+        return self.embedding_service.embed_single_text(text).tolist()
     
     def _discover_precedents(self, seed_cases: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        Discover precedents for seed cases using Neo4j graph traversal.
+        Discover precedents and appellate relationships for seed cases using Neo4j graph traversal.
+        
+        Now leverages:
+        - CITES relationships (precedent discovery - high confidence)
+        - APPEALS_FROM relationships (appellate chain discovery)
         
         Args:
-            seed_cases: Cases to find precedents for
+            seed_cases: Cases to find precedents/appellate relationships for
         
         Returns:
-            List of discovered precedent cases
+            List of discovered precedent cases with relationship metadata
         """
-        precedents = {}  # Use dict to avoid duplicates
+        precedents = {}  # Use dict to avoid duplicates; key=citation
         
         for case in seed_cases:
             case_id = case.get("case_id")
@@ -274,16 +310,32 @@ class UpperCourtCaseRetriever(CaseRetriever, VectorRetriever):
                 continue
             
             try:
-                # Query graph for precedents
+                # Query graph for precedents (CITES relationships)
                 graph_precedents = self.neo4j_schema.query_case_precedents(case_id, depth=2)
                 
                 for precedent in graph_precedents:
                     key = precedent.get("citation", "")
                     if key and key not in precedents:
-                        precedents[key] = precedent
+                        precedent_with_type = {**precedent, "relationship_type": "precedent"}
+                        precedents[key] = precedent_with_type
+                        logger.debug(f"Discovered precedent: {key} (distance: {precedent.get('distance', 'unknown')})")
             
             except Exception as e:
                 logger.debug(f"Failed to discover precedents for {case_id}: {e}")
+            
+            try:
+                # Query graph for appellate chain (APPEALS_FROM relationships)
+                appellate_chain = self.neo4j_schema.query_appellate_chain(case_id)
+                
+                for appellate_case in appellate_chain:
+                    key = appellate_case.get("citation", "")
+                    if key and key not in precedents:
+                        appellate_with_type = {**appellate_case, "relationship_type": "appellate"}
+                        precedents[key] = appellate_with_type
+                        logger.debug(f"Found appellate case: {key} (status: {appellate_case.get('status', 'unknown')})")
+            
+            except Exception as e:
+                logger.debug(f"Failed to discover appellate chain for {case_id}: {e}")
         
         return list(precedents.values())
     
@@ -295,13 +347,18 @@ class UpperCourtCaseRetriever(CaseRetriever, VectorRetriever):
             formatted.append({
                 "case_id": result.get("case_id"),
                 "citation": result.get("citation"),
+                "citation_normalized": result.get("citation_normalized"),
+                "citation_aliases": result.get("citation_aliases", []),  # Support multi-citation cases
                 "court": result.get("court"),
                 "court_level": result.get("court_level"),
+                "legal_domain": result.get("legal_domain"),
                 "date": result.get("metadata", {}).get("date"),
+                "metadata": result.get("metadata", {}),
                 "chunk_text": result.get("chunk_text"),
                 "content_type": result.get("content_type"),
                 "legal_concepts": result.get("legal_concepts", []),
                 "similarity_score": result.get("similarity_score"),
+                "pdf_path": result.get("metadata", {}).get("pdf_path") or result.get("pdf_path"),
                 "result_type": "direct",
             })
         
@@ -320,18 +377,20 @@ class CaseAppellateChainRetriever(CaseRetriever):
         query: str,  # Case citation or ID
         top_k: int = 10,
         filters: Optional[Dict[str, Any]] = None,
+        confidence_threshold: float = 0.6,
         **kwargs
     ) -> RetrievalResult:
         """
-        Retrieve appellate chain for a case.
+        Retrieve appellate chain for a case with confidence filtering.
         
         Args:
             query: Case citation or ID (primary key)
             top_k: Not used for chain retrieval
             filters: Optional filters
+            confidence_threshold: Only include edges with confidence >= this (default 0.6)
         
         Returns:
-            RetrievalResult with appellate chain
+            RetrievalResult with appellate chain (high-confidence relationships only)
         """
         start_time = time.time()
         
@@ -339,17 +398,56 @@ class CaseAppellateChainRetriever(CaseRetriever):
             # Query Neo4j for appellate chain
             chain = self.neo4j_schema.query_appellate_chain(query)
             
+            # Filter chain by confidence threshold to exclude low-confidence relationships
+            if chain and isinstance(chain, list) and len(chain) > 0:
+                # If chain items have confidence metadata, filter by threshold
+                filtered_chain = [
+                    case for case in chain
+                    if case.get("confidence", 1.0) >= confidence_threshold or "confidence" not in case
+                ]
+                
+                if len(filtered_chain) < len(chain):
+                    logger.debug(
+                        f"Filtered appellate chain: {len(chain)} cases -> {len(filtered_chain)} cases "
+                        f"(confidence threshold: {confidence_threshold})"
+                    )
+                
+                chain = filtered_chain
+            
+            # Enhance chain results with relationship metadata
+            formatted_chain = []
+            for i, case in enumerate(chain):
+                formatted_case = {
+                    "position_in_chain": i,  # Position in appellate sequence
+                    "case_id": case.get("case_id"),
+                    "citation": case.get("citation"),
+                    "court": case.get("court"),
+                    "date": case.get("date"),
+                    "holding": case.get("holding"),
+                    "decision": case.get("decision"),
+                    "reversal_status": case.get("reversal_status"), # Direct or reverse
+                    "confidence": case.get("confidence", 1.0),  # Relationship confidence
+                    "extraction_method": case.get("extraction_method", "graph_traversal"),
+                }
+                formatted_chain.append(formatted_case)
+            
             retrieval_time = (time.time() - start_time) * 1000
             
-            logger.info(f"Appellate chain retrieval: {len(chain)} cases in {retrieval_time:.2f}ms")
+            logger.info(
+                f"Appellate chain retrieval: {len(formatted_chain)} cases "
+                f"(confidence >= {confidence_threshold}) in {retrieval_time:.2f}ms"
+            )
             
             return RetrievalResult(
                 query=query,
-                results=chain,
+                results=formatted_chain,
                 retrieval_type="appellate_chain",
-                total_results=len(chain),
+                total_results=len(formatted_chain),
                 retrieval_time_ms=retrieval_time,
-                metadata={"chain_depth": len(chain)}
+                metadata={
+                    "chain_depth": len(formatted_chain),
+                    "confidence_threshold": confidence_threshold
+                }
             )
         
         except Exception as e:

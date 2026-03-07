@@ -1,0 +1,184 @@
+[
+    {
+"metadata": {
+"court": "High Court of Kerala at Ernakulam",
+"bench": [
+"P.V. Kunhikrishnan, J."
+],
+"date": "2025-07-25",
+"citation": "2025:KER:54510",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "cash_transaction_violation_269ss_legally_enforceable_debt",
+"natural_form": "Whether a debt arising from a cash transaction exceeding Rs.20,000 in violation of Section 269SS of the Income-tax Act, 1961 constitutes a legally enforceable debt under Section 138 of the Negotiable Instruments Act?",
+"legal_domain": "general criminal law",
+"outcome": "denied"
+},
+{
+"issue_id": "rebuttal_of_section_139_presumption",
+"natural_form": "Whether the accused rebutted the presumption under Section 139 of the Negotiable Instruments Act by raising a probable defence regarding absence of legally enforceable debt?",
+"legal_domain": "general criminal law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"text": "The presumption under Section 139 of the Negotiable Instruments Act includes the existence of a legally enforceable debt; however, it is rebuttable by the accused on the standard of preponderance of probabilities. A debt arising from a cash transaction exceeding Rs.20,000 in violation of Section 269SS of the Income-tax Act cannot be treated as legally enforceable unless a valid explanation under Section 273B of that Act is established.\n\nWhere the complainant admits payment of a large amount in cash in contravention of statutory mandate and fails to offer any lawful explanation, the accused can successfully rebut the statutory presumption. Criminal courts cannot validate transactions that defeat the object of Section 269SS, which aims to curb unaccounted cash transactions. In such circumstances, the alleged debt is not legally enforceable for the purposes of Section 138 of the Negotiable Instruments Act.",
+"source_hint": {
+"approx_pages": "12-18",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Negotiable Instruments Act, 1881",
+"section": "Sections 138 and 139",
+"interpretation": "Section 139 creates a rebuttable presumption including existence of legally enforceable debt; such presumption can be rebutted by probable defence on preponderance of probabilities."
+},
+{
+"statute_name": "Income-tax Act, 1961",
+"section": "Sections 269SS, 271D and 273B",
+"interpretation": "Cash loans above Rs.20,000 are prohibited; violation attracts penalty and unless a reasonable cause under Section 273B is shown, such transaction cannot be treated as giving rise to legally enforceable debt under Section 138 NI Act."
+}
+],
+"holding": {
+"decision": "conviction set aside; accused acquitted",
+"relief": "Judgments of trial court and appellate court set aside; revision allowed; accused acquitted; bail bond cancelled; amounts, if deposited, to be returned."
+},
+"legal_concepts": [
+"legally enforceable debt",
+"statutory presumption",
+"reverse onus",
+"preponderance of probabilities",
+"illegality of consideration",
+"cash transaction prohibition",
+"prospective application of judicial declaration"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/P_C_Hari_vs_Shine_Varghese_on_25_July_2025.PDF",
+"relevant_page_ranges": [
+"12-18"
+]
+}
+}
+,
+{"metadata": {
+"court": "High Court of Kerala at Ernakulam",
+"bench": [
+"Sushrut Arvind Dharmadhikari",
+"Syam Kumar V.M."
+],
+"date": "2025-12-03",
+"citation": "2025:KER:93252; W.A. No. 1551 of 2025",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "cci_jurisdiction_vis_a_vis_trai",
+"natural_form": "Whether the Competition Commission of India has jurisdiction to order investigation under Section 26(1) of the Competition Act, 2002 despite the existence of the TRAI Act and sectoral regulations.",
+"legal_domain": "competition_law",
+"outcome": "allowed"
+},
+{
+"issue_id": "maintainability_of_writ_against_section_26_order",
+"natural_form": "Whether a writ petition is maintainable against a prima facie order directing investigation under Section 26(1) of the Competition Act, 2002.",
+"legal_domain": "competition_law",
+"outcome": "denied"
+}
+],
+"ratio": {
+"summary": "The Competition Act, 2002 is an independent special statute addressing anti-competitive practices and abuse of dominant position. The jurisdiction of the Competition Commission of India to examine allegations under Section 4 is not ousted merely because the telecom sector is regulated by TRAI. Overlapping regulatory fields do not bar CCI from exercising its statutory mandate where anti-competitive conduct is alleged.\n\nAn order under Section 26(1) forming a prima facie opinion and directing investigation is administrative and does not determine rights or impose civil consequences. Judicial interference at this preliminary stage is unwarranted; jurisdictional objections may be raised before the CCI itself.",
+"source_hint": {
+"approx_pages": "3-10",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Competition Act, 2002",
+"section": "Sections 4, 19(1)(a) and 26(1)",
+"interpretation": "CCI may form a prima facie opinion of abuse of dominant position and direct investigation; such order is preliminary and does not decide rights."
+},
+{
+"statute_name": "Telecom Regulatory Authority of India Act, 1997",
+"section": "General scheme",
+"interpretation": "Sectoral regulation under TRAI does not exclude CCIs jurisdiction over anti-competitive conduct."
+}
+],
+"holding": {
+"decision": "writ_appeal_dismissed",
+"relief": "Order of Single Bench affirmed; liberty reserved to raise jurisdictional objections before CCI."
+},
+"legal_concepts": [
+"abuse_of_dominant_position",
+"sectoral_regulator_overlap",
+"prima_facie_opinion",
+"judicial_restraint",
+"competition_regulation"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Jiostar_India_Private_Limited_vs_CCI(rejected plea)_on_3_December_2025 (2).PDF",
+"relevant_page_ranges": [
+"3-10"
+]
+}
+},
+{
+"metadata": {
+"court": "High Court of Kerala at Ernakulam",
+"bench": [
+"K. Vinod Chandran",
+"V.G. Arun"
+],
+"date": "2020-01-23",
+"citation": "AIRONLINE 2020 KER 715; W.A. No. 979 of 2018 & connected cases",
+"language": "en"
+},
+"issues": [
+{
+"issue_id": "applicability_of_shops_and_establishments_act_to_it_companies",
+"natural_form": "Whether IT/ITeS companies operating in Kerala are covered by the Kerala Shops and Commercial Establishments Act and subject to inspection and compliance under labour laws.",
+"legal_domain": "general_criminal_law",
+"outcome": "allowed"
+},
+{
+"issue_id": "validity_of_inspection_by_labour_authorities",
+"natural_form": "Whether inspection and proceedings initiated by Assistant Labour Officers against such establishments were legally sustainable.",
+"legal_domain": "general_criminal_law",
+"outcome": "allowed"
+}
+],
+"ratio": {
+"summary": "The Kerala Shops and Commercial Establishments Act applies to establishments engaged in systematic commercial activity irrespective of their nature as IT or IT-enabled services entities. Exemptions must be expressly provided and cannot be inferred merely from the character of the industry.\n\nLabour authorities are empowered to conduct inspections and initiate proceedings for statutory compliance. Judicial interference is unwarranted where statutory authorities act within the bounds of the Act and the challenge is premised only on the nature of business carried on.",
+"source_hint": {
+"approx_pages": "120-139",
+"section": "analysis"
+}
+},
+"statutes_interpreted": [
+{
+"statute_name": "Kerala Shops and Commercial Establishments Act, 1960",
+"section": "General applicability provisions",
+"interpretation": "IT and allied service establishments fall within the definition of commercial establishments unless specifically exempted."
+}
+],
+"holding": {
+"decision": "appeals_dismissed",
+"relief": "Writ appeals dismissed; orders upholding statutory inspections sustained."
+},
+"legal_concepts": [
+"commercial_establishment",
+"labour_law_compliance",
+"statutory_inspection",
+"judicial_restraint",
+"regulatory_oversight"
+],
+"evidence": {
+"pdf_path": "tool/data/case_files/Tata_Consultancy_Services_Limited_vs_State_Of_Kerala_on_23_January_2020.PDF",
+"relevant_page_ranges": [
+"120-139"
+]
+}
+}
+]

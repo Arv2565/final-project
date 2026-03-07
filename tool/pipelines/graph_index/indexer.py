@@ -28,8 +28,9 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 from openai import OpenAI
 from neo4j import Session
 
-from src.config import get_settings, LegalOntology, EntityType, RelationType, get_embedding_config
+from src.config import get_settings, LegalOntology, EntityType, RelationType, get_embedding_config, get_llm_config
 from src.database.neo4j.client import neo4j_session
+from src.database.embeddings import InLegalBERTEmbeddingService
 from .enrichment import normalize_name, canonicalize_entities_legal, enrich_relation, detect_doc_level_from_source, get_resolver
 from .validation import flag_uncertain_triples
 from src.utils.pdf import PDFTextExtractor
@@ -195,13 +196,28 @@ def chunk_text(text: str, words_per_chunk: int, overlap_words: int) -> List[str]
 class GraphRAGIndexer:
     def __init__(self, create_vector_index: bool = True, force_reembed: bool = False):
         self.settings = get_settings()
-        self.client = OpenAI()
-        self.chat_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+        self.llm_config = get_llm_config()
+        
+        # Determine LLM provider and initialize appropriate client
+        self.llm_provider = self.llm_config.llm_provider
+        if self.llm_provider == "gemini":
+            import google.generativeai as genai
+            gemini_api_key = os.getenv("GEMINI_API_KEY")
+            if not gemini_api_key:
+                raise ValueError("GEMINI_API_KEY environment variable not set. Please set it before using Gemini provider.")
+            genai.configure(api_key=gemini_api_key)
+            self.client = genai
+            self.chat_model = self.llm_config.gemini_chat_model
+        else:
+            self.client = OpenAI()
+            self.chat_model = self.llm_config.chat_model
+        
+        self.embedding_service = InLegalBERTEmbeddingService()
         self.create_vector_index = create_vector_index
         # If True, always recompute embeddings even when an existing vector is present.
         # Default False to enable deduplication across runs.
         self.force_reembed = force_reembed
-        self.embed_dim = 3072
+        self.embed_dim = 768  # InLegalBERT embedding dimension
         self.pdf_extractor = PDFTextExtractor()
         self.cost = CostStats()
 
@@ -297,31 +313,47 @@ Document Context: {doc_context}
 
     Return a JSON array of triples where each triple has these fields: `head`, `head_type`, `relation`, `tail`, `tail_type`. Optionally include `head_canonical_id` and `tail_canonical_id` when a canonical identifier is evident (e.g., `IPC:Section:420`, `IPC:Chapter:XVII`). Prefer explicit hierarchical relations (e.g., `part_of`, `section_in`, `chapter_in`) for structural links. Return ONLY valid JSON, no other text."""
 
-        resp = self.client.chat.completions.create(
-            model=self.chat_model,
-            messages=[
-                {"role": "system", "content": sys_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0,
-        )
-        
-        # Track token usage if available
-        usage = getattr(resp, "usage", None)
-        if usage is not None:
-            try:
-                prompt_tokens = getattr(usage, "prompt_tokens", None)
-                if prompt_tokens is None and isinstance(usage, dict):
-                    prompt_tokens = usage.get("prompt_tokens", 0)
-                completion_tokens = getattr(usage, "completion_tokens", None)
-                if completion_tokens is None and isinstance(usage, dict):
-                    completion_tokens = usage.get("completion_tokens", 0)
-                self.cost.chat_prompt_tokens += int(prompt_tokens or 0)
-                self.cost.chat_completion_tokens += int(completion_tokens or 0)
-            except Exception:
-                pass
-        
-        content = resp.choices[0].message.content or "[]"
+        # Call appropriate LLM API based on provider
+        if self.llm_provider == "gemini":
+            resp = self.client.GenerativeModel(self.chat_model).generate_content(
+                [sys_prompt, "\n\n", user_prompt],
+                generation_config=self.client.types.GenerationConfig(temperature=0),
+            )
+            content = resp.text or "[]"
+            # Gemini usage tracking if available
+            usage = getattr(resp, "usage_metadata", None)
+            if usage is not None:
+                try:
+                    prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                    completion_tokens = getattr(usage, "candidates_token_count", 0)
+                    self.cost.chat_prompt_tokens += int(prompt_tokens or 0)
+                    self.cost.chat_completion_tokens += int(completion_tokens or 0)
+                except Exception:
+                    pass
+        else:
+            resp = self.client.chat.completions.create(
+                model=self.chat_model,
+                messages=[
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0,
+            )
+            # Track token usage if available
+            usage = getattr(resp, "usage", None)
+            if usage is not None:
+                try:
+                    prompt_tokens = getattr(usage, "prompt_tokens", None)
+                    if prompt_tokens is None and isinstance(usage, dict):
+                        prompt_tokens = usage.get("prompt_tokens", 0)
+                    completion_tokens = getattr(usage, "completion_tokens", None)
+                    if completion_tokens is None and isinstance(usage, dict):
+                        completion_tokens = usage.get("completion_tokens", 0)
+                    self.cost.chat_prompt_tokens += int(prompt_tokens or 0)
+                    self.cost.chat_completion_tokens += int(completion_tokens or 0)
+                except Exception:
+                    pass
+            content = resp.choices[0].message.content or "[]"
         
         # Strip code fences if any
         content = content.strip()
@@ -401,15 +433,23 @@ Document Context: {doc_context}
         )
 
         try:
-            resp = self.client.chat.completions.create(
-                model=self.chat_model,
-                messages=[
-                    {"role": "system", "content": sys_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=0,
-            )
-            content = (resp.choices[0].message.content or "").strip()
+            if self.llm_provider == "gemini":
+                resp = self.client.GenerativeModel(self.chat_model).generate_content(
+                    [sys_prompt, "\n\n", user_prompt],
+                    generation_config=self.client.types.GenerationConfig(temperature=0),
+                )
+                content = (resp.text or "").strip()
+            else:
+                resp = self.client.chat.completions.create(
+                    model=self.chat_model,
+                    messages=[
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=0,
+                )
+                content = (resp.choices[0].message.content or "").strip()
+            
             # Strip code fences if any
             if content.startswith("```"):
                 content = re.sub(r"^```\w*\n|```$", "", content, flags=re.MULTILINE).strip()
@@ -838,23 +878,14 @@ Document Context: {doc_context}
         if not names_to_embed:
             logger.info("No new entities to embed; skipping embedding step.")
             return 0
-        batch_size = 128
-        logger.info(f"Embedding {len(names_to_embed)} unique entities in batches of {batch_size}...")
+        batch_size = 32  # Smaller batch size for InLegalBERT due to memory constraints
+        logger.info(f"Embedding {len(names_to_embed)} unique entities in batches of {batch_size} using InLegalBERT...")
         start = time.time()
         for i in range(0, len(names_to_embed), batch_size):
             batch = names_to_embed[i : i + batch_size]
-            embeds = self.client.embeddings.create(model=EMBED_MODEL, input=batch)
-            # Track embedding token usage if available
-            emb_usage = getattr(embeds, "usage", None)
-            if emb_usage is not None:
-                try:
-                    prompt_tokens = getattr(emb_usage, "prompt_tokens", None)
-                    if prompt_tokens is None and isinstance(emb_usage, dict):
-                        prompt_tokens = emb_usage.get("prompt_tokens", 0)
-                    self.cost.embed_tokens += int(prompt_tokens or 0)
-                except Exception:
-                    pass
-            vectors = [e.embedding for e in embeds.data]
+            # Use InLegalBERT embedding service
+            embedding_result = self.embedding_service.generate_embeddings(batch)
+            vectors = embedding_result.embeddings.tolist()
             with neo4j_session() as session:
                 for name, vec in zip(batch, vectors):
                     session.run(
@@ -872,7 +903,7 @@ Document Context: {doc_context}
             rate = done / elapsed if elapsed > 0 else 0
             eta = (len(names) - done) / rate if rate > 0 else float("inf")
             logger.info(
-                f"Embedding progress: {done}/{len(names)} ({pct:.1f}%) | rate {rate:.1f}/s | ETA {eta:.1f}s | est cost ${self.cost.total_cost_usd():.2f}"
+                f"Embedding progress: {done}/{len(names)} ({pct:.1f}%) | rate {rate:.1f}/s | ETA {eta:.1f}s"
             )
         return total
 

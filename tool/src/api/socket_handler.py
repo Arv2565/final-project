@@ -132,6 +132,7 @@ async def handle_websocket_connection(websocket: WebSocket):
                     "responsible_actor": "👥 Mapping responsible parties...",
                     "estimated_effort": "💰 Estimating time and cost...",
                     "procedural_response": "📝 Formatting procedural guidance...",
+                    "case_retriever": "🔎 Retrieving relevant case law...",
                     "general_chat": "💬 Preparing response...",
                 }
 
@@ -199,6 +200,20 @@ async def handle_websocket_connection(websocket: WebSocket):
                 # If no clarification, we have a result!
                 router_output = final_state.get("router_output")
                 final_response = final_state.get("final_response")
+                case_retriever_markdown = final_state.get("case_retriever_markdown")
+                case_pdf_paths = final_state.get("case_pdf_paths", [])
+
+                logger.debug(f"Socket handler state: final_response={bool(final_response)}, case_markdown={bool(case_retriever_markdown)}, pdfs={len(case_pdf_paths)}")
+
+                # Send case markdown if available from case retrieval
+                if case_retriever_markdown and isinstance(case_retriever_markdown, str) and case_retriever_markdown.strip():
+                    await websocket.send_json({"type": "case_markdown", "payload": case_retriever_markdown})
+                    logger.info(f"Sent case retriever markdown output: {len(case_retriever_markdown)} chars")
+                
+                # Send case_pdf_paths if available from case retrieval
+                if case_pdf_paths and isinstance(case_pdf_paths, list) and len(case_pdf_paths) > 0:
+                    await websocket.send_json({"type": "case_pdfs", "payload": case_pdf_paths})
+                    logger.info(f"Sent {len(case_pdf_paths)} case PDF paths")
                 
                 # Check for procedural guidance state - could be civil, criminal, or generic
                 procedural_state = (
@@ -210,11 +225,20 @@ async def handle_websocket_connection(websocket: WebSocket):
                 activity_state = final_state.get("activity_law_state")
                 
                 result_payload = {}
+                payload_source = "unknown"
                 
                 if final_response:
                     result_payload["text"] = final_response
                     final_state["previous_user_message"] = current_state.get("user_query", "")
                     final_state["previous_agent_message"] = final_response
+                    payload_source = "final_response"
+                    logger.info(f"Result payload populated from final_response")
+                elif case_retriever_markdown and isinstance(case_retriever_markdown, str) and case_retriever_markdown.strip():
+                    result_payload["text"] = case_retriever_markdown
+                    final_state["previous_user_message"] = current_state.get("user_query", "")
+                    final_state["previous_agent_message"] = case_retriever_markdown
+                    payload_source = "case_retriever_markdown"
+                    logger.info(f"Result payload populated from case_retriever_markdown: {len(case_retriever_markdown)} chars")
                     
                 elif procedural_state:
                     result_payload["workflow"] = "procedural"
@@ -270,6 +294,19 @@ async def handle_websocket_connection(websocket: WebSocket):
                     result_payload["data"] = result_data
 
                 
+                # CRITICAL: Ensure result_payload has content - fallback to case_retriever_markdown if empty
+                if not result_payload and case_retriever_markdown and isinstance(case_retriever_markdown, str) and case_retriever_markdown.strip():
+                    logger.warning(f"Result payload was empty but case_retriever_markdown available ({len(case_retriever_markdown)} chars) - using as fallback")
+                    result_payload["text"] = case_retriever_markdown
+                    payload_source = "case_retriever_markdown_fallback"
+                
+                # Final fallback if still empty
+                if not result_payload:
+                    logger.warning("Result payload is still empty - adding generic fallback status")
+                    result_payload = {"text": "Query processed. No results to display."}
+                    payload_source = "fallback_generic"
+                
+                logger.info(f"Sending final_result with payload from: {payload_source}")
                 await websocket.send_json({"type": "final_result", "payload": result_payload})
 
                 # Persist updated state for next user message in this session

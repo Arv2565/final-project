@@ -4,7 +4,7 @@ Case Retriever Workflow Orchestration.
 This module orchestrates the 3-agent system for case retrieval:
 1. LowerCourtCaseFinderAgent - discovers lower court cases
 2. UpperCourtCaseFinderAgent - discovers precedents and appellate chains
-3. CaseComparativeAnalyzerAgent - synthesizes both findings
+3. CaseComparativeAnalyzerAgent - generates final markdown synthesis
 """
 
 import logging
@@ -29,7 +29,7 @@ class CaseRetrieverWorkflow:
     Executes:
     1. Lower court case finding (parallel independence)
     2. Upper court case finding (parallel independence)
-    3. Comparative analysis (sequential after both finders)
+    3. LLM synthesis (sequential after both finders)
     
     All agents work with accumulating state passed through the workflow.
     """
@@ -75,6 +75,7 @@ class CaseRetrieverWorkflow:
             # STAGE 1: Parallel Execution of Lower and Upper Court Finders
             # ==================================================================
             logger.info("CaseRetrieverWorkflow: Stage 1 - Executing finders in parallel")
+            logger.info("CaseRetrieverWorkflow: 🔎 Searching lower court cases...")
             
             # Execute lower court finder
             lower_court_result = None
@@ -88,6 +89,7 @@ class CaseRetrieverWorkflow:
                 logger.error(f"Lower court finder failed: {e}")
             
             # Execute upper court finder (can run in parallel with lower)
+            logger.info("CaseRetrieverWorkflow: 📚 Analyzing precedents and appellate chains...")
             upper_court_result = None
             upper_court_error = None
             try:
@@ -112,9 +114,10 @@ class CaseRetrieverWorkflow:
                 raise RuntimeError(error_msg)
             
             # ==================================================================
-            # STAGE 2: Comparative Analysis (Sequential on Finder Results)
+            # STAGE 2: LLM Synthesis (Sequential on Finder Results)
             # ==================================================================
             logger.info("CaseRetrieverWorkflow: Stage 2 - Running comparative analyzer")
+            logger.info("CaseRetrieverWorkflow: ⚖️ Generating case summary and conclusion...")
             
             analysis_result = None
             analysis_error = None
@@ -185,5 +188,5 @@ class CaseRetrieverWorkflow:
             "workflow_completed": result.get("case_retriever_state", {}).get("workflow_status") == "completed",
             "lower_court_cases_found": len(result.get("lower_court_result", {}).get("cases", [])) if result.get("lower_court_result") else 0,
             "precedents_found": len(result.get("upper_court_result", {}).get("precedents", [])) if result.get("upper_court_result") else 0,
-            "analysis_confidence": result.get("analysis_result", {}).get("confidence_score") if result.get("analysis_result") else None,
+            "analysis_generated": bool(result.get("analysis_result")),
         }

@@ -224,7 +224,7 @@ def build_graph(llm_provider=None):
             "procedural_guidance_criminal": "procedural_guidance_criminal",
             "draft_builder": "doc_gen_template_selection", # Mapped
             "educational_layer": END,
-            "case_retriever": END,
+            "case_retriever": "case_retriever",
             "comparative_module": END,
             "doc_gen_template_selection": "doc_gen_template_selection",
             "general_chat": "general_chat",
