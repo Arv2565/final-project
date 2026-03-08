@@ -76,6 +76,17 @@ class UpperCourtCaseResult(BaseModel):
     reversals_detected: int = Field(description="Number of reversal cases found")
 
 
+class CitationSelectionResult(BaseModel):
+    """LLM output for citation selection from JSON case database."""
+    selected_citations: List[str] = Field(
+        max_length=2,
+        description="Maximum 2 most relevant case citations selected from the provided cases"
+    )
+    reasoning: str = Field(
+        description="Brief explanation of why these cases were selected"
+    )
+
+
 class CaseSynthesisResult(BaseModel):
     """Minimal LLM output for case retrieval response."""
     analysis_markdown: str = Field(

@@ -204,19 +204,27 @@ class ChatService:
             result = await workflow.ainvoke(initial_state)
             
             # Extract response and metadata
+            final_response = result.get("final_response", "")
+            case_markdown = result.get("case_retriever_markdown", "")
+            case_pdfs = result.get("case_pdf_paths", [])
+            
+            # Use case_retriever_markdown if no final_response
+            response_text = final_response or case_markdown
+            
             response_data = {
                 "query": query,
-                "response": result.get("final_response", ""),
+                "response": response_text,
                 "metadata": {
                     "intent": result.get("intent"),
                     "confidence_score": result.get("confidence_score"),
                     "active_legal_domain": result.get("active_legal_domain"),
-                    "next_module": result.get("next_module")
+                    "next_module": result.get("next_module"),
+                    "case_pdf_paths": case_pdfs
                 },
                 "session_id": session_id
             }
             
-            logger.info(f"Query processed successfully (session: {session_id})")
+            logger.info(f"Query processed successfully (session: {session_id}), response_length: {len(response_text)}, pdfs: {len(case_pdfs)}")
             return response_data
             
         except Exception as e:
@@ -508,6 +516,8 @@ class ChatService:
                     # If no clarification, we have a result!
                     router_output = final_state.get("router_output")
                     final_response = final_state.get("final_response")
+                    case_retriever_markdown = final_state.get("case_retriever_markdown")
+                    case_pdf_paths = final_state.get("case_pdf_paths", [])
                     generated_document_content = final_state.get("generated_document_content")
                     procedural_state = (
                         final_state.get("procedural_guidance_civil_state") or 
@@ -518,8 +528,18 @@ class ChatService:
                     result_payload = {}
                     if generated_document_content:
                         result_payload["document_content"] = generated_document_content
-                    if final_response:
+                    
+                    # Use case_retriever_markdown as text if available, otherwise use final_response
+                    if case_retriever_markdown and isinstance(case_retriever_markdown, str) and case_retriever_markdown.strip():
+                        result_payload["text"] = case_retriever_markdown
+                        logger.info(f"Using case_retriever_markdown as final response text")
+                    elif final_response:
                         result_payload["text"] = final_response
+                    
+                    # Include case PDF paths in final result
+                    if case_pdf_paths and isinstance(case_pdf_paths, list) and len(case_pdf_paths) > 0:
+                        result_payload["case_pdf_paths"] = case_pdf_paths
+                        logger.info(f"Including {len(case_pdf_paths)} case PDF paths in final result")
                     elif procedural_state:
                         result_payload["workflow"] = "procedural"
                         if isinstance(procedural_state, dict):
@@ -575,19 +595,27 @@ class ChatService:
                             if generated_document_content:
                                 document_field = {"content": generated_document_content}
                             
+                            # Build metadata including case_pdf_paths
                             chat_ctx = final_state.get("chat_context", "")
+                            metadata = {
+                                "final_result": True, 
+                                "chat_context": chat_ctx
+                            }
+                            if case_pdf_paths and isinstance(case_pdf_paths, list) and len(case_pdf_paths) > 0:
+                                metadata["case_pdf_paths"] = case_pdf_paths
+                            
                             assist_msg = Message(
                                 sender="assistant", 
                                 content=content, 
                                 document=document_field,
                                 created_at=datetime.utcnow(), 
-                                metadata={"final_result": True, "chat_context": chat_ctx}
+                                metadata=metadata
                             )
                             await assist_msg.insert()
                             chat_history.messages.append(assist_msg)
                             chat_history.updated_at = datetime.utcnow()
                             await chat_history.save()
-                            logger.info(f"Persisted final result to chat {session_id}")
+                            logger.info(f"Persisted final result to chat {session_id} with {len(case_pdf_paths) if case_pdf_paths else 0} PDFs")
                         except Exception as e:
                             logger.error(f"Failed to persist final result: {e}")
                     if langfuse_client:

@@ -1,184 +1,195 @@
 [
-    {
-"metadata": {
-"court": "High Court of Kerala at Ernakulam",
-"bench": [
-"P.V. Kunhikrishnan, J."
-],
-"date": "2025-07-25",
-"citation": "2025:KER:54510",
-"language": "en"
-},
-"issues": [
-{
-"issue_id": "cash_transaction_violation_269ss_legally_enforceable_debt",
-"natural_form": "Whether a debt arising from a cash transaction exceeding Rs.20,000 in violation of Section 269SS of the Income-tax Act, 1961 constitutes a legally enforceable debt under Section 138 of the Negotiable Instruments Act?",
-"legal_domain": "general criminal law",
-"outcome": "denied"
-},
-{
-"issue_id": "rebuttal_of_section_139_presumption",
-"natural_form": "Whether the accused rebutted the presumption under Section 139 of the Negotiable Instruments Act by raising a probable defence regarding absence of legally enforceable debt?",
-"legal_domain": "general criminal law",
-"outcome": "allowed"
-}
-],
-"ratio": {
-"text": "The presumption under Section 139 of the Negotiable Instruments Act includes the existence of a legally enforceable debt; however, it is rebuttable by the accused on the standard of preponderance of probabilities. A debt arising from a cash transaction exceeding Rs.20,000 in violation of Section 269SS of the Income-tax Act cannot be treated as legally enforceable unless a valid explanation under Section 273B of that Act is established.\n\nWhere the complainant admits payment of a large amount in cash in contravention of statutory mandate and fails to offer any lawful explanation, the accused can successfully rebut the statutory presumption. Criminal courts cannot validate transactions that defeat the object of Section 269SS, which aims to curb unaccounted cash transactions. In such circumstances, the alleged debt is not legally enforceable for the purposes of Section 138 of the Negotiable Instruments Act.",
-"source_hint": {
-"approx_pages": "12-18",
-"section": "analysis"
-}
-},
-"statutes_interpreted": [
-{
-"statute_name": "Negotiable Instruments Act, 1881",
-"section": "Sections 138 and 139",
-"interpretation": "Section 139 creates a rebuttable presumption including existence of legally enforceable debt; such presumption can be rebutted by probable defence on preponderance of probabilities."
-},
-{
-"statute_name": "Income-tax Act, 1961",
-"section": "Sections 269SS, 271D and 273B",
-"interpretation": "Cash loans above Rs.20,000 are prohibited; violation attracts penalty and unless a reasonable cause under Section 273B is shown, such transaction cannot be treated as giving rise to legally enforceable debt under Section 138 NI Act."
-}
-],
-"holding": {
-"decision": "conviction set aside; accused acquitted",
-"relief": "Judgments of trial court and appellate court set aside; revision allowed; accused acquitted; bail bond cancelled; amounts, if deposited, to be returned."
-},
-"legal_concepts": [
-"legally enforceable debt",
-"statutory presumption",
-"reverse onus",
-"preponderance of probabilities",
-"illegality of consideration",
-"cash transaction prohibition",
-"prospective application of judicial declaration"
-],
-"evidence": {
-"pdf_path": "tool/data/case_files/P_C_Hari_vs_Shine_Varghese_on_25_July_2025.PDF",
-"relevant_page_ranges": [
-"12-18"
-]
-}
-}
-,
-{"metadata": {
-"court": "High Court of Kerala at Ernakulam",
-"bench": [
-"Sushrut Arvind Dharmadhikari",
-"Syam Kumar V.M."
-],
-"date": "2025-12-03",
-"citation": "2025:KER:93252; W.A. No. 1551 of 2025",
-"language": "en"
-},
-"issues": [
-{
-"issue_id": "cci_jurisdiction_vis_a_vis_trai",
-"natural_form": "Whether the Competition Commission of India has jurisdiction to order investigation under Section 26(1) of the Competition Act, 2002 despite the existence of the TRAI Act and sectoral regulations.",
-"legal_domain": "competition_law",
-"outcome": "allowed"
+  {
+    "citation": "2025:KER:54510",
+    "court": "High Court of Kerala",
+    "year": 2025,
+    "title": "Legally enforceable debt under NI Act when loan violates Section 269SS",
+    "description": "The Kerala High Court held that the presumption under Section 139 of the Negotiable Instruments Act includes the existence of a legally enforceable debt, but the accused may rebut this presumption on the standard of preponderance of probabilities. Where the complainant admits that the alleged loan exceeding ₹20,000 was paid in cash in violation of Section 269SS of the Income Tax Act, such a transaction may not constitute a legally enforceable debt unless a valid explanation under Section 273B is shown. Courts cannot enforce transactions that defeat the statutory objective of preventing unaccounted cash dealings. Consequently, the presumption under Section 139 was successfully rebutted and the conviction under Section 138 NI Act was set aside.",
+    "legal_concepts": [
+      "section 138 NI Act",
+      "section 139 presumption",
+      "legally enforceable debt",
+      "section 269SS income tax act",
+      "cash loan prohibition",
+      "rebuttable presumption"
+    ]
+  },
+
+  {
+    "citation": "2025:KER:93252",
+    "court": "High Court of Kerala",
+    "year": 2025,
+    "title": "CCI jurisdiction despite sectoral telecom regulation",
+    "description": "The Kerala High Court held that the Competition Commission of India retains jurisdiction to investigate abuse of dominant position under the Competition Act, 2002 even when the relevant sector is regulated by another statutory authority such as the Telecom Regulatory Authority of India (TRAI). The existence of sector-specific regulation does not exclude the application of competition law where anti-competitive conduct is alleged. The Court further held that an order under Section 26(1) of the Competition Act directing investigation is only a prima facie administrative determination and does not decide rights or impose civil consequences. Therefore, judicial interference through writ jurisdiction at this preliminary stage is generally unwarranted.",
+    "legal_concepts": [
+      "competition commission jurisdiction",
+      "abuse of dominant position",
+      "section 26 investigation",
+      "sectoral regulator overlap",
+      "TRAI vs CCI jurisdiction"
+    ]
+  },
+
+  {
+    "citation": "AIRONLINE 2020 KER 715",
+    "court": "High Court of Kerala",
+    "year": 2020,
+    "title": "Applicability of Shops and Establishments Act to IT companies",
+    "description": "The Kerala High Court held that IT and IT-enabled service companies operating in the state fall within the definition of commercial establishments under the Kerala Shops and Commercial Establishments Act unless a specific statutory exemption is granted. The nature of business as a technology or software enterprise does not automatically remove such establishments from the regulatory framework of labour legislation. Labour authorities are therefore empowered to conduct inspections and initiate proceedings to ensure compliance with statutory requirements under the Act. Courts should not interfere with such inspections where authorities act within the scope of their statutory powers.",
+    "legal_concepts": [
+      "kerala shops and establishments act",
+      "commercial establishment",
+      "labour law compliance",
+      "inspection by labour authorities",
+      "IT companies regulation"
+    ]
+  },
+  {
+  "citation": "(2000) 6 SCC 359; AIR 2000 SC 2587",
+  "court": "Supreme Court of India",
+  "year": 2000,
+  "title": "Doctrine of merger after dismissal of Special Leave Petition",
+  "description": "The Supreme Court clarified the doctrine of merger in the context of dismissal of Special Leave Petitions under Article 136 of the Constitution. The Court held that dismissal of an SLP at the stage of consideration for grant of leave does not result in merger of the High Court judgment into the order of the Supreme Court. At that stage the Court exercises discretionary jurisdiction and not appellate jurisdiction. A non-speaking dismissal merely indicates that the Court was not inclined to grant leave and does not constitute affirmation of the High Court judgment. Consequently, the High Court retains jurisdiction to entertain review proceedings against its own judgment, subject to procedural limitations.",
+  "statutes": [
+    "Constitution of India Article 136"
+  ],
+  "legal_concepts": [
+    "doctrine of merger",
+    "special leave petition",
+    "review jurisdiction",
+    "judicial hierarchy",
+    "discretionary appellate jurisdiction"
+  ]
 },
 {
-"issue_id": "maintainability_of_writ_against_section_26_order",
-"natural_form": "Whether a writ petition is maintainable against a prima facie order directing investigation under Section 26(1) of the Competition Act, 2002.",
-"legal_domain": "competition_law",
-"outcome": "denied"
-}
-],
-"ratio": {
-"summary": "The Competition Act, 2002 is an independent special statute addressing anti-competitive practices and abuse of dominant position. The jurisdiction of the Competition Commission of India to examine allegations under Section 4 is not ousted merely because the telecom sector is regulated by TRAI. Overlapping regulatory fields do not bar CCI from exercising its statutory mandate where anti-competitive conduct is alleged.\n\nAn order under Section 26(1) forming a prima facie opinion and directing investigation is administrative and does not determine rights or impose civil consequences. Judicial interference at this preliminary stage is unwarranted; jurisdictional objections may be raised before the CCI itself.",
-"source_hint": {
-"approx_pages": "3-10",
-"section": "analysis"
-}
-},
-"statutes_interpreted": [
-{
-"statute_name": "Competition Act, 2002",
-"section": "Sections 4, 19(1)(a) and 26(1)",
-"interpretation": "CCI may form a prima facie opinion of abuse of dominant position and direct investigation; such order is preliminary and does not decide rights."
-},
-{
-"statute_name": "Telecom Regulatory Authority of India Act, 1997",
-"section": "General scheme",
-"interpretation": "Sectoral regulation under TRAI does not exclude CCIs jurisdiction over anti-competitive conduct."
-}
-],
-"holding": {
-"decision": "writ_appeal_dismissed",
-"relief": "Order of Single Bench affirmed; liberty reserved to raise jurisdictional objections before CCI."
-},
-"legal_concepts": [
-"abuse_of_dominant_position",
-"sectoral_regulator_overlap",
-"prima_facie_opinion",
-"judicial_restraint",
-"competition_regulation"
-],
-"evidence": {
-"pdf_path": "tool/data/case_files/Jiostar_India_Private_Limited_vs_CCI(rejected plea)_on_3_December_2025 (2).PDF",
-"relevant_page_ranges": [
-"3-10"
-]
-}
+  "citation": "2024 INSC 937",
+  "court": "Supreme Court of India",
+  "year": 2024,
+  "title": "Distinction between murder and culpable homicide",
+  "description": "The Supreme Court examined the distinction between murder under Section 302 IPC and culpable homicide not amounting to murder under Section 304 IPC. The Court held that determining the appropriate offence requires careful evaluation of intention, knowledge, nature of the weapon used, the number and location of injuries, and surrounding circumstances. Where the accused intentionally inflicts multiple injuries on vital parts of the body using a deadly weapon, intention to cause death may be inferred. In the present case, eyewitness testimony corroborated by medical evidence established the accused’s intention to cause death, and therefore the conviction under Section 302 IPC was upheld.",
+  "statutes": [
+    "Indian Penal Code Section 302",
+    "Indian Penal Code Section 304",
+    "Indian Penal Code Section 324",
+    "Indian Penal Code Section 326"
+  ],
+  "legal_concepts": [
+    "murder vs culpable homicide",
+    "intention vs knowledge",
+    "criminal liability",
+    "eyewitness evidence",
+    "medical corroboration"
+  ]
 },
 {
-"metadata": {
-"court": "High Court of Kerala at Ernakulam",
-"bench": [
-"K. Vinod Chandran",
-"V.G. Arun"
-],
-"date": "2020-01-23",
-"citation": "AIRONLINE 2020 KER 715; W.A. No. 979 of 2018 & connected cases",
-"language": "en"
+  "citation": "2026 INSC 35",
+  "court": "Supreme Court of India",
+  "year": 2026,
+  "title": "Limitation and readiness in suits for specific performance",
+  "description": "The Supreme Court reiterated that a decree for specific performance requires the plaintiff to demonstrate continuous readiness and willingness to perform contractual obligations under Section 16(c) of the Specific Relief Act. The Court held that reliance on contractual extensions granted by a person lacking valid authority cannot establish enforceable rights against a co-owner who had revoked earlier authority through a registered power of attorney. The Court further clarified that under Article 54 of the Limitation Act, a suit for specific performance must be filed within three years from the date fixed for performance or from the date when the plaintiff has notice of refusal. In the absence of a valid extension binding on the relevant party, the suit filed beyond the limitation period was barred.",
+  "statutes": [
+    "Specific Relief Act 1963 Section 16(c)",
+    "Limitation Act 1963 Article 54"
+  ],
+  "legal_concepts": [
+    "specific performance",
+    "readiness and willingness",
+    "limitation in contract law",
+    "power of attorney revocation",
+    "contract enforcement"
+  ]
 },
-"issues": [
 {
-"issue_id": "applicability_of_shops_and_establishments_act_to_it_companies",
-"natural_form": "Whether IT/ITeS companies operating in Kerala are covered by the Kerala Shops and Commercial Establishments Act and subject to inspection and compliance under labour laws.",
-"legal_domain": "general_criminal_law",
-"outcome": "allowed"
+  "citation": "SLP (C) No. 23740/2023",
+  "court": "Supreme Court of India",
+  "year": 2025,
+  "title": "Procedural order granting time for filing rejoinder",
+  "description": "The Supreme Court issued an interim procedural order granting the respondent additional time to file a rejoinder affidavit in a pending Special Leave Petition. The matter was directed to be listed again after the specified period. Such orders do not decide substantive legal rights or interpret statutory provisions but are issued to facilitate orderly progress of proceedings before the Court.",
+  "statutes": [
+    "Constitution of India Article 136"
+  ],
+  "legal_concepts": [
+    "interim order",
+    "procedural directions",
+    "special leave petition",
+    "rejoinder affidavit",
+    "case management"
+  ]
 },
 {
-"issue_id": "validity_of_inspection_by_labour_authorities",
-"natural_form": "Whether inspection and proceedings initiated by Assistant Labour Officers against such establishments were legally sustainable.",
-"legal_domain": "general_criminal_law",
-"outcome": "allowed"
-}
-],
-"ratio": {
-"summary": "The Kerala Shops and Commercial Establishments Act applies to establishments engaged in systematic commercial activity irrespective of their nature as IT or IT-enabled services entities. Exemptions must be expressly provided and cannot be inferred merely from the character of the industry.\n\nLabour authorities are empowered to conduct inspections and initiate proceedings for statutory compliance. Judicial interference is unwarranted where statutory authorities act within the bounds of the Act and the challenge is premised only on the nature of business carried on.",
-"source_hint": {
-"approx_pages": "120-139",
-"section": "analysis"
-}
+  "citation": "Civil Appeal No. 59 of 2021",
+  "court": "Supreme Court of India",
+  "year": 2021,
+  "title": "Reservation in promotion for persons with disabilities",
+  "description": "The Supreme Court held that the Persons with Disabilities (Equal Opportunities, Protection of Rights and Full Participation) Act, 1995 mandates reservation in promotion in addition to reservation in initial recruitment. Sections 32, 33 and 47 must be read harmoniously to ensure equal opportunity and non-discrimination in employment for persons with disabilities. The Court clarified that reservation must be computed with reference to total cadre strength and is not confined to employees originally appointed under the disability quota. Once an employee qualifies as a person with disability under the statute, the benefit of reservation in promotion applies irrespective of the mode of initial recruitment.",
+  "statutes": [
+    "Persons with Disabilities Act 1995 Sections 32, 33, 47"
+  ],
+  "legal_concepts": [
+    "reservation in promotion",
+    "disability rights",
+    "equal opportunity in employment",
+    "beneficial legislation",
+    "cadre strength reservation"
+  ]
 },
-"statutes_interpreted": [
 {
-"statute_name": "Kerala Shops and Commercial Establishments Act, 1960",
-"section": "General applicability provisions",
-"interpretation": "IT and allied service establishments fall within the definition of commercial establishments unless specifically exempted."
-}
-],
-"holding": {
-"decision": "appeals_dismissed",
-"relief": "Writ appeals dismissed; orders upholding statutory inspections sustained."
+  "citation": "Criminal Appeal Nos. 1122-1123 of 2018",
+  "court": "Supreme Court of India",
+  "year": 2024,
+  "title": "DNA evidence and commutation of death sentence in rape-murder case",
+  "description": "The Supreme Court upheld the conviction of the accused for rape and murder of a minor child based on a complete chain of circumstantial evidence supported by forensic and DNA analysis. The Court reiterated that in cases relying on circumstantial evidence, the prosecution must establish a chain of circumstances that conclusively points to the guilt of the accused and excludes any reasonable alternative hypothesis. In the present case, the forensic reports, medical findings, and recovery evidence decisively connected the accused to the offence. However, the Court held that the imposition of the death penalty requires strict application of the 'rarest of rare' doctrine, balancing aggravating and mitigating circumstances. Despite the gravity of the crime, the Court found that the mitigating factors and possibility of reformation justified commutation of the death sentence to imprisonment for the remainder of the accused’s natural life.",
+  "statutes": [
+    "Indian Penal Code Section 302",
+    "Indian Penal Code Section 376",
+    "Indian Penal Code Section 201",
+    "Code of Criminal Procedure Section 366",
+    "Code of Criminal Procedure Section 394"
+  ],
+  "legal_concepts": [
+    "rarest of rare doctrine",
+    "circumstantial evidence",
+    "DNA forensic evidence",
+    "capital punishment",
+    "death sentence commutation",
+    "life imprisonment till natural life"
+  ]
 },
-"legal_concepts": [
-"commercial_establishment",
-"labour_law_compliance",
-"statutory_inspection",
-"judicial_restraint",
-"regulatory_oversight"
-],
-"evidence": {
-"pdf_path": "tool/data/case_files/Tata_Consultancy_Services_Limited_vs_State_Of_Kerala_on_23_January_2020.PDF",
-"relevant_page_ranges": [
-"120-139"
-]
-}
+{
+  "citation": "1980 AIR 271; 1980 SCR (1) 804",
+  "court": "Supreme Court of India",
+  "year": 1979,
+  "title": "Legislative competence to impose building tax",
+  "description": "The Supreme Court upheld the constitutional validity of the Kerala Building Tax Act, 1975, holding that the State Legislature possessed competence under Entry 49 of List II of the Seventh Schedule to impose taxes on buildings. The Court clarified the distinction between the subject of a tax and the measure used to compute it, observing that determining capital value by multiplying annual rental value was a permissible method of valuation. The retrospective operation of the tax from an earlier date was also upheld, as it did not violate constitutional protections or impair vested rights. The Court rejected the challenge under Article 14, finding the valuation mechanism reasonable and non-arbitrary.",
+  "statutes": [
+    "Kerala Building Tax Act 1975",
+    "Constitution of India Entry 49 List II",
+    "Constitution of India Article 14"
+  ],
+  "legal_concepts": [
+    "legislative competence",
+    "taxation of buildings",
+    "retrospective taxation",
+    "subject vs measure of tax",
+    "constitutional validity of tax law"
+  ]
+},
+{
+  "citation": "AIR 1973 SC 1461; (1973) 4 SCC 225",
+  "court": "Supreme Court of India",
+  "year": 1973,
+  "title": "Basic structure doctrine of the Constitution",
+  "description": "The Supreme Court in the landmark Kesavananda Bharati case held that while Parliament has wide powers to amend the Constitution under Article 368, such power is not unlimited. Parliament cannot alter or destroy the basic structure or essential features of the Constitution. The Court identified foundational principles such as supremacy of the Constitution, republican and democratic form of government, secularism, separation of powers, federalism, and judicial review as part of the Constitution’s basic structure. While the 24th Amendment confirming Parliament’s amending power was upheld, parts of the 25th Amendment were limited, and laws placed in the Ninth Schedule remain subject to judicial review if they damage the basic structure.",
+  "statutes": [
+    "Constitution of India Article 368",
+    "Constitution of India Article 13"
+  ],
+  "legal_concepts": [
+    "basic structure doctrine",
+    "constitutional amendment power",
+    "judicial review",
+    "supremacy of constitution",
+    "limited amending power"
+  ]
 }
 ]

@@ -14,11 +14,8 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
 from src.agents.agent_llm_helper import get_agent_llm
-from src.agents.case_retriever.models import (
-    LowerCourtCaseResult,
-    UpperCourtCaseResult,
-    CaseSynthesisResult,
-)
+from src.agents.case_retriever.models import CaseSynthesisResult
+from src.services.case_json_loader import CaseJSONLoader
 
 logger = logging.getLogger(__name__)
 
@@ -41,21 +38,22 @@ class CaseComparativeAnalyzerAgent:
             model_type="writer",
             output_schema=CaseSynthesisResult,
         )
+        self.case_loader = CaseJSONLoader()
     
     @observe(name="CaseComparativeAnalyzer", as_type="agent")
     def __call__(
         self,
-        lower_result: Optional[LowerCourtCaseResult],
-        upper_result: Optional[UpperCourtCaseResult],
+        lower_citations: List[str],
+        upper_citations: List[str],
         state: Optional[Dict[str, Any]] = None,
         callbacks: Optional[List] = None
     ) -> Dict[str, Any]:
         """
-        Generate LLM synthesis from lower and upper court case results.
+        Generate LLM synthesis from citation lists by enriching with full case JSON.
         
         Args:
-            lower_result: LowerCourtCaseResult from lower court finder (optional)
-            upper_result: UpperCourtCaseResult from upper court finder (optional)
+            lower_citations: List of max 2 citations from lower court finder
+            upper_citations: List of max 2 citations from upper court finder
             state: GraphState
             callbacks: Optional callbacks
         
@@ -63,25 +61,33 @@ class CaseComparativeAnalyzerAgent:
             Dict with 'analysis_result' key containing CaseSynthesisResult
         """
         try:
-            lower_count = len(lower_result.cases) if lower_result else 0
-            upper_count = len(upper_result.precedents) if upper_result else 0
-            
             logger.info(
                 f"CaseComparativeAnalyzer: Analyzing "
-                f"{lower_count} lower cases, {upper_count} precedents"
+                f"{len(lower_citations)} lower citations, {len(upper_citations)} upper citations"
             )
 
             # Handle edge cases
-            if not lower_result and not upper_result:
-                logger.warning("CaseComparativeAnalyzer: Both lower and upper results are None")
+            if not lower_citations and not upper_citations:
+                logger.warning("CaseComparativeAnalyzer: No citations provided")
                 return {"analysis_result": CaseSynthesisResult(
                     analysis_markdown="# Case Analysis\n\nNo cases found for the query.",
                     relevant_pdf_paths=[]
                 )}
 
-            cases_payload = self._prepare_cases_payload(lower_result, upper_result)
+            # Enrich citations with full case JSON from casefiles.json
+            enriched_cases = self._enrich_citations_with_full_json(
+                lower_citations, upper_citations
+            )
+            
+            if not enriched_cases:
+                logger.warning("CaseComparativeAnalyzer: No cases found in casefiles.json")
+                return {"analysis_result": CaseSynthesisResult(
+                    analysis_markdown="# Case Analysis\n\nSelected cases not found in database.",
+                    relevant_pdf_paths=[]
+                )}
+            
             analysis_result = self._run_llm_synthesis(
-                cases_payload=cases_payload,
+                enriched_cases=enriched_cases,
                 user_query=(state or {}).get("user_query", ""),
                 callbacks=callbacks or [],
             )
@@ -101,60 +107,111 @@ class CaseComparativeAnalyzerAgent:
                 relevant_pdf_paths=[]
             )}
 
-    def _prepare_cases_payload(
+    def _enrich_citations_with_full_json(
         self,
-        lower_result: Optional[LowerCourtCaseResult],
-        upper_result: Optional[UpperCourtCaseResult],
+        lower_citations: List[str],
+        upper_citations: List[str]
     ) -> List[Dict[str, Any]]:
-        """Build compact case payload consumed by the LLM."""
+        """
+        Enrich citations with full case JSON from casefiles.json.
+        
+        Args:
+            lower_citations: Citations from lower court finder
+            upper_citations: Citations from upper court finder
+        
+        Returns:
+            List of enriched case dictionaries with full JSON and metadata
+        """
+        enriched_cases = []
+        
+        # Process lower court citations
+        for citation in lower_citations:
+            logger.info(f"Loading lower court case: {citation}")
+            case_json = self.case_loader.load_case_by_citation(citation)
+            if case_json:
+                enriched_cases.append({
+                    "source": "lower_court",
+                    "citation": citation,
+                    "full_case_json": case_json
+                })
+            else:
+                logger.warning(f"Case not found in casefiles.json: {citation}")
+        
+        # Process upper court citations
+        for citation in upper_citations:
+            logger.info(f"Loading upper court case: {citation}")
+            case_json = self.case_loader.load_case_by_citation(citation)
+            if case_json:
+                enriched_cases.append({
+                    "source": "upper_court",
+                    "citation": citation,
+                    "full_case_json": case_json
+                })
+            else:
+                logger.warning(f"Case not found in casefiles.json: {citation}")
+        
+        logger.info(f"Enriched {len(enriched_cases)} cases with full JSON")
+        return enriched_cases
+
+    def _prepare_cases_for_llm(
+        self,
+        enriched_cases: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Build detailed case payload for LLM from enriched cases with full JSON.
+        
+        Extracts all relevant fields from the full case JSON structure including:
+        - Metadata (court, date, citation, bench)
+        - Issues and their outcomes
+        - Ratio decidendi
+        - Holdings and decisions
+        - Statutes interpreted
+        - Legal concepts
+        - PDF paths from evidence
+        """
         payload: List[Dict[str, Any]] = []
 
-        if lower_result:
-            for case in lower_result.cases:
-                payload.append(
-                    {
-                        "source": "lower",
-                        "case_id": case.case_id,
-                        "citation": case.citation,
-                        "court": case.court,
-                        "date": case.date,
-                        "decision": case.decision,
-                        "legal_concepts": case.legal_concepts,
-                        "statutes_mentioned": case.statutes_mentioned,
-                        "content_preview": case.content_preview,
-                        "relevance_score": case.similarity_score,
-                        "pdf_path": case.pdf_path,
-                    }
-                )
-
-        if upper_result:
-            for precedent in upper_result.precedents:
-                payload.append(
-                    {
-                        "source": "upper",
-                        "case_id": None,
-                        "citation": precedent.citation,
-                        "court": precedent.court,
-                        "date": precedent.date,
-                        "decision": precedent.decision,
-                        "legal_concepts": precedent.common_concepts,
-                        "statutes_mentioned": [],
-                        "content_preview": None,
-                        "relevance_score": precedent.relevance_score,
-                        "pdf_path": precedent.pdf_path,
-                    }
-                )
+        for case_data in enriched_cases:
+            case_json = case_data.get("full_case_json", {})
+            metadata = case_json.get("metadata", {})
+            evidence = case_json.get("evidence", {})
+            holding = case_json.get("holding", {})
+            ratio = case_json.get("ratio", {})
+            
+            # Build comprehensive case representation
+            case_for_llm = {
+                "source": case_data.get("source"),
+                "citation": case_data.get("citation"),
+                "court": metadata.get("court", ""),
+                "bench": metadata.get("bench", []),
+                "date": metadata.get("date", ""),
+                "language": metadata.get("language", "en"),
+                "issues": case_json.get("issues", []),
+                "ratio": ratio.get("text", ""),
+                "holding": holding,
+                "statutes_interpreted": case_json.get("statutes_interpreted", []),
+                "legal_concepts": case_json.get("legal_concepts", []),
+                "pdf_path": evidence.get("pdf_path", ""),
+                "relevant_page_ranges": evidence.get("relevant_page_ranges", []),
+                # Include full case json for comprehensive analysis
+                "full_structure": case_json
+            }
+            
+            payload.append(case_for_llm)
 
         return payload
 
     @observe(name="LLM_Synthesis", as_type="llm")
     def _run_llm_synthesis(
         self,
-        cases_payload: List[Dict[str, Any]],
+        enriched_cases: List[Dict[str, Any]],
         user_query: str,
         callbacks: List[Any],
     ) -> CaseSynthesisResult:
-        """Invoke LLM to produce markdown analysis and relevant PDF paths."""
+        """Invoke LLM to produce markdown analysis and relevant PDF paths from enriched cases."""
+        # Prepare detailed payload for LLM
+        cases_payload = self._prepare_cases_for_llm(enriched_cases)
+        
         available_pdf_paths = {
             path for path in (case.get("pdf_path") for case in cases_payload) if path
         }
@@ -185,9 +242,81 @@ class CaseComparativeAnalyzerAgent:
             logger.info(f"Invoking LLM synthesis with {len(cases_payload)} cases...")
             logger.info(f"Case sources: {set(c.get('source') for c in cases_payload)}")
             logger.info(f"Available PDF paths: {len({c.get('pdf_path') for c in cases_payload if c.get('pdf_path')})}")
+            system_prompt = """You are DIKE, an AI legal analyst specializing in Indian law.
+
+Your task is NOT to produce short summaries.
+Your task is to produce detailed legal explanations of ONLY the RELEVANT cases so that a user can clearly understand:
+
+- the factual background of the case
+- the legal issues involved
+- the arguments of the parties
+- the statutes or constitutional provisions involved
+- the reasoning of the court
+- the final holding and legal principles established
+
+CASE FILTERING RULES:
+
+1. FIRST, analyze the user query to understand what they are asking about.
+2. ONLY analyze cases that are directly relevant to the user's query.
+3. SKIP or minimally mention cases that are not directly related to the user's legal problem or question.
+4. If a case touches on peripheral issues but not the main question, do NOT include it in detailed analysis.
+5. Prioritize cases with the highest relevance to the user's specific query.
+6. If a case is only tangentially related, acknowledge its existence but do NOT provide full CASE ANALYSIS format for it.
+
+When presenting relevant cases, follow this structured format:
+
+------------------------------------------------------------
+
+CASE ANALYSIS
+
+Case Name:
+Citation:
+Court:
+Bench:
+Date:
+
+1. Background Facts
+Explain the factual background of the dispute in detail.
+Describe the events that led to the litigation and why the case reached the court.
+
+2. Legal Issues
+Clearly list the legal questions that the court had to decide.
+
+3. Statutory Framework
+Mention all relevant statutes, constitutional provisions, or legal doctrines that the court relied upon.
+
+4. Arguments
+Explain the key arguments made by the petitioner/appellant and the respondent.
+
+5. Court's Reasoning
+Provide a detailed explanation of how the court analyzed the issues.
+Explain the legal reasoning step-by-step.
+
+6. Holding / Judgment
+State the final decision of the court and the legal rule that emerged.
+
+7. Key Legal Principles
+List the important principles or precedents established by the judgment.
+
+------------------------------------------------------------
+
+IMPORTANT RULES:
+
+1. Do NOT produce short summaries.
+2. Do NOT compress the reasoning.
+3. Explain the case in a detailed narrative form.
+4. Always mention the citation and court if available.
+5. If multiple cases are relevant, analyze each case separately using the structured format above.
+6. Focus on legally decisive facts and reasoning rather than generic commentary.
+7. Preserve legal terminology accurately.
+8. Only provide detailed analysis for cases that directly address the user's query.
+9. Filter out irrelevant cases and do NOT pad your response with marginally related cases.
+
+Your goal is to help the user understand the full legal significance of RELEVANT cases, not just the conclusion."""
+
             llm_result = self.llm.invoke(
                 [
-                    {"role": "system", "content": "You are a precise legal analysis assistant."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt},
                 ],
                 config={"callbacks": callbacks},

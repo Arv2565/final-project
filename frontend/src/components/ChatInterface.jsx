@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DocumentPreviewButton from './DocumentPreviewButton';
 import LoadingIndicator from './LoadingIndicator';
+import CasePdfList from './CasePdfList';
 import { getCookie } from '../utils';
 
 const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMessages, isDraftOpen, userId, persistChatToDatabase, createNewChat }) => {
@@ -244,13 +245,13 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 if (pdfPaths.length > 0) {
                     console.log(`Received ${pdfPaths.length} case PDF paths`);
                     
-                    // Create a message to display the case PDFs
-                    const pdfListContent = pdfPaths.map(path => `- ${path}`).join('\n');
+                    // Create a message to display the case PDFs using CasePdfList component
                     const casePdfMsg = {
                         id: Date.now(),
                         type: 'assistant',
-                        content: `**Retrieved Case PDFs:**\n${pdfListContent}`,
-                        payload: { type: 'case_pdfs', paths: pdfPaths }
+                        content: null,  // No text content for PDF list
+                        payload: { type: 'case_pdfs', paths: pdfPaths },
+                        isCasePdfList: true  // Flag to indicate this is a PDF list message
                     };
                     updatedMessages = [...updatedMessages, casePdfMsg];
                     setMessages(updatedMessages);
@@ -538,71 +539,77 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-3 w-full">
+                                        {message.content ? (
+                                            <div className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800 markdown-content break-words overflow-x-hidden w-full">
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                    {message.content}
+                                                </ReactMarkdown>
+                                            </div>
+                                        ) : null}
+                                        {/* Render CasePdfList for both live websocket and history-loaded messages */}
+                                        {Array.isArray(message.payload?.case_pdf_paths) && message.payload.case_pdf_paths.length > 0 ? (
+                                            <CasePdfList pdfPaths={message.payload.case_pdf_paths} />
+                                        ) : Array.isArray(message.payload?.paths) && message.payload.paths.length > 0 ? (
+                                            <CasePdfList pdfPaths={message.payload.paths} />
+                                        ) : null}
+                                        {/* Document Preview & Download Buttons */}
+                                        {message.documentContent && message.documentContent.trim() !== '' && (
+                                            <div className="flex items-stretch gap-2 w-full mt-3">
+                                                <DocumentPreviewButton
+                                                    toggleDraft={() => toggleDraft(message.documentContent)}
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        const blob = new Blob([message.documentContent], { type: 'text/markdown' });
+                                                        const url = URL.createObjectURL(blob);
+                                                        const a = document.createElement('a');
+                                                        a.href = url;
+                                                        a.download = 'document.md';
+                                                        document.body.appendChild(a);
+                                                        a.click();
+                                                        document.body.removeChild(a);
+                                                        URL.revokeObjectURL(url);
+                                                    }}
+                                                    className="border border-gray-500 dark:border-gray-500 light:border-gray-500 hover:border-gray-700 dark:hover:border-gray-300 light:hover:border-gray-700 rounded-lg p-3 transition-all hover:bg-gray-200 dark:hover:bg-white/5 light:hover:bg-gray-200 group flex items-center justify-center h-full"
+                                                    title="Download"
+                                                >
+                                                    <span className="material-symbols-outlined text-gray-600 dark:text-gray-400 light:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white light:group-hover:text-gray-900" style={{ fontSize: '20px' }}>download</span>
+                                                </button>
+                                            </div>
+                                        )}
+                                        {/* Action Buttons */}
                                         {message.content && (
-                                            <>
-                                                <div className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800 markdown-content break-words overflow-x-hidden w-full">
-                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                        {message.content}
-                                                    </ReactMarkdown>
-                                                </div>
-                                                {/* Document Preview & Download Buttons */}
-                                                {message.documentContent && message.documentContent.trim() !== '' && (
-                                                    <div className="flex items-stretch gap-2 w-full mt-3">
-                                                        <DocumentPreviewButton
-                                                            toggleDraft={() => toggleDraft(message.documentContent)}
-                                                        />
-                                                        <button
-                                                            onClick={() => {
-                                                                const blob = new Blob([message.documentContent], { type: 'text/markdown' });
-                                                                const url = URL.createObjectURL(blob);
-                                                                const a = document.createElement('a');
-                                                                a.href = url;
-                                                                a.download = 'document.md';
-                                                                document.body.appendChild(a);
-                                                                a.click();
-                                                                document.body.removeChild(a);
-                                                                URL.revokeObjectURL(url);
-                                                            }}
-                                                            className="border border-gray-500 dark:border-gray-500 light:border-gray-500 hover:border-gray-700 dark:hover:border-gray-300 light:hover:border-gray-700 rounded-lg p-3 transition-all hover:bg-gray-200 dark:hover:bg-white/5 light:hover:bg-gray-200 group flex items-center justify-center h-full"
-                                                            title="Download"
-                                                        >
-                                                            <span className="material-symbols-outlined text-gray-600 dark:text-gray-400 light:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white light:group-hover:text-gray-900" style={{ fontSize: '20px' }}>download</span>
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {/* Action Buttons */}
-                                                <div className="flex gap-2 pt-2 items-center">
-                                                    <button
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(message.content);
-                                                        }}
-                                                        className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-gray-900 dark:hover:text-white light:hover:text-gray-900 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
-                                                        title="Copy"
-                                                    >
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>content_copy</span>
-                                                    </button>
-                                                    <button
-                                                        className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-green-600 dark:hover:text-green-400 light:hover:text-green-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
-                                                        title="Like"
-                                                    >
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>thumb_up</span>
-                                                    </button>
-                                                    <button
-                                                        className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-red-600 dark:hover:text-red-400 light:hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
-                                                        title="Dislike"
-                                                    >
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>thumb_down</span>
-                                                    </button>
-                                                    <button
-                                                        className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-blue-600 dark:hover:text-blue-400 light:hover:text-blue-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
-                                                        title="Regenerate"
-                                                    >
-                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 2.2"></path>
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </>
+                                            <div className="flex gap-2 pt-2 items-center">
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(message.content);
+                                                    }}
+                                                    className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-gray-900 dark:hover:text-white light:hover:text-gray-900 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
+                                                    title="Copy"
+                                                >
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>content_copy</span>
+                                                </button>
+                                                <button
+                                                    className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-green-600 dark:hover:text-green-400 light:hover:text-green-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
+                                                    title="Like"
+                                                >
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>thumb_up</span>
+                                                </button>
+                                                <button
+                                                    className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-red-600 dark:hover:text-red-400 light:hover:text-red-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
+                                                    title="Dislike"
+                                                >
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>thumb_down</span>
+                                                </button>
+                                                <button
+                                                    className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-blue-600 dark:hover:text-blue-400 light:hover:text-blue-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
+                                                    title="Regenerate"
+                                                >
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 2.2"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                 )}

@@ -1,6 +1,22 @@
 """
 Dual-RAG Retriever for Parallel Naive and Graph-Based Retrieval.
 
+DEPRECATED: This module is deprecated as of 2026-03-07.
+    
+The case retrieval system has been simplified to use direct LLM-based citation
+selection from JSON files (higher_case.json, lower_case.json) instead of 
+vector-based RAG retrieval. This eliminates the need for parallel naive + graph 
+RAG execution.
+
+New Implementation:
+- LowerCourtCaseFinderAgent: Uses LLM to select max 2 citations from lower_case.json
+- UpperCourtCaseFinderAgent: Uses LLM to select max 2 citations from higher_case.json  
+- CaseComparativeAnalyzerAgent: Enriches citations with full case JSON from casefiles.json
+
+This file remains in the codebase for potential future use but is no longer
+imported or used by the case retriever agents.
+
+Original Description:
 Combines naive vector search with graph-based retrieval,
 running both in parallel and merging results ranked by relevance.
 Returns full case JSON for each result using citation lookup.

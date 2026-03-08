@@ -77,36 +77,36 @@ class CaseRetrieverWorkflow:
             logger.info("CaseRetrieverWorkflow: Stage 1 - Executing finders in parallel")
             logger.info("CaseRetrieverWorkflow: 🔎 Searching lower court cases...")
             
-            # Execute lower court finder
-            lower_court_result = None
+            # Execute lower court finder - returns list of citations
+            lower_citations = []
             lower_court_error = None
             try:
                 lower_result_dict = self.lower_court_finder(state, callbacks=callbacks)
-                lower_court_result = lower_result_dict.get("lower_court_result")
-                logger.info("Lower court finder completed successfully")
+                lower_citations = lower_result_dict.get("lower_citations", [])
+                logger.info(f"Lower court finder completed successfully: {len(lower_citations)} citations")
             except Exception as e:
                 lower_court_error = e
                 logger.error(f"Lower court finder failed: {e}")
             
-            # Execute upper court finder (can run in parallel with lower)
+            # Execute upper court finder - returns list of citations
             logger.info("CaseRetrieverWorkflow: 📚 Analyzing precedents and appellate chains...")
-            upper_court_result = None
+            upper_citations = []
             upper_court_error = None
             try:
                 upper_result_dict = self.upper_court_finder(
-                    lower_result=lower_court_result.dict() if lower_court_result else None,
+                    lower_result=None,  # No longer needed
                     state=state,
                     callbacks=callbacks
                 )
-                upper_court_result = upper_result_dict.get("upper_court_result")
-                logger.info("Upper court finder completed successfully")
+                upper_citations = upper_result_dict.get("upper_citations", [])
+                logger.info(f"Upper court finder completed successfully: {len(upper_citations)} citations")
             except Exception as e:
                 upper_court_error = e
                 logger.error(f"Upper court finder failed: {e}")
             
             # Check if at least one finder succeeded
-            if not lower_court_result and not upper_court_result:
-                error_msg = "Both finders failed"
+            if not lower_citations and not upper_citations:
+                error_msg = "Both finders failed to return citations"
                 if lower_court_error:
                     error_msg += f": Lower - {lower_court_error}"
                 if upper_court_error:
@@ -114,32 +114,26 @@ class CaseRetrieverWorkflow:
                 raise RuntimeError(error_msg)
             
             # ==================================================================
-            # STAGE 2: LLM Synthesis (Sequential on Finder Results)
+            # STAGE 2: LLM Synthesis (Sequential on Citation Results)
             # ==================================================================
             logger.info("CaseRetrieverWorkflow: Stage 2 - Running comparative analyzer")
-            logger.info("CaseRetrieverWorkflow: ⚖️ Generating case summary and conclusion...")
+            logger.info(f"CaseRetrieverWorkflow: ⚖️ Analyzing {len(lower_citations)} lower + {len(upper_citations)} upper citations...")
             
             analysis_result = None
             analysis_error = None
             
-            if lower_court_result and upper_court_result:
-                try:
-                    analyzer_result_dict = self.analyzer(
-                        lower_result=lower_court_result,
-                        upper_result=upper_court_result,
-                        state=state,
-                        callbacks=callbacks
-                    )
-                    analysis_result = analyzer_result_dict.get("analysis_result")
-                    logger.info("Comparative analyzer completed successfully")
-                except Exception as e:
-                    analysis_error = e
-                    logger.error(f"Comparative analyzer failed: {e}")
-            else:
-                logger.warning(
-                    "Skipping analysis - missing finder results. "
-                    f"Have lower: {bool(lower_court_result)}, upper: {bool(upper_court_result)}"
+            try:
+                analyzer_result_dict = self.analyzer(
+                    lower_citations=lower_citations,
+                    upper_citations=upper_citations,
+                    state=state,
+                    callbacks=callbacks
                 )
+                analysis_result = analyzer_result_dict.get("analysis_result")
+                logger.info("Comparative analyzer completed successfully")
+            except Exception as e:
+                analysis_error = e
+                logger.error(f"Comparative analyzer failed: {e}")
             
             # ==================================================================
             # STAGE 3: Accumulate Results into State
@@ -147,10 +141,10 @@ class CaseRetrieverWorkflow:
             logger.info("CaseRetrieverWorkflow: Stage 3 - Accumulating results")
             
             case_retriever_state = {
-                "lower_court_cases": lower_court_result.dict() if lower_court_result else None,
-                "upper_court_precedents": upper_court_result.dict() if upper_court_result else None,
+                "lower_court_citations": lower_citations,
+                "upper_court_citations": upper_citations,
                 "case_analysis": analysis_result.dict() if analysis_result else None,
-                "workflow_status": "completed" if (lower_court_result and upper_court_result) else "partial",
+                "workflow_status": "completed" if (lower_citations or upper_citations) else "failed",
                 "errors": {
                     "lower_court_finder": str(lower_court_error) if lower_court_error else None,
                     "upper_court_finder": str(upper_court_error) if upper_court_error else None,
@@ -165,8 +159,8 @@ class CaseRetrieverWorkflow:
             
             return {
                 "case_retriever_state": case_retriever_state,
-                "lower_court_result": lower_court_result,
-                "upper_court_result": upper_court_result,
+                "lower_citations": lower_citations,
+                "upper_citations": upper_citations,
                 "analysis_result": analysis_result,
             }
         
@@ -186,7 +180,7 @@ class CaseRetrieverWorkflow:
         """
         return {
             "workflow_completed": result.get("case_retriever_state", {}).get("workflow_status") == "completed",
-            "lower_court_cases_found": len(result.get("lower_court_result", {}).get("cases", [])) if result.get("lower_court_result") else 0,
-            "precedents_found": len(result.get("upper_court_result", {}).get("precedents", [])) if result.get("upper_court_result") else 0,
+            "lower_citations_found": len(result.get("lower_citations", [])),
+            "upper_citations_found": len(result.get("upper_citations", [])),
             "analysis_generated": bool(result.get("analysis_result")),
         }
