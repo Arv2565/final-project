@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 const DraftBuilder = ({ onClose, content = '', onContentChange }) => {
     const [isEditMode, setIsEditMode] = useState(false);
@@ -73,14 +71,12 @@ const DraftBuilder = ({ onClose, content = '', onContentChange }) => {
                             placeholder="Edit your document content here..."
                         />
                     ) : (
-                        /* Preview Mode - Rendered Markdown */
+                        /* Preview Mode - Plain text to preserve exact legal formatting */
                         <div
                             className="draft-markdown-content w-full text-legal-darkNavy dark:text-gray-300 bg-transparent"
                             style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
                         >
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {editableContent}
-                            </ReactMarkdown>
+                            {editableContent}
                         </div>
                     )
                 ) : (
@@ -98,7 +94,7 @@ const DraftBuilder = ({ onClose, content = '', onContentChange }) => {
                 .draft-markdown-content {
                     font-family: Arial, Helvetica, sans-serif;
                     font-size: 0.95rem;
-                    line-height: 1.25;
+                    line-height: 1.6;
                     background: transparent;
                     word-wrap: break-word;
                     overflow-wrap: anywhere;

@@ -67,7 +67,7 @@ Rules:
 - Do not hallucinate legal requirements"""
 
 DOCUMENT_GENERATION_SYSTEM_PROMPT = """You are a precise legal document generation assistant.
-Your task is to generate a final legal document in Markdown format by extracting necessary details from the user's natural language response and filling in the provided placeholders in the template.
+Your task is to generate a final legal document by extracting necessary details from the user's natural language response and filling in the provided placeholders in the template.
 
 Input:
 1. Template Content: The raw text of the legal document template.
@@ -82,9 +82,21 @@ Rules:
 - Do NOT bold the replaced values.
 - Maintain the exact structure, formatting, and wording of the original template.
 - Do NOT add any introductory or concluding remarks. Output ONLY the document content.
-- Ensure the final output is valid Markdown.
+- Output plain legal document text (not markdown-rendered formatting).
+- Do NOT add markdown headings (#, ##, ###), markdown bullets (-, *, +), or markdown task/checklist syntax.
+- Keep legal clause markers (for example, "1.", "2.", "a.", "b.") as literal text exactly where they belong in the template flow.
+- Preserve section and clause boundaries from the template, but avoid hard-wrapping inside a running sentence.
+- Do NOT insert leading indentation spaces unless they already exist in the template text.
+- Prevent merged clause tokens: never produce joined forms like "followsa.", "followsb.", or similar.
+- If a heading ends with text like "as follows:", ensure any sub-clause marker ("a.", "b.", etc.) starts on a new line.
 - IMPORTANT: Generate the entire document in the specified output language, not in English.
-- If the output language is not English, translate all labels, instructions, and text while preserving the legal document structure and placeholders."""
+- If the output language is not English, translate all labels, instructions, and text while preserving the legal document structure and placeholders.
+
+Final self-check before returning output:
+1. Output contains only the legal document body.
+2. No markdown list syntax was introduced.
+3. No merged clause markers are present.
+4. Missing values are still shown as "________"."""
 
 QUESTION_GENERATION_SYSTEM_PROMPT = """You are a helpful legal assistant.
 Your task is to gently ask the user for the information needed to complete a legal document.

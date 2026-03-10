@@ -17,10 +17,14 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [loadingStatus, setLoadingStatus] = useState(''); // Text status from server
+    const [copiedMessageId, setCopiedMessageId] = useState(null);
+    const [toastMessage, setToastMessage] = useState('');
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const scrollTimeoutRef = useRef(null);
+    const copyResetTimerRef = useRef(null);
+    const toastTimerRef = useRef(null);
 
     // Use currentSession?.id directly instead of deriving chatId state
     const chatId = currentSession?.id || null;
@@ -64,6 +68,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const reconnectAttemptsRef = useRef(0);
     const reconnectTimerRef = useRef(null);
     const intentionalCloseRef = useRef(false);
+    const regeneratingMessageIdRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -291,7 +296,24 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                     payload: data.payload,
                     documentContent: documentContent
                 };
-                updatedMessages = [...updatedMessages, resultMsg];
+
+                if (regeneratingMessageIdRef.current) {
+                    const targetId = regeneratingMessageIdRef.current;
+                    updatedMessages = updatedMessages.map((msg) =>
+                        msg.id === targetId
+                            ? {
+                                ...msg,
+                                content,
+                                payload: data.payload,
+                                documentContent
+                            }
+                            : msg
+                    );
+                    regeneratingMessageIdRef.current = null;
+                } else {
+                    updatedMessages = [...updatedMessages, resultMsg];
+                }
+
                 setMessages(updatedMessages);
                 if (onUpdateMessages) onUpdateMessages(updatedMessages);
                 if (documentContent && documentContent.trim() !== '') {
@@ -317,19 +339,18 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
         }
     };
 
-    const handleSendMessage = async () => {
-        if (!inputValue.trim()) return;
+    const sendMessage = async (messageText, options = {}) => {
+        const { forceType = 'auto', clearInput = false, appendUserMessage = true } = options;
+        const trimmedMessage = (messageText || '').trim();
+        if (!trimmedMessage) return;
 
         // If chatId is null, we're on the landing page - create a new chat first
         if (!chatId) {
             if (createNewChat) {
-                console.log('Landing page message, creating new chat...');
                 setLoadingStatus('Creating new chat...');
-                // Save the message to send after chat is created
-                pendingMessageRef.current = inputValue;
-                setInputValue(''); // Clear input while we create chat
+                pendingMessageRef.current = trimmedMessage;
+                if (clearInput) setInputValue('');
                 createNewChat();
-                // The parent will update chatId, and the useEffect will trigger auto-send
                 return;
             }
             console.log('No chat and no createNewChat function available');
@@ -338,31 +359,21 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
 
         // For temporary chats, we need to persist first before sending
         const isTempChat = chatId && chatId.startsWith('temp_');
-        const isFirstMessage = messages.length === 0;
+        const isFirstMessage = messagesRef.current.length === 0;
 
         if (isTempChat && isFirstMessage && persistChatToDatabase) {
-            console.log('First message on temp chat, persisting to database...');
             setIsLoading(true);
             setLoadingStatus('Creating chat...');
 
             try {
-                // Persist the chat and get the real ID
                 const realChatId = await persistChatToDatabase(chatId);
-                console.log(`Chat persisted: ${chatId} -> ${realChatId}`);
-
-                // Wait for parent state update and WebSocket reconnection
-                // The parent will update currentSession -> chatId will update -> WebSocket will reconnect
                 let attempts = 0;
-                const maxAttempts = 20; // 2 seconds max
+                const maxAttempts = 20;
 
                 while (attempts < maxAttempts) {
-                    // Check if WebSocket is connected (it should auto-reconnect when chatId updates)
                     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                        console.log('WebSocket ready for sending message');
                         break;
                     }
-
-                    // Wait 100ms and try again
                     await new Promise(resolve => setTimeout(resolve, 100));
                     attempts++;
                 }
@@ -374,23 +385,24 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                     return;
                 }
 
-                // Now send the message with the real chat ID
                 const userMessage = {
                     id: Date.now(),
                     type: 'user',
-                    content: inputValue
+                    content: trimmedMessage
                 };
 
                 const payload = {
                     type: 'query',
-                    payload: inputValue,
+                    payload: trimmedMessage,
                     session_id: realChatId,
                 };
 
-                const updatedMessages = [...messagesRef.current, userMessage];
+                const updatedMessages = appendUserMessage
+                    ? [...messagesRef.current, userMessage]
+                    : [...messagesRef.current];
                 setMessages(updatedMessages);
                 if (onUpdateMessages) onUpdateMessages(updatedMessages);
-                setInputValue('');
+                if (clearInput) setInputValue('');
                 setIsLoading(true);
                 setLoadingStatus('Sending...');
 
@@ -403,7 +415,6 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             return;
         }
 
-        // For existing chats, send the message normally
         if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
             console.error('WebSocket not connected');
             return;
@@ -412,29 +423,121 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
         const userMessage = {
             id: Date.now(),
             type: 'user',
-            content: inputValue
+            content: trimmedMessage
         };
 
-        const updatedMessages = [...messages, userMessage];
+        const updatedMessages = appendUserMessage
+            ? [...messagesRef.current, userMessage]
+            : [...messagesRef.current];
         setMessages(updatedMessages);
         if (onUpdateMessages) onUpdateMessages(updatedMessages);
-        setInputValue('');
+        if (clearInput) setInputValue('');
         setIsLoading(true);
         setLoadingStatus('Sending...');
 
-        // Fix #6: use ref to avoid stale closure over messages state
         const currentMessages = messagesRef.current;
         const lastMessage = currentMessages.length > 0 ? currentMessages[currentMessages.length - 1] : null;
         const isClarificationResponse = lastMessage?.isClarification;
 
         const payload = {
-            type: isClarificationResponse ? 'clarification_response' : 'query',
-            payload: inputValue,
+            type: forceType === 'query' ? 'query' : (isClarificationResponse ? 'clarification_response' : 'query'),
+            payload: trimmedMessage,
             session_id: chatId,
         };
 
         ws.current.send(JSON.stringify(payload));
     };
+
+    const showToast = (message, duration = 1800) => {
+        setToastMessage(message);
+        if (toastTimerRef.current) {
+            clearTimeout(toastTimerRef.current);
+        }
+        toastTimerRef.current = setTimeout(() => {
+            setToastMessage('');
+        }, duration);
+    };
+
+    const copyTextToClipboard = async (text, messageId) => {
+        if (!text) return;
+
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                textarea.style.top = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+
+            setCopiedMessageId(messageId);
+            showToast('Copied to clipboard');
+            if (copyResetTimerRef.current) {
+                clearTimeout(copyResetTimerRef.current);
+            }
+            copyResetTimerRef.current = setTimeout(() => {
+                setCopiedMessageId(null);
+            }, 1500);
+        } catch (error) {
+            console.error('Copy failed:', error);
+        }
+    };
+
+    const handleRegenerate = async (messageIndex) => {
+        const currentMessages = Array.isArray(messagesRef.current) ? messagesRef.current : [];
+        const targetMessage = currentMessages[messageIndex];
+        if (!targetMessage || targetMessage.type === 'user') {
+            return;
+        }
+
+        for (let i = messageIndex - 1; i >= 0; i--) {
+            const previousMessage = currentMessages[i];
+            if (previousMessage?.type === 'user' && previousMessage?.content) {
+                regeneratingMessageIdRef.current = targetMessage.id;
+
+                // Clear old assistant response immediately and replace it in-place when new output arrives.
+                const clearedMessages = currentMessages.map((msg) =>
+                    msg.id === targetMessage.id
+                        ? {
+                            ...msg,
+                            content: '',
+                            payload: {},
+                            documentContent: ''
+                        }
+                        : msg
+                );
+                setMessages(clearedMessages);
+                if (onUpdateMessages) onUpdateMessages(clearedMessages);
+
+                showToast('Regenerating...');
+                await sendMessage(previousMessage.content, { forceType: 'query', appendUserMessage: false });
+                return;
+            }
+        }
+        console.warn('No previous user message found for regenerate action');
+    };
+
+    const handleSendMessage = async () => {
+        await sendMessage(inputValue, { clearInput: true });
+    };
+
+    useEffect(() => {
+        return () => {
+            if (copyResetTimerRef.current) {
+                clearTimeout(copyResetTimerRef.current);
+            }
+            if (toastTimerRef.current) {
+                clearTimeout(toastTimerRef.current);
+            }
+        };
+    }, []);
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -581,13 +684,13 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                         {message.content && (
                                             <div className="flex gap-2 pt-2 items-center">
                                                 <button
-                                                    onClick={() => {
-                                                        navigator.clipboard.writeText(message.content);
-                                                    }}
+                                                    onClick={() => copyTextToClipboard(message.content, message.id)}
                                                     className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-gray-900 dark:hover:text-white light:hover:text-gray-900 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
-                                                    title="Copy"
+                                                    title={copiedMessageId === message.id ? 'Copied' : 'Copy'}
                                                 >
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>content_copy</span>
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                                                        {copiedMessageId === message.id ? 'check' : 'content_copy'}
+                                                    </span>
                                                 </button>
                                                 <button
                                                     className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-green-600 dark:hover:text-green-400 light:hover:text-green-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
@@ -602,6 +705,8 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                                     <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>thumb_down</span>
                                                 </button>
                                                 <button
+                                                    onClick={() => handleRegenerate(index)}
+                                                    disabled={isLoading}
                                                     className="text-gray-600 dark:text-gray-400 light:text-gray-600 hover:text-blue-600 dark:hover:text-blue-400 light:hover:text-blue-600 transition-colors p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-white/10 light:hover:bg-gray-200 flex items-center justify-center"
                                                     title="Regenerate"
                                                 >
@@ -659,6 +764,12 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                     </button>
                 </div>
             </div>
+
+            {toastMessage && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-legal-darkNavy/95 text-white text-sm shadow-lg border border-white/10">
+                    {toastMessage}
+                </div>
+            )}
         </div>
     );
 };
