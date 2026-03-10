@@ -25,6 +25,10 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const scrollTimeoutRef = useRef(null);
     const copyResetTimerRef = useRef(null);
     const toastTimerRef = useRef(null);
+    const typingTimersRef = useRef({});
+
+    const [typingProgressById, setTypingProgressById] = useState({});
+    const [typingCompletedById, setTypingCompletedById] = useState({});
 
     // Use currentSession?.id directly instead of deriving chatId state
     const chatId = currentSession?.id || null;
@@ -70,6 +74,44 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const intentionalCloseRef = useRef(false);
     const regeneratingMessageIdRef = useRef(null);
 
+    const clearTypingTimer = useCallback((messageId) => {
+        if (typingTimersRef.current[messageId]) {
+            clearTimeout(typingTimersRef.current[messageId]);
+            delete typingTimersRef.current[messageId];
+        }
+    }, []);
+
+    const startTypingAnimation = useCallback((messageId, fullText) => {
+        if (!fullText || typeof fullText !== 'string') {
+            setTypingCompletedById((prev) => ({ ...prev, [messageId]: true }));
+            return;
+        }
+
+        clearTypingTimer(messageId);
+        setTypingCompletedById((prev) => ({ ...prev, [messageId]: false }));
+        setTypingProgressById((prev) => ({ ...prev, [messageId]: '' }));
+
+        let index = 0;
+        // Faster on longer answers so it feels responsive while keeping letter-by-letter effect.
+        const step = Math.max(1, Math.ceil(fullText.length / 240));
+
+        const typeNext = () => {
+            index = Math.min(index + step, fullText.length);
+            const nextChunk = fullText.slice(0, index);
+            setTypingProgressById((prev) => ({ ...prev, [messageId]: nextChunk }));
+
+            if (index < fullText.length) {
+                typingTimersRef.current[messageId] = setTimeout(typeNext, 16);
+                return;
+            }
+
+            clearTypingTimer(messageId);
+            setTypingCompletedById((prev) => ({ ...prev, [messageId]: true }));
+        };
+
+        typeNext();
+    }, [clearTypingTimer]);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -82,8 +124,34 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
 
     // Sync messages with parent session
     useEffect(() => {
+        Object.keys(typingTimersRef.current).forEach((messageId) => {
+            clearTypingTimer(messageId);
+        });
+
         setMessages(currentSession?.messages || []);
-    }, [currentSession]);
+        const sessionMessages = Array.isArray(currentSession?.messages) ? currentSession.messages : [];
+
+        // Session history should render fully without replaying typing animation.
+        setTypingProgressById(() => {
+            const next = {};
+            sessionMessages.forEach((msg) => {
+                if (msg?.id && typeof msg.content === 'string') {
+                    next[msg.id] = msg.content;
+                }
+            });
+            return next;
+        });
+
+        setTypingCompletedById(() => {
+            const next = {};
+            sessionMessages.forEach((msg) => {
+                if (msg?.id && typeof msg.content === 'string') {
+                    next[msg.id] = true;
+                }
+            });
+            return next;
+        });
+    }, [currentSession, clearTypingTimer]);
 
     // Auto-send pending message after chat is created
     useEffect(() => {
@@ -277,6 +345,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 updatedMessages = [...updatedMessages, clarificationMsg];
                 setMessages(updatedMessages);
                 if (onUpdateMessages) onUpdateMessages(updatedMessages);
+                startTypingAnimation(clarificationMsg.id, clarificationMsg.content || '');
                 break;
             }
             case 'final_result': {
@@ -309,9 +378,11 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                             }
                             : msg
                     );
+                    startTypingAnimation(targetId, content || '');
                     regeneratingMessageIdRef.current = null;
                 } else {
                     updatedMessages = [...updatedMessages, resultMsg];
+                    startTypingAnimation(resultMsg.id, content || '');
                 }
 
                 setMessages(updatedMessages);
@@ -332,6 +403,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 updatedMessages = [...updatedMessages, errorMsg];
                 setMessages(updatedMessages);
                 if (onUpdateMessages) onUpdateMessages(updatedMessages);
+                startTypingAnimation(errorMsg.id, errorMsg.content || '');
                 break;
             }
             default:
@@ -530,6 +602,9 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
 
     useEffect(() => {
         return () => {
+            Object.keys(typingTimersRef.current).forEach((messageId) => {
+                clearTypingTimer(messageId);
+            });
             if (copyResetTimerRef.current) {
                 clearTimeout(copyResetTimerRef.current);
             }
@@ -537,7 +612,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 clearTimeout(toastTimerRef.current);
             }
         };
-    }, []);
+    }, [clearTypingTimer]);
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -614,6 +689,10 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 <div className={`space-y-6 w-full ${isDraftOpen ? 'max-w-full' : 'max-w-2xl'}`}>
                     {safeMessages.map((message, index) => {
                         const showExtraSpacing = index > 0 && safeMessages[index - 1].type !== message.type;
+                        const isMessageTyping = typingCompletedById[message.id] === false;
+                        const renderedContent = isMessageTyping
+                            ? (typingProgressById[message.id] || '')
+                            : message.content;
                         return (
                             <div
                                 key={message.id}
@@ -642,11 +721,14 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-3 w-full">
-                                        {message.content ? (
+                                        {renderedContent ? (
                                             <div className="text-sm leading-relaxed text-gray-800 dark:text-slate-100 light:text-gray-800 markdown-content break-words overflow-x-hidden w-full">
                                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                    {message.content}
+                                                    {renderedContent}
                                                 </ReactMarkdown>
+                                                {isMessageTyping && (
+                                                    <span className="inline-block w-2 h-4 ml-1 align-middle bg-gray-500 dark:bg-gray-300 animate-pulse" />
+                                                )}
                                             </div>
                                         ) : null}
                                         {/* Render CasePdfList for both live websocket and history-loaded messages */}
@@ -656,7 +738,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                             <CasePdfList pdfPaths={message.payload.paths} />
                                         ) : null}
                                         {/* Document Preview & Download Buttons */}
-                                        {message.documentContent && message.documentContent.trim() !== '' && (
+                                        {message.documentContent && message.documentContent.trim() !== '' && !isMessageTyping && (
                                             <div className="flex items-stretch gap-2 w-full mt-3">
                                                 <DocumentPreviewButton
                                                     toggleDraft={() => toggleDraft(message.documentContent)}
@@ -681,7 +763,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                             </div>
                                         )}
                                         {/* Action Buttons */}
-                                        {message.content && (
+                                        {renderedContent && !isMessageTyping && (
                                             <div className="flex gap-2 pt-2 items-center">
                                                 <button
                                                     onClick={() => copyTextToClipboard(message.content, message.id)}
