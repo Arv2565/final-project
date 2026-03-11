@@ -373,16 +373,23 @@ class ChatService:
                         clarification = current_state["pending_clarification"]
                         history = current_state.get("clarification_history", [])
                         history.append({"question": clarification['question'], "answer": user_answer})
-                        new_state = {
-                            "user_query": user_answer,
-                            "router_output": current_state.get("router_output"),
-                            "clarification_history": history,
-                            "clarification_counts": current_state.get("clarification_counts", {}),
-                            "chat_context": current_state.get("chat_context", ""),
+                        stale_flags = {
+                            "pending_clarification",
+                            "needs_clarification",
+                            "ambiguity_remover_scope",
+                            "ambiguity_remover_context",
+                            "ambiguity_remover_next",
+                            "orchestrator_plan",
                         }
-                        for key in current_state:
-                            if key not in ["pending_clarification", "orchestrator_plan", "user_query", "router_output", "clarification_history", "clarification_counts", "chat_context"]:
-                                new_state[key] = current_state[key]
+                        new_state = {
+                            key: value
+                            for key, value in current_state.items()
+                            if key not in stale_flags
+                        }
+                        new_state["user_query"] = user_answer
+                        new_state["clarification_history"] = history
+                        new_state["clarification_counts"] = current_state.get("clarification_counts", {})
+                        new_state["chat_context"] = current_state.get("chat_context", "")
                         current_state = new_state
                         await websocket.send_json({"type": "status", "payload": "Processing clarification..."})
                         # Persist clarification response as user message

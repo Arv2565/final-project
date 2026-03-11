@@ -41,9 +41,9 @@ function EditHistoryName({ historyId, currentName, onRename }) {
   };
 
   return (
-    <div className="flex items-center gap-1.5 w-full">
+    <div className="flex items-center gap-1.5 w-full min-w-0">
       {editing ? (
-        <div className="flex items-center gap-1 w-full flex-1">
+        <div className="flex items-center gap-1 w-full flex-1 min-w-0">
           <input
             ref={inputRef}
             value={name}
@@ -76,10 +76,10 @@ function EditHistoryName({ historyId, currentName, onRename }) {
         </div>
       ) : (
         <>
-          <span className="flex-1">{name}</span>
+          <span className="flex-1 min-w-0 truncate">{name}</span>
           <button
             onClick={() => setEditing(true)}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-legal-navy/10 dark:hover:bg-white/10 rounded text-legal-gray dark:text-gray-400 hover:text-legal-darkNavy dark:hover:text-white transition-all"
+            className="shrink-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-legal-navy/10 dark:hover:bg-white/10 rounded text-legal-gray dark:text-gray-400 hover:text-legal-darkNavy dark:hover:text-white transition-all"
             title="Edit name"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

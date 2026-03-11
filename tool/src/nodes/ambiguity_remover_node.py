@@ -26,6 +26,20 @@ logger = logging.getLogger(__name__)
 _ambiguity_remover: Optional[AmbiguityRemover] = None
 
 
+def _already_answered_question(question: str, clarification_history: list) -> bool:
+    """Return True if an equivalent clarification question is already answered."""
+    normalized = (question or "").strip().lower()
+    if not normalized:
+        return False
+
+    for item in clarification_history or []:
+        asked = (item.get("question") or "").strip().lower()
+        answer = (item.get("answer") or "").strip()
+        if asked == normalized and answer:
+            return True
+    return False
+
+
 def set_ambiguity_remover(remover: AmbiguityRemover) -> None:
     """Set the global AmbiguityRemover instance."""
     global _ambiguity_remover
@@ -139,6 +153,16 @@ async def ambiguity_remover_node(state: GraphState, config: Optional[RunnableCon
         except Exception as e:
             logger.warning(f"AmbiguityRemover localization failed, using original clarification: {e}")
 
+        clarification_history = state.get("clarification_history", [])
+        if _already_answered_question(localized_question, clarification_history):
+            logger.info("AmbiguityRemover: Skipping duplicate predefined clarification question")
+            return {
+                "needs_clarification": False,
+                "ambiguity_remover_scope": None,
+                "ambiguity_remover_context": None,
+                "ambiguity_remover_next": None,
+            }
+
         clarification = ClarificationRequest(
             question=localized_question,
             reason=localized_reason,
@@ -195,6 +219,15 @@ async def ambiguity_remover_node(state: GraphState, config: Optional[RunnableCon
         
         # Initialize clarification history if needed
         clarification_history = state.get("clarification_history", [])
+
+        if _already_answered_question(result.clarification_request.question, clarification_history):
+            logger.info("AmbiguityRemover: Skipping duplicate generated clarification question")
+            return {
+                "needs_clarification": False,
+                "ambiguity_remover_scope": None,
+                "ambiguity_remover_context": None,
+                "ambiguity_remover_next": None,
+            }
         
         logger.info(
             f"AmbiguityRemover generated clarification: {result.clarification_request.question} "

@@ -75,6 +75,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const intentionalCloseRef = useRef(false);
     const regeneratingMessageIdRef = useRef(null);
     const pendingCasePdfPathsRef = useRef([]);
+    const awaitingClarificationRef = useRef(false);
 
     const mergeCasePdfPaths = useCallback((existingPaths = [], incomingPaths = []) => {
         const normalizedExisting = Array.isArray(existingPaths) ? existingPaths : [];
@@ -168,6 +169,13 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             });
             return next;
         });
+
+        const lastSessionMessage = sessionMessages.length > 0
+            ? sessionMessages[sessionMessages.length - 1]
+            : null;
+        awaitingClarificationRef.current = Boolean(
+            lastSessionMessage?.type === 'assistant' && lastSessionMessage?.isClarification
+        );
     }, [currentSession, clearTypingTimer]);
 
     // Auto-send pending message after chat is created
@@ -343,6 +351,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 setIsLoading(false);
                 setLoadingStatus('');
                 pendingCasePdfPathsRef.current = [];
+                awaitingClarificationRef.current = true;
                 const clarificationMsg = {
                     id: Date.now(),
                     type: 'assistant',
@@ -359,6 +368,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             case 'final_result': {
                 setIsLoading(false);
                 setLoadingStatus('');
+                awaitingClarificationRef.current = false;
                 let content = '';
                 let documentContent = data.payload.document_content || '';
                 const mergedCasePdfPaths = mergeCasePdfPaths(
@@ -412,6 +422,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             case 'error': {
                 setIsLoading(false);
                 setLoadingStatus('');
+                awaitingClarificationRef.current = false;
                 pendingCasePdfPathsRef.current = [];
                 const errorMsg = {
                     id: Date.now(),
@@ -527,15 +538,22 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
         setIsLoading(true);
         setLoadingStatus('Sending...');
 
-        const currentMessages = messagesRef.current;
-        const lastMessage = currentMessages.length > 0 ? currentMessages[currentMessages.length - 1] : null;
-        const isClarificationResponse = lastMessage?.isClarification;
+        const isClarificationResponse =
+            forceType === 'clarification_response'
+                ? true
+                : (forceType === 'auto' && awaitingClarificationRef.current);
 
         const payload = {
-            type: forceType === 'query' ? 'query' : (isClarificationResponse ? 'clarification_response' : 'query'),
+            type: forceType === 'query'
+                ? 'query'
+                : (isClarificationResponse ? 'clarification_response' : 'query'),
             payload: trimmedMessage,
             session_id: chatId,
         };
+
+        if (payload.type === 'clarification_response') {
+            awaitingClarificationRef.current = false;
+        }
 
         ws.current.send(JSON.stringify(payload));
     };

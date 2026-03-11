@@ -10,7 +10,8 @@ const Sidebar = ({
     currentSessionId,
     onNewChat,
     onSelectChat,
-    onDeleteChat
+    onDeleteChat,
+    onRenameChat
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -112,7 +113,7 @@ const Sidebar = ({
                                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                         </svg>
                                     </div>
-                                    <span className={`text-sm whitespace-nowrap overflow-hidden truncate flex-1 ${currentSessionId === chat.id
+                                    <div className={`flex-1 min-w-0 text-sm ${currentSessionId === chat.id
                                             ? 'text-legal-darkNavy dark:text-white font-medium'
                                             : 'text-legal-darkNavy dark:text-gray-300 group-hover:text-legal-darkNavy dark:group-hover:text-white'
                                         }`}>
@@ -127,12 +128,12 @@ const Sidebar = ({
                                                 }
                                             }}
                                         />
-                                    </span>
+                                    </div>
 
                                     {/* Delete Button (visible on hover) */}
                                     <button
                                         onClick={(e) => onDeleteChat(chat.id, e)}
-                                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-gray-400 hover:text-red-500 transition-all"
+                                        className="shrink-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-gray-400 hover:text-red-500 transition-all"
                                         title="Delete chat"
                                     >
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
