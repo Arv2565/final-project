@@ -7,7 +7,7 @@ import CasePdfList from './CasePdfList';
 import { getCookie } from '../utils';
 import { axiosJWT } from '../Auth/axios';
 
-const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMessages, isDraftOpen, userId, persistChatToDatabase, createNewChat }) => {
+const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMessages, isDraftOpen, userId, userName, persistChatToDatabase, createNewChat }) => {
 
 
     // Use messages from props, fallback to empty array
@@ -693,6 +693,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     // Landing page view - when no messages and chat hasn't started
     // We check messages.length directly. Ensure messages is an array.
     const safeMessages = Array.isArray(messages) ? messages : [];
+    const displayName = (userName || '').trim() || 'there';
 
     if (safeMessages.length === 0) {
         return (
@@ -701,7 +702,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 <div className="flex flex-col items-center justify-center mb-16 opacity-90">
                     <div className="flex items-center gap-3 mb-8">
                         <span className="material-symbols-outlined text-legal-navy dark:text-white" style={{ fontSize: '24px' }}>balance</span>
-                        <p className="text-lg text-legal-darkNavy dark:text-gray-300">Hi Pranav</p>
+                        <p className="text-lg text-legal-darkNavy dark:text-gray-300">{`Hi ${displayName}`}</p>
                     </div>
                     <h1 className="text-5xl md:text-6xl font-bold text-legal-darkNavy dark:text-white text-center tracking-tight">
                         Where should we start?

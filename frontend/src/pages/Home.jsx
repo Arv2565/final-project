@@ -20,6 +20,7 @@ const Home = () => {
     } = useOutletContext();
     const { user } = useContext(AuthContext);
     const userId = user?.id || null;
+    const userDisplayName = (user?.name || user?.username || '').trim();
 
     const toggleDraft = (content = '') => {
         // Only treat a string as content; React events can accidentally be passed here.
@@ -75,6 +76,7 @@ const Home = () => {
                         persistChatToDatabase={persistChatToDatabase}
                         createNewChat={createNewChat}
                         userId={userId}
+                        userName={userDisplayName}
                     />
                 </div>
                 {isDraftOpen && (
