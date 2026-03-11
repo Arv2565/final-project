@@ -47,6 +47,7 @@ def test_app_has_expected_routes():
     assert any("/api/auth" in p for p in paths), f"Missing /api/auth in {paths}"
     assert any("/api/user" in p for p in paths), f"Missing /api/user in {paths}"
     assert any("/api/chat-history" in p for p in paths), f"Missing /api/chat-history in {paths}"
+    assert any("/api/documents" in p for p in paths), f"Missing /api/documents in {paths}"
 
 
 # ===========================================================================

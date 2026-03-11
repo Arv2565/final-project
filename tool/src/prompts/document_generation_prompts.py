@@ -10,9 +10,15 @@ Placeholders usually look like:
 
 Rules:
 - Extract every unique placeholder occurrence.
-- Normalize the key to a snake_case variable name (e.g., 'monthly_rent', 'tenant_name').
+- Normalize the key to a semantic snake_case variable name (e.g., 'monthly_rent', 'tenant_name').
+- Derive the key from nearby label/context text when available. Examples:
+	- "BEFORE THE HIGH COURT AT ______" -> key: "high_court_name"
+	- "(FIR Number: ______)" -> key: "fir_number"
+	- "Under Section: (______)" -> key: "section_of_law"
+	- "Police Station: (______)" -> key: "police_station_name"
 - Provide the 'original_text' exactly as it appears in the document so it can be replaced later.
 - If a placeholder appears multiple times but refers to the same value (e.g. strict 'Tenant Name'), use the same key.
+- Do not use vague keys like "blank_1", "field_2", or "placeholder_x" when contextual meaning is available.
 - Do NOT invent placeholders that are not in the text."""
 
 TEMPLATE_SELECTION_SYSTEM_PROMPT = """You are an expert legal document assistant.
@@ -77,7 +83,12 @@ Input:
 
 Rules:
 - Analyze the "User Response" to find values for each placeholder in the "Placeholders List".
+- Treat "Field: Value" style input as authoritative (for example: "FIR Number: FIR No. 123/2026").
+- Map user-provided labels to placeholder meaning using semantic matching and nearby template context.
 - Replace each placeholder in the template with the extracted value.
+- For underscore blanks ("___"), replace the entire blank token with the mapped value.
+- For parenthesized blanks like "(_______)", keep parentheses if present in template and only replace the inner blank.
+- If the same logical field appears more than once, fill all occurrences consistently with the same value.
 - If a value is missing or empty, replace it with "________" (8 underscores) to indicate a blank space.
 - Do NOT bold the replaced values.
 - Maintain the exact structure, formatting, and wording of the original template.
@@ -91,12 +102,21 @@ Rules:
 - If a heading ends with text like "as follows:", ensure any sub-clause marker ("a.", "b.", etc.) starts on a new line.
 - IMPORTANT: Generate the entire document in the specified output language, not in English.
 - If the output language is not English, translate all labels, instructions, and text while preserving the legal document structure and placeholders.
+- Keep literal values exactly as supplied for names, FIR numbers, police station names, court names, and statutory references unless the user explicitly asks to rephrase.
+
+Example mapping behavior (must follow this pattern):
+- "Name of the High Court: High Court of Kerala at Ernakulam" -> fill "BEFORE THE HIGH COURT AT ______"
+- "FIR Number: FIR No. 123/2026" -> fill "(FIR Number: ______)"
+- "Section of Law: Section 420 of the Indian Penal Code, 1860 (Cheating)" -> fill "Under Section: (______)"
+- "Name of the Police Station: Museum Police Station, Thiruvananthapuram" -> fill "Police Station: (______)"
+- "Full Name of the Person Applying for Bail: Rajesh Kumar Nair" -> fill applicant name blank(s).
 
 Final self-check before returning output:
 1. Output contains only the legal document body.
 2. No markdown list syntax was introduced.
 3. No merged clause markers are present.
-4. Missing values are still shown as "________"."""
+4. Missing values are still shown as "________".
+5. No unresolved placeholder tokens remain when a matching user value exists."""
 
 QUESTION_GENERATION_SYSTEM_PROMPT = """You are a helpful legal assistant.
 Your task is to gently ask the user for the information needed to complete a legal document.

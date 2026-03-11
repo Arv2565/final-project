@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DocumentPreviewButton from './DocumentPreviewButton';
 import LoadingIndicator from './LoadingIndicator';
 import CasePdfList from './CasePdfList';
 import { getCookie } from '../utils';
+import { axiosJWT } from '../Auth/axios';
 
 const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMessages, isDraftOpen, userId, persistChatToDatabase, createNewChat }) => {
 
@@ -19,6 +19,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const [loadingStatus, setLoadingStatus] = useState(''); // Text status from server
     const [copiedMessageId, setCopiedMessageId] = useState(null);
     const [toastMessage, setToastMessage] = useState('');
+    const [downloadingDocMessageId, setDownloadingDocMessageId] = useState(null);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
     const scrollContainerRef = useRef(null);
@@ -73,6 +74,22 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const reconnectTimerRef = useRef(null);
     const intentionalCloseRef = useRef(false);
     const regeneratingMessageIdRef = useRef(null);
+    const pendingCasePdfPathsRef = useRef([]);
+
+    const mergeCasePdfPaths = useCallback((existingPaths = [], incomingPaths = []) => {
+        const normalizedExisting = Array.isArray(existingPaths) ? existingPaths : [];
+        const normalizedIncoming = Array.isArray(incomingPaths) ? incomingPaths : [];
+
+        if (normalizedExisting.length === 0) {
+            return normalizedIncoming;
+        }
+
+        if (normalizedIncoming.length === 0) {
+            return normalizedExisting;
+        }
+
+        return Array.from(new Set([...normalizedExisting, ...normalizedIncoming]));
+    }, []);
 
     const clearTypingTimer = useCallback((messageId) => {
         if (typingTimersRef.current[messageId]) {
@@ -313,28 +330,19 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 setIsLoading(true);
                 break;
             case 'case_pdfs': {
-                // Handle case PDF paths received from case retrieval
                 const pdfPaths = Array.isArray(data.payload) ? data.payload : [];
                 if (pdfPaths.length > 0) {
-                    console.log(`Received ${pdfPaths.length} case PDF paths`);
-                    
-                    // Create a message to display the case PDFs using CasePdfList component
-                    const casePdfMsg = {
-                        id: Date.now(),
-                        type: 'assistant',
-                        content: null,  // No text content for PDF list
-                        payload: { type: 'case_pdfs', paths: pdfPaths },
-                        isCasePdfList: true  // Flag to indicate this is a PDF list message
-                    };
-                    updatedMessages = [...updatedMessages, casePdfMsg];
-                    setMessages(updatedMessages);
-                    if (onUpdateMessages) onUpdateMessages(updatedMessages);
+                    pendingCasePdfPathsRef.current = mergeCasePdfPaths(
+                        pendingCasePdfPathsRef.current,
+                        pdfPaths
+                    );
                 }
                 break;
             }
             case 'clarification_request': {
                 setIsLoading(false);
                 setLoadingStatus('');
+                pendingCasePdfPathsRef.current = [];
                 const clarificationMsg = {
                     id: Date.now(),
                     type: 'assistant',
@@ -353,6 +361,15 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                 setLoadingStatus('');
                 let content = '';
                 let documentContent = data.payload.document_content || '';
+                const mergedCasePdfPaths = mergeCasePdfPaths(
+                    data.payload.case_pdf_paths,
+                    pendingCasePdfPathsRef.current
+                );
+                const resultPayload = {
+                    ...data.payload,
+                    ...(mergedCasePdfPaths.length > 0 ? { case_pdf_paths: mergedCasePdfPaths } : {})
+                };
+                pendingCasePdfPathsRef.current = [];
                 if (data.payload.text) {
                     content = data.payload.text;
                 } else if (data.payload.data) {
@@ -362,7 +379,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                     id: Date.now(),
                     type: 'assistant',
                     content: content,
-                    payload: data.payload,
+                    payload: resultPayload,
                     documentContent: documentContent
                 };
 
@@ -373,7 +390,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                             ? {
                                 ...msg,
                                 content,
-                                payload: data.payload,
+                                payload: resultPayload,
                                 documentContent
                             }
                             : msg
@@ -395,6 +412,7 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
             case 'error': {
                 setIsLoading(false);
                 setLoadingStatus('');
+                pendingCasePdfPathsRef.current = [];
                 const errorMsg = {
                     id: Date.now(),
                     type: 'system',
@@ -415,6 +433,8 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
         const { forceType = 'auto', clearInput = false, appendUserMessage = true } = options;
         const trimmedMessage = (messageText || '').trim();
         if (!trimmedMessage) return;
+
+        pendingCasePdfPathsRef.current = [];
 
         // If chatId is null, we're on the landing page - create a new chat first
         if (!chatId) {
@@ -600,6 +620,51 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
         await sendMessage(inputValue, { clearInput: true });
     };
 
+    const handleDownloadDocumentPdf = async (documentContent, messageId) => {
+        const contentToExport = (documentContent || '').trim();
+        if (!contentToExport) {
+            alert('No content to export.');
+            return;
+        }
+
+        const filename = `draft-${new Date().toISOString().slice(0, 10)}.pdf`;
+
+        try {
+            setDownloadingDocMessageId(messageId);
+            const response = await axiosJWT.post(
+                'documents/export-pdf',
+                {
+                    content: contentToExport,
+                    filename,
+                },
+                { responseType: 'blob' }
+            );
+
+            const contentType = response.headers?.['content-type'] || '';
+            if (!contentType.includes('application/pdf')) {
+                throw new Error(`Unexpected response type: ${contentType}`);
+            }
+
+            const blob = response.data instanceof Blob
+                ? response.data
+                : new Blob([response.data], { type: 'application/pdf' });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to export PDF:', error);
+            alert('Failed to export PDF. Please try again.');
+        } finally {
+            setDownloadingDocMessageId((current) => (current === messageId ? null : current));
+        }
+    };
+
     useEffect(() => {
         return () => {
             Object.keys(typingTimersRef.current).forEach((messageId) => {
@@ -732,9 +797,9 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                             </div>
                                         ) : null}
                                         {/* Render CasePdfList for both live websocket and history-loaded messages */}
-                                        {Array.isArray(message.payload?.case_pdf_paths) && message.payload.case_pdf_paths.length > 0 ? (
+                                        {!isMessageTyping && Array.isArray(message.payload?.case_pdf_paths) && message.payload.case_pdf_paths.length > 0 ? (
                                             <CasePdfList pdfPaths={message.payload.case_pdf_paths} />
-                                        ) : Array.isArray(message.payload?.paths) && message.payload.paths.length > 0 ? (
+                                        ) : !isMessageTyping && Array.isArray(message.payload?.paths) && message.payload.paths.length > 0 ? (
                                             <CasePdfList pdfPaths={message.payload.paths} />
                                         ) : null}
                                         {/* Document Preview & Download Buttons */}
@@ -744,19 +809,10 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                                                     toggleDraft={() => toggleDraft(message.documentContent)}
                                                 />
                                                 <button
-                                                    onClick={() => {
-                                                        const blob = new Blob([message.documentContent], { type: 'text/markdown' });
-                                                        const url = URL.createObjectURL(blob);
-                                                        const a = document.createElement('a');
-                                                        a.href = url;
-                                                        a.download = 'document.md';
-                                                        document.body.appendChild(a);
-                                                        a.click();
-                                                        document.body.removeChild(a);
-                                                        URL.revokeObjectURL(url);
-                                                    }}
+                                                    onClick={() => handleDownloadDocumentPdf(message.documentContent, message.id)}
+                                                    disabled={downloadingDocMessageId === message.id}
                                                     className="border border-gray-500 dark:border-gray-500 light:border-gray-500 hover:border-gray-700 dark:hover:border-gray-300 light:hover:border-gray-700 rounded-lg p-3 transition-all hover:bg-gray-200 dark:hover:bg-white/5 light:hover:bg-gray-200 group flex items-center justify-center h-full"
-                                                    title="Download"
+                                                    title={downloadingDocMessageId === message.id ? 'Exporting PDF...' : 'Download PDF'}
                                                 >
                                                     <span className="material-symbols-outlined text-gray-600 dark:text-gray-400 light:text-gray-600 group-hover:text-gray-900 dark:group-hover:text-white light:group-hover:text-gray-900" style={{ fontSize: '20px' }}>download</span>
                                                 </button>

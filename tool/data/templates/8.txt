@@ -1,6 +1,6 @@
-This Agreement is made and entered into by and between _________________ ABC (hereinafter
-referred to as ABC) having offices at ___________ and DEF (hereinafter referred to as DEF) having
-offices at __________________
+This Agreement is made and entered into by and between [ABC Party Name] (hereinafter
+referred to as ABC) having offices at [ABC Office Address] and [DEF Party Name] (hereinafter referred to as DEF) having
+offices at [DEF Office Address]
 Subject of ABC Information: Business and technical information including but not limited to its
 ideas, products, proposed products, processes, services, capabilities, and materials, or any
 information which quantifies, classifies, or identifies any ideas, products, proposed products,
@@ -124,7 +124,7 @@ to act as an agent on its behalf for any purpose.
 ___________, without giving effect to its internal principles of conflict of law.
 IN WITNESS WHEREOF, the parties hereto have caused this Agreement to be executed in
 duplicate.
-ABC DEF
+[ABC Party Name] [DEF Party Name]
 By:_______________________ By:_____________________
 (Authorized Signature) (Authorized Signature)
 Name:______________________ Name:___________________

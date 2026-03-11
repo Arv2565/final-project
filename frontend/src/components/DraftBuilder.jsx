@@ -1,13 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { axiosJWT } from '../Auth/axios';
 
-const DraftBuilder = ({ onClose, content = '', onContentChange }) => {
+const DraftBuilder = ({ onClose, content = '', onContentChange, onSwitchToPreview }) => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [editableContent, setEditableContent] = useState(content);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const editorRef = useRef(null);
 
     // Sync editableContent when content prop changes
     useEffect(() => {
-        setEditableContent(content);
-    }, [content]);
+        // Avoid clobbering in-progress local edits while typing in edit mode.
+        if (!isEditMode) {
+            setEditableContent(content);
+        }
+    }, [content, isEditMode]);
 
     const handleContentChange = (e) => {
         const newContent = e.target.value;
@@ -17,8 +24,72 @@ const DraftBuilder = ({ onClose, content = '', onContentChange }) => {
         }
     };
 
-    const toggleEditMode = () => {
-        setIsEditMode((prev) => !prev);
+    const toggleEditMode = async () => {
+        // Edit -> Preview: persist latest canvas edits first.
+        if (isEditMode) {
+            if (onSwitchToPreview) {
+                try {
+                    setIsSaving(true);
+                    await onSwitchToPreview(editableContent);
+                } finally {
+                    setIsSaving(false);
+                }
+            }
+            setIsEditMode(false);
+            return;
+        }
+
+        setIsEditMode(true);
+    };
+
+    const handleExportPdf = async () => {
+        const latestEditorContent = isEditMode && editorRef.current
+            ? editorRef.current.value
+            : editableContent;
+        const contentToExport = latestEditorContent?.trim() || '';
+        if (!contentToExport) {
+            alert('No content to export.');
+            return;
+        }
+
+        const date = new Date().toISOString().slice(0, 10);
+        const filename = `draft-${date}.pdf`;
+
+        try {
+            setIsExporting(true);
+            const response = await axiosJWT.post(
+                'documents/export-pdf',
+                {
+                    content: contentToExport,
+                    filename,
+                },
+                { responseType: 'blob' }
+            );
+
+            const contentType = response.headers?.['content-type'] || '';
+            if (!contentType.includes('application/pdf')) {
+                throw new Error(`Unexpected response type: ${contentType}`);
+            }
+
+            const blob = response.data instanceof Blob
+                ? response.data
+                : new Blob([response.data], { type: 'application/pdf' });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('PDF export failed:', error);
+            alert('Failed to export PDF. Please try again.');
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     return (
@@ -38,16 +109,21 @@ const DraftBuilder = ({ onClose, content = '', onContentChange }) => {
                     {/* Edit/Preview Toggle */}
                     <button
                         onClick={toggleEditMode}
+                        disabled={isSaving || isExporting}
                         className={`text-sm border rounded-full px-4 py-1.5 transition-colors font-medium ${
                             isEditMode
                                 ? 'bg-legal-darkNavy dark:bg-white text-white dark:text-[#0d0e10] border-legal-darkNavy dark:border-white'
                                 : 'border-legal-borders dark:border-white/20 text-legal-darkNavy dark:text-gray-300 hover:bg-legal-lightGray dark:hover:bg-white/5'
                         }`}
                     >
-                        {isEditMode ? 'Preview' : 'Edit'}
+                        {isSaving ? 'Saving...' : isEditMode ? 'Preview' : 'Edit'}
                     </button>
-                    <button className="text-sm border border-legal-borders dark:border-white/20 rounded-full px-4 py-1.5 hover:bg-legal-lightGray dark:hover:bg-white/5 transition-colors font-medium text-legal-darkNavy dark:text-gray-300">
-                        Export as PDF
+                    <button
+                        onClick={handleExportPdf}
+                        disabled={isSaving || isExporting || !editableContent?.trim()}
+                        className="text-sm border border-legal-borders dark:border-white/20 rounded-full px-4 py-1.5 hover:bg-legal-lightGray dark:hover:bg-white/5 transition-colors font-medium text-legal-darkNavy dark:text-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                        {isExporting ? 'Exporting...' : 'Export as PDF'}
                     </button>
                     <button onClick={onClose} className="p-2 hover:bg-legal-lightGray dark:hover:bg-white/10 rounded-full transition-colors">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-legal-gray dark:text-gray-400">
@@ -64,6 +140,7 @@ const DraftBuilder = ({ onClose, content = '', onContentChange }) => {
                     isEditMode ? (
                         /* Edit Mode - Textarea */
                         <textarea
+                            ref={editorRef}
                             value={editableContent}
                             onChange={handleContentChange}
                             className="w-full h-full min-h-[400px] p-4 rounded-lg border border-legal-borders dark:border-white/10 bg-legal-lightGray/50 dark:bg-white/5 text-legal-darkNavy dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-legal-darkNavy/20 dark:focus:ring-white/20 resize-none"

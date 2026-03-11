@@ -248,10 +248,6 @@ def generate_pdf_report(content: str, filename: str) -> str:
 
     # Create the report content
     story = []
-    
-    # Title
-    story.append(Paragraph("Legal Analysis Report", title_style))
-    story.append(Spacer(1, 12))
 
     # Parse content
     flowables = parse_markdown_to_flowables(content, styles)

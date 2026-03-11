@@ -26,24 +26,27 @@ const CasePdfList = ({ pdfPaths = [] }) => {
         return path.split('/').pop() || 'Unknown';
     };
 
+    const fetchPdfBlob = async (filePath) => {
+        const response = await axiosJWT.get('files/download', {
+            params: { file_path: filePath },
+            responseType: 'blob',
+        });
+
+        const contentType = response.headers?.['content-type'] || '';
+        if (!contentType.includes('application/pdf')) {
+            throw new Error(`Unexpected response type: ${contentType}`);
+        }
+
+        return new Blob([response.data], { type: 'application/pdf' });
+    };
+
     /**
      * Handle PDF download by calling the backend endpoint
      */
     const handleDownloadPdf = async (filePath) => {
         try {
             const filename = getFilenameFromPath(filePath);
-            const response = await axiosJWT.get('files/download', {
-                params: { file_path: filePath },
-                responseType: 'blob',
-            });
-
-            const contentType = response.headers?.['content-type'] || '';
-            if (!contentType.includes('application/pdf')) {
-                throw new Error(`Unexpected response type: ${contentType}`);
-            }
-
-            // Create a blob URL so browser saves exact binary payload
-            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const blob = await fetchPdfBlob(filePath);
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -58,6 +61,31 @@ const CasePdfList = ({ pdfPaths = [] }) => {
         } catch (error) {
             console.error(`Failed to download PDF (${filePath}):`, error);
             alert(`Failed to download PDF: ${getFilenameFromPath(filePath)}`);
+        }
+    };
+
+    /**
+     * Open PDF preview in a new browser tab
+     */
+    const handleOpenPdfInNewTab = async (filePath) => {
+        const previewTab = window.open('', '_blank', 'noopener,noreferrer');
+
+        if (!previewTab) {
+            alert('Popup blocked. Please allow popups and try again.');
+            return;
+        }
+
+        try {
+            const blob = await fetchPdfBlob(filePath);
+            const url = URL.createObjectURL(blob);
+            previewTab.location.href = url;
+
+            // Give the new tab enough time to resolve URL before cleanup.
+            setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        } catch (error) {
+            previewTab.close();
+            console.error(`Failed to open PDF (${filePath}):`, error);
+            alert(`Failed to open PDF: ${getFilenameFromPath(filePath)}`);
         }
     };
 
@@ -77,10 +105,16 @@ const CasePdfList = ({ pdfPaths = [] }) => {
         hover:border-legal-navy dark:hover:border-blue-400 transition-all group
     `;
 
+    const openButtonClasses = `
+        border border-legal-borders dark:border-gray-500 hover:border-legal-navy dark:hover:border-gray-300
+        rounded-lg px-3 py-2 transition-all hover:bg-legal-lightGray dark:hover:bg-white/5
+        group flex items-center justify-center gap-2 h-full
+    `;
+
     const downloadButtonClasses = `
-        px-3 py-2 bg-legal-navy dark:bg-blue-600 hover:bg-legal-darkNavy dark:hover:bg-blue-700
-        text-white rounded-md transition-colors text-sm font-medium
-        flex items-center gap-1 whitespace-nowrap
+        border border-legal-borders dark:border-gray-500 hover:border-legal-navy dark:hover:border-gray-300
+        rounded-lg p-2 transition-all hover:bg-legal-lightGray dark:hover:bg-white/5
+        group flex items-center justify-center h-full
     `;
 
     return (
@@ -126,16 +160,33 @@ const CasePdfList = ({ pdfPaths = [] }) => {
                                     </span>
                                 </div>
 
-                                <button
-                                    onClick={() => handleDownloadPdf(pdfPath)}
-                                    className={downloadButtonClasses}
-                                    title={`Download ${filename}`}
-                                >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-                                        download
-                                    </span>
-                                    <span>Download</span>
-                                </button>
+                                <div className="flex items-stretch gap-2 ml-3">
+                                    <button
+                                        onClick={() => handleOpenPdfInNewTab(pdfPath)}
+                                        className={openButtonClasses}
+                                        title={`Open ${filename} in new tab`}
+                                        aria-label={`Open ${filename} in new tab`}
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-legal-gray dark:text-gray-400 group-hover:text-legal-darkNavy dark:group-hover:text-white">
+                                            <path d="M12 20h9"></path>
+                                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                        </svg>
+                                        <span className="text-sm text-legal-gray dark:text-gray-400 group-hover:text-legal-darkNavy dark:group-hover:text-white whitespace-nowrap">
+                                            Open PDF
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleDownloadPdf(pdfPath)}
+                                        className={downloadButtonClasses}
+                                        title={`Download ${filename}`}
+                                        aria-label={`Download ${filename}`}
+                                    >
+                                        <span className="material-symbols-outlined text-legal-gray dark:text-gray-400 group-hover:text-legal-darkNavy dark:group-hover:text-white" style={{ fontSize: '18px' }}>
+                                            download
+                                        </span>
+                                    </button>
+                                </div>
                             </div>
                         );
                     })}

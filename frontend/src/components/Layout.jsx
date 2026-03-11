@@ -196,6 +196,63 @@ const Layout = () => {
         }
     };
 
+    const persistDraftContent = async (chatId, content) => {
+        if (!chatId || chatId.startsWith('temp_')) return false;
+
+        try {
+            const res = await axiosJWT.put(`/chat-history/${chatId}/document`, { content });
+            const updatedMessageId = res?.data?.message_id;
+
+            if (updatedMessageId) {
+                setSessions(prev => prev.map(session => {
+                    if (session.id !== chatId) return session;
+                    const updatedMessages = (session.messages || []).map(msg =>
+                        String(msg.id) === String(updatedMessageId)
+                            ? {
+                                ...msg,
+                                documentContent: content,
+                                document: {
+                                    ...(msg.document || {}),
+                                    content,
+                                },
+                            }
+                            : msg
+                    );
+
+                    return {
+                        ...session,
+                        messages: updatedMessages,
+                        timestamp: new Date().toISOString(),
+                    };
+                }));
+
+                setLoadedMessages(prev => {
+                    const existing = prev[chatId] || [];
+                    return {
+                        ...prev,
+                        [chatId]: existing.map(msg =>
+                            String(msg.id) === String(updatedMessageId)
+                                ? {
+                                    ...msg,
+                                    documentContent: content,
+                                    document: {
+                                        ...(msg.document || {}),
+                                        content,
+                                    },
+                                }
+                                : msg
+                        ),
+                    };
+                });
+            }
+
+            return true;
+        } catch (err) {
+            console.error('Failed to persist draft content:', err);
+            return false;
+        }
+    };
+
     const deleteSession = async (sessionId, e) => {
         e.stopPropagation();
 
@@ -260,6 +317,7 @@ const Layout = () => {
                     currentSession,
                     updateSessionMessages,
                     persistChatToDatabase,
+                    persistDraftContent,
                     createNewChat,
                 }} />
             </main>

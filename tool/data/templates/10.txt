@@ -6,17 +6,17 @@ ___________LTD, a Company incorporated under the Companies Act, 1956 or Companie
 "The Lender") which term or expression shall unless excluded by or repugnant to the subject or
 context hereof shall mean and include its heirs, successors and assigns of the One Part
 AND
- i. M/S ABC LIMITED, a Company incorporated under the Companies Act, 1956 or
+ i. M/S [Borrower Company Name], a Company incorporated under the Companies Act, 1956 or
 Companies Act ,2013 having its Registered Office at ____________________ (hereinafter referred
 to as "The Borrower") which terms or expression shall unless excluded by or repugnant to the
 subject or context hereof shall mean and include its heirs, successors and assigns of the
 SECOND PART and
- ii. M/S CDE LIMITED, a Company incorporated under the Companies Act, 1956 or
+ ii. M/S [Pledger Company Name], a Company incorporated under the Companies Act, 1956 or
 Companies Act ,2013 having its Registered Office at __________________ (hereinafter referred to
 as "The Lender") which terms or expression shall unless excluded by or repugnant to the subject
 or context hereof shall mean and include its heirs, successors and assigns of the THIRD PART.
 WHEREAS
-A. The Borrower is one of the entities in the group of Companies, ABC LIMITED, a Company
+A. The Borrower is one of the entities in the group of Companies, [Borrower Company Name], a Company
 incorporated under the provisions of the Companies Act, 1956 or Companies Act, 2013 having
 its Registered Office at ___________________________ hereinafter referred to as "The Borrower"
 has a paid up capital of Rs. ______ lacs as on _________ (date).
@@ -40,7 +40,7 @@ interest @ _% per annum over and above the interest mentioned hereinabove.
 3. As a security towards timely repayment of loan along with interest, the Lender has agreed to
 pledge in favour of the Lender, fully paid up equity shares, standing in the name of Lender as
 stated in the Annexure annexed hereto and treated as an integral part of the agreement in the
-equity capital of ABC Limited, a company incorporated under the provisions of the Companies
+equity capital of [Borrower Company Name], a company incorporated under the provisions of the Companies
 Act, 1956 or Companies Act, 2013 having its Registered Office at
 _____________________________. The Equity shares of Equity International Ltd are listed at
 _______ Stock Exchange and the current market price of shares is agreed to be Rs. ____/- per
@@ -53,12 +53,12 @@ compulsory) to demand from the Borrower repayment of the loan along with the int
 outstanding and the Borrower shall be liable to repay the loan in full along with interest thereon
 without any objection and/or demur.
 5. It is expressly agreed by and between the parties hereto that in case of downward revision in
-the market price of the equity shares of ABC LTD, the Borrower/ Lender shall on its own, pledge
-in favour of the Lender such other shares of ABC LTD so as to ensure ______ % margin between
+the market price of the equity shares of [Borrower Company Name], the Borrower/ Lender shall on its own, pledge
+in favour of the Lender such other shares of [Borrower Company Name] so as to ensure ______ % margin between
 the amount of loan along with interest and the securities.
 6. In case the Borrower fails and/or neglects to repay the amount of loan or the amount of
 interest on the due date it shall be lawful for the Lender to sell or dispose off, at the cost and
-expenses of the borrower, all or some of the equity shares of ABC LTD either by way of private
+expenses of the borrower, all or some of the equity shares of [Borrower Company Name] either by way of private
 arrangement or in the open market and to apply the net proceeds thereof towards satisfaction
 of the amount of loan or the interest, then outstanding.
 7. The Borrower agrees that any accretion the securities pledged with the Lender by way of
@@ -72,7 +72,7 @@ documents/papers, including fresh transfer deeds, as may be required by the Lend
 to time.
 10.The Borrower/ Lender have agreed to constitute nominate and appoint the Lenders as its true
 and lawful attorney to do all such deeds and things in respect of the said ______(No. of Shares)
-Equity Shares of ABC LTD as may be pledged/hypothecated by the Borrower to the Lender.
+Equity Shares of [Borrower Company Name] as may be pledged/hypothecated by the Borrower to the Lender.
 11. It is agreed that the liability of the Lender is jointly and severally along with the liabilities of
 the Borrower and the same is co-extensive.
 IN WITNESS WHEREOF the parties herein have signed this agreement in acceptance of all terms

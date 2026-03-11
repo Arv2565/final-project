@@ -74,22 +74,27 @@ def doc_gen_clarification_node(state: GraphState) -> Dict[str, Any]:
     # Generate a friendly question using LLM
     question_generator_llm = get_agent_llm(model_type="writer")
     
-    # Handle Pydantic model or dict
-    p_keys = []
+    # Build readable required details to help the LLM ask precise questions.
+    placeholder_lines = []
     for p in placeholders:
         if isinstance(p, dict):
-             p_keys.append(p.get('key'))
+            key = p.get("key", "")
+            description = p.get("description")
+            original_text = p.get("original_text")
         else:
-             p_keys.append(p.key)
-    
-    try:
-        keys_str = ", ".join(p_keys)
-    except Exception:
-        keys_str = str(placeholders)
+            key = getattr(p, "key", "")
+            description = getattr(p, "description", None)
+            original_text = getattr(p, "original_text", None)
+
+        label = (description or original_text or key or "detail").strip()
+        placeholder_lines.append(f"- {label} (key: {key})")
+
+    keys_str = "\n".join(placeholder_lines) if placeholder_lines else str(placeholders)
     
     q_system_prompt = QUESTION_GENERATION_SYSTEM_PROMPT
     q_user_prompt = f"""Document Name: {template_info.name}
-Required Details: {keys_str}
+Required Details:
+{keys_str}
 
 IMPORTANT: Respond ONLY in {response_language_name} (language code: {original_language_code}).
 Do NOT use English. All your output must be in {response_language_name}."""

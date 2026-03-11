@@ -254,14 +254,16 @@ Your task is to produce detailed legal explanations of ONLY the RELEVANT cases s
 - the reasoning of the court
 - the final holding and legal principles established
 
-CASE FILTERING RULES:
+CRITICAL CASE FILTERING RULES:
 
 1. FIRST, analyze the user query to understand what they are asking about.
-2. ONLY analyze cases that are directly relevant to the user's query.
-3. SKIP or minimally mention cases that are not directly related to the user's legal problem or question.
-4. If a case touches on peripheral issues but not the main question, do NOT include it in detailed analysis.
-5. Prioritize cases with the highest relevance to the user's specific query.
-6. If a case is only tangentially related, acknowledge its existence but do NOT provide full CASE ANALYSIS format for it.
+2. ONLY analyze cases that are directly relevant and address the user's specific query.
+3. COMPLETELY EXCLUDE any case that is not directly relevant to the user's legal problem or question.
+4. Do NOT include cases that only tangentially relate to the query.
+5. Do NOT acknowledge the existence of irrelevant cases.
+6. Do NOT include explanatory notes like "Note: This case is not relevant" or "This case is tangential" - simply omit irrelevant cases completely.
+7. Present ONLY the relevant cases without any mention of excluded cases.
+8. If ALL cases are irrelevant, respond with: "No relevant cases found for this query."
 
 When presenting relevant cases, follow this structured format:
 
@@ -310,9 +312,10 @@ IMPORTANT RULES:
 6. Focus on legally decisive facts and reasoning rather than generic commentary.
 7. Preserve legal terminology accurately.
 8. Only provide detailed analysis for cases that directly address the user's query.
-9. Filter out irrelevant cases and do NOT pad your response with marginally related cases.
+9. COMPLETELY filter out irrelevant cases - do NOT include any mention of them.
+10. Do NOT add explanatory notes about why cases are excluded.
 
-Your goal is to help the user understand the full legal significance of RELEVANT cases, not just the conclusion."""
+Your goal is to help the user understand the full legal significance of RELEVANT cases ONLY, not just the conclusion. Silence on irrelevant cases is preferred - they should not appear in the output at all."""
 
             llm_result = self.llm.invoke(
                 [
@@ -330,11 +333,16 @@ Your goal is to help the user understand the full legal significance of RELEVANT
             
             filtered_paths = self._filter_paths(llm_result.relevant_pdf_paths or [], available_pdf_paths)
             
+            # Clean the markdown to remove any notes about irrelevant cases
+            cleaned_markdown = self._clean_irrelevant_case_notes(
+                llm_result.analysis_markdown or "# Case Analysis\n\nNo synthesis generated."
+            )
+            
             result = CaseSynthesisResult(
-                analysis_markdown=llm_result.analysis_markdown or "# Case Analysis\n\nNo synthesis generated.",
+                analysis_markdown=cleaned_markdown,
                 relevant_pdf_paths=filtered_paths,
             )
-            logger.info(f"LLM synthesis successful: {len(result.analysis_markdown)} chars markdown, {len(result.relevant_pdf_paths)} PDFs")
+            logger.info(f"LLM synthesis successful: {len(result.analysis_markdown)} chars markdown (after cleaning), {len(result.relevant_pdf_paths)} PDFs")
             return result
             
         except Exception as llm_error:
@@ -371,3 +379,46 @@ Your goal is to help the user understand the full legal significance of RELEVANT
                 seen.add(path)
                 filtered.append(path)
         return filtered
+
+    def _clean_irrelevant_case_notes(self, markdown: str) -> str:
+        """
+        Remove any notes or mentions of irrelevant cases from markdown output.
+        
+        Strips out:
+        - "Note: ... is not relevant" sections
+        - "Note: ... is tangential" sections
+        - "Conclusion" sections that mention irrelevance
+        - Any section after a "## Note" or "## Notes" header that discusses exclusions
+        
+        Args:
+            markdown: Raw markdown from LLM
+            
+        Returns:
+            Cleaned markdown with irrelevance notes removed
+        """
+        import re
+        
+        # Remove "## Note" or "## Notes" sections that discuss irrelevance/tangentiality
+        # Pattern matches ## Note(s) followed by content mentioning "not relevant", "tangential", "not directly relevant", etc.
+        patterns_to_remove = [
+            # Remove Note sections discussing irrelevance
+            r"##\s*Note[s]?:?\s*\n.*?(?:not.*?relevant|tangential|not.*?directly.*?related|peripheral).*?(?=##\s*[A-Z]|$)",
+            # Remove conclusion sections mentioning specific irrelevant cases
+            r"(Conclusion|CONCLUSION)\n.*?(?:not.*?relevant|tangential|not.*?directly.*?related).*?(?=##|$)",
+            # Remove inline note patterns like "Note: The second case provided... is not directly relevant"
+            r"\n*Note:\s+The\s+(?:second|third|first|another)\s+case.*?(?:not\s+directly\s+relevant|tangential).*?(?=\n\n|##|$)",
+            # Remove "is not directly relevant to" patterns
+            r"is\s+not\s+directly\s+relevant\s+to.*?(?=\n\n|##|$)",
+            # Remove sections explicitly stating cases should be ignored
+            r"(?:should\s+be\s+)?ignored.*?(?=\n\n|##|$)",
+        ]
+        
+        cleaned = markdown
+        for pattern in patterns_to_remove:
+            cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.DOTALL)
+        
+        # Remove excessive newlines
+        cleaned = re.sub(r"\n\n\n+", "\n\n", cleaned)
+        cleaned = cleaned.strip()
+        
+        return cleaned

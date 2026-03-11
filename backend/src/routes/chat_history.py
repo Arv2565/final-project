@@ -13,7 +13,9 @@ from ..schemas.chat_history import (
     ChatHistoryListResponse,
     MessageSchema,
     ChatHistoryNameUpdate,
-    ChatHistoryNameResponse
+    ChatHistoryNameResponse,
+    ChatDocumentUpdate,
+    ChatDocumentUpdateResponse,
 )
 
 router = APIRouter()
@@ -188,6 +190,49 @@ async def update_chat(
         "created_at": chat.created_at,
         "updated_at": chat.updated_at,
         "messages": messages_formated
+    }
+
+
+@router.put("/{chat_id}/document", response_model=ChatDocumentUpdateResponse)
+async def update_chat_document(
+    chat_id: str,
+    doc_in: ChatDocumentUpdate,
+    current_user: dict = Depends(authenticate)
+) -> Any:
+    """Update the latest assistant message document content in a chat."""
+    try:
+        chat = await ChatHistory.get(PydanticObjectId(chat_id), fetch_links=True)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid chat ID format")
+
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    if str(chat.user.id) != current_user.get("id"):
+        raise HTTPException(status_code=403, detail="Not authorized to access this chat")
+
+    target_message = None
+    for msg in reversed(chat.messages):
+        is_assistant = getattr(msg, "sender", None) == "assistant"
+        has_document = bool(getattr(msg, "document", None))
+        if is_assistant and has_document:
+            target_message = msg
+            break
+
+    if not target_message:
+        raise HTTPException(status_code=404, detail="No assistant document found in this chat")
+
+    existing_doc = target_message.document or {}
+    target_message.document = {**existing_doc, "content": doc_in.content}
+    await target_message.save()
+
+    chat.updated_at = datetime.utcnow()
+    await chat.save()
+
+    return {
+        "chat_id": str(chat.id),
+        "message_id": str(target_message.id),
+        "updated_at": chat.updated_at,
     }
 
 @router.delete("/{chat_id}", status_code=status.HTTP_204_NO_CONTENT)

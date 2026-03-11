@@ -39,3 +39,13 @@ class ChatHistoryNameUpdate(BaseModel):
 class ChatHistoryNameResponse(BaseModel):
     id: str
     name: str
+
+
+class ChatDocumentUpdate(BaseModel):
+    content: str = Field(..., description="Updated document content from draft editor")
+
+
+class ChatDocumentUpdateResponse(BaseModel):
+    chat_id: str
+    message_id: str
+    updated_at: datetime

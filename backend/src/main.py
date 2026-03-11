@@ -17,7 +17,7 @@ tool_path = Path(__file__).parent.parent.parent / "tool"
 if str(tool_path) not in sys.path:
     sys.path.insert(0, str(tool_path))
 
-from .routes import chat, health, auth, user, chat_history, files
+from .routes import chat, health, auth, user, chat_history, files, documents
 from .db import init_db
 
 # Setup logging
@@ -59,6 +59,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(user.router, prefix="/api/user", tags=["user"])
 app.include_router(chat_history.router, prefix="/api/chat-history", tags=["chat-history"])
 app.include_router(files.router, prefix="/api", tags=["files"])
+app.include_router(documents.router, prefix="/api", tags=["documents"])
 
 @app.on_event("startup")
 async def startup_event():

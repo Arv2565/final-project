@@ -14,6 +14,7 @@ const Home = () => {
         currentSession,
         updateSessionMessages,
         persistChatToDatabase,
+        persistDraftContent,
         createNewChat,
         setCloseDraftCallback
     } = useOutletContext();
@@ -30,6 +31,12 @@ const Home = () => {
 
     const closeDraft = () => {
         setIsDraftOpen(false);
+    };
+
+    const handleSwitchToPreview = async (latestContent) => {
+        const sessionId = currentSession?.id;
+        if (!sessionId || !persistDraftContent) return;
+        await persistDraftContent(sessionId, latestContent || '');
     };
 
     const toggleSettings = () => {
@@ -76,6 +83,7 @@ const Home = () => {
                             onClose={closeDraft}
                             content={draftContent}
                             onContentChange={setDraftContent}
+                            onSwitchToPreview={handleSwitchToPreview}
                         />
                     </div>
                 )}
