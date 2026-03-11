@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "generated_from": "tool/data/compare",
+  "entries": [
+    {
+      "id": "land_001",
+      "topic": "Land Reforms and Agricultural Ceilings",
+      "states": ["Kerala", "Karnataka"],
+      "keywords": ["land", "land reforms", "agricultural land", "ceiling", "tenant rights", "surplus land"],
+      "aliases": ["land ceiling", "agricultural holding limits", "kerala karnataka land law"],
+      "file_path": "tool/data/compare/1.md",
+      "has_table": true,
+      "table_headers": ["Aspect", "Kerala", "Karnataka"],
+      "table_row_count": 9,
+      "short_summary": "Compares land ceiling frameworks, tenant protections, surplus land treatment, and purchase restrictions."
+    },
+    {
+      "id": "lottery_002",
+      "topic": "Lottery Regulation and Policy",
+      "states": ["Kerala", "Karnataka"],
+      "keywords": ["lottery", "state lottery", "lottery ban", "ticket sale", "gambling"],
+      "aliases": ["lottery regulation", "lottery policy", "kerala lottery vs karnataka"],
+      "file_path": "tool/data/compare/2.md",
+      "has_table": true,
+      "table_headers": ["Aspect", "Kerala", "Karnataka"],
+      "table_row_count": 7,
+      "short_summary": "Contrasts Kerala's regulated lottery model and Karnataka's prohibition approach."
+    },
+    {
+      "id": "education_003",
+      "topic": "Education Law and Language Policy",
+      "states": ["Kerala", "Karnataka"],
+      "keywords": ["education", "language policy", "school law", "RTE", "NEP", "medium of instruction"],
+      "aliases": ["school language law", "malayalam vs kannada policy", "education comparison"],
+      "file_path": "tool/data/compare/3.md",
+      "has_table": true,
+      "table_headers": ["Aspect", "Kerala", "Karnataka"],
+      "table_row_count": 7,
+      "short_summary": "Compares school education statutes, compulsory language obligations, and RTE/NEP positions."
+    },
+    {
+      "id": "excise_004",
+      "topic": "Alcohol and Excise Regulation",
+      "states": ["Kerala", "Karnataka"],
+      "keywords": ["alcohol", "excise", "drinking age", "bar license", "liquor", "abkari"],
+      "aliases": ["liquor policy", "alcohol regulation", "excise law comparison"],
+      "file_path": "tool/data/compare/4.md",
+      "has_table": true,
+      "table_headers": ["Aspect", "Kerala", "Karnataka"],
+      "table_row_count": 6,
+      "short_summary": "Compares excise statutes, drinking age, retail structure, and bar licensing policy."
+    },
+    {
+      "id": "fisheries_005",
+      "topic": "Fisheries Law and Marine Regulation",
+      "states": ["Kerala", "Karnataka"],
+      "keywords": ["fisheries", "marine fishing", "trawl ban", "aquaculture", "cooperative", "gear restrictions"],
+      "aliases": ["fishery law", "marine regulation", "fisheries comparison"],
+      "file_path": "tool/data/compare/5.md",
+      "has_table": true,
+      "table_headers": ["Aspect", "Kerala", "Karnataka"],
+      "table_row_count": 8,
+      "short_summary": "Compares inland and marine fisheries regulation, monsoon bans, and cooperative models."
+    },
+    {
+      "id": "public_health_006",
+      "topic": "Public Health and Sanitation Statutes",
+      "states": ["Kerala", "Karnataka"],
+      "keywords": ["public health", "sanitation", "epidemic", "municipal health", "right to health"],
+      "aliases": ["health law comparison", "public health act", "sanitation law"],
+      "file_path": "tool/data/compare/6.md",
+      "has_table": true,
+      "table_headers": ["Aspect", "Kerala", "Karnataka"],
+      "table_row_count": 6,
+      "short_summary": "Contrasts Kerala's unified public health code and Karnataka's multi-statute structure."
+    }
+  ]
+}

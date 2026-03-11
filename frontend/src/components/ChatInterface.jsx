@@ -713,6 +713,28 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
     const safeMessages = Array.isArray(messages) ? messages : [];
     const displayName = (userName || '').trim() || 'there';
 
+    const containsMarkdownTable = (content) => {
+        if (typeof content !== 'string' || !content.includes('|')) {
+            return false;
+        }
+
+        const lines = content.split('\n');
+        for (let index = 0; index < lines.length - 1; index += 1) {
+            const headerLine = lines[index].trim();
+            const separatorLine = lines[index + 1].trim();
+            if (
+                headerLine.startsWith('|') &&
+                headerLine.endsWith('|') &&
+                separatorLine.startsWith('|') &&
+                /^\|[\-:| ]+\|$/.test(separatorLine)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     if (safeMessages.length === 0) {
         return (
             <div className="w-full max-w-4xl mx-auto px-4 pb-4 flex flex-col justify-center items-center h-full bg-legal-lightGray dark:bg-[#131416]">
@@ -774,7 +796,8 @@ const ChatInterface = ({ toggleDraft, toggleSettings, currentSession, onUpdateMe
                     {safeMessages.map((message, index) => {
                         const showExtraSpacing = index > 0 && safeMessages[index - 1].type !== message.type;
                         const isMessageTyping = typingCompletedById[message.id] === false;
-                        const renderedContent = isMessageTyping
+                        const shouldSkipTypingForMessage = containsMarkdownTable(message.content);
+                        const renderedContent = isMessageTyping && !shouldSkipTypingForMessage
                             ? (typingProgressById[message.id] || '')
                             : message.content;
                         return (

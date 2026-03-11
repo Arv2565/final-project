@@ -45,6 +45,10 @@ class GraphState(TypedDict, total=False):
     educational_content: NotRequired[str] # EducationalLayerAgent
     case_law: NotRequired[List[str]] # CaseRetrieverAgent
     comparison_result: NotRequired[str] # ComparativeModuleAgent
+    comparison_mode: NotRequired[str] # precomputed | fallback | error
+    comparison_match_id: NotRequired[str]
+    comparison_match_score: NotRequired[float]
+    comparison_source_file: NotRequired[str]
     
     # Activity to Law Workflow State
     activity_law_state: NotRequired[ActivityLawState]

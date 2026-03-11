@@ -5,6 +5,14 @@ from .orchestrator import OrchestratorPlan, NextModule, AgentType
 from .procedural_guidance import ProceduralGuidanceState
 from .clarification import ClarificationRequest
 from .document_generation import TemplateInfo, PlaceholderInfo, DocumentGenerationState
+from .comparative_module import (
+    ComparisonEntry,
+    ComparisonMatch,
+    ComparativeStateFinding,
+    ComparativeAgent1Output,
+    ComparativeStateFindingsOutput,
+    ComparativeAgent4Output,
+)
 
 __all__ = [
     "QueryRouterOutput",
@@ -21,4 +29,10 @@ __all__ = [
     "TemplateInfo",
     "PlaceholderInfo",
     "DocumentGenerationState",
+    "ComparisonEntry",
+    "ComparisonMatch",
+    "ComparativeStateFinding",
+    "ComparativeAgent1Output",
+    "ComparativeStateFindingsOutput",
+    "ComparativeAgent4Output",
 ]

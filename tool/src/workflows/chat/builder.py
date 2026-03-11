@@ -28,6 +28,7 @@ from src.nodes.doc_gen_procedure_generation import doc_gen_procedure_generation_
 
 from src.nodes.placeholder_node import placeholder_node
 from src.nodes.case_retriever_node import case_retriever_node
+from src.nodes.comparative_module_node import comparative_module_node
 
 
 def route_from_orchestrator(state: GraphState) -> Literal["ambiguity_remover", "fact_structuring", "procedural_guidance_civil", "procedural_guidance_criminal", "draft_builder", "educational_layer", "case_retriever", "comparative_module", "doc_gen_template_selection", "general_chat", "__end__"]:
@@ -200,7 +201,7 @@ def build_graph(llm_provider=None):
     workflow.add_node("draft_builder", placeholder_node) # Can be removed if completely replaced, but kept for safety
     workflow.add_node("educational_layer", placeholder_node)
     workflow.add_node("case_retriever", case_retriever_node)
-    workflow.add_node("comparative_module", placeholder_node)
+    workflow.add_node("comparative_module", comparative_module_node)
     
     # Register Document Generation nodes (Broken down)
     workflow.add_node("doc_gen_template_selection", doc_gen_template_selection_node)
@@ -225,7 +226,7 @@ def build_graph(llm_provider=None):
             "draft_builder": "doc_gen_template_selection", # Mapped
             "educational_layer": END,
             "case_retriever": "case_retriever",
-            "comparative_module": END,
+            "comparative_module": "comparative_module",
             "doc_gen_template_selection": "doc_gen_template_selection",
             "general_chat": "general_chat",
             END: END
